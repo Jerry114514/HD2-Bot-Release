@@ -1,0 +1,23 @@
+# 隐私与本地文件（勿提交）
+config.json
+*.local.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 运行时数据
+temp/
+news_cache.json
+*.log
+
+# NapCat / AstrBot 运行产物
+napcat/
+.astrbot/
+
+# 编辑器/系统
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

@@ -1,0 +1,48 @@
+{
+  "_说明": "复制本文件为 config.json 并填写你的信息。所有含 YOUR 的值都必须替换。相对路径基于项目根。",
+
+  "bot": {
+    "self_id": "YOUR_QQ_NUMBER",
+    "admin_qq": "YOUR_ADMIN_QQ",
+    "groups": [111111111, 222222222],
+    "default_group": 111111111
+  },
+
+  "napcat": {
+    "webui_url": "http://127.0.0.1:6099",
+    "token": "YOUR_NAPCAT_WEBUI_TOKEN",
+    "dir": "C:/NapCat/napcat",
+    "qq_exe": "C:/Program Files/Tencent/QQNT/QQ.exe",
+    "qrcode_rel": "cache/qrcode.png",
+    "ws_url": "ws://127.0.0.1:6199/ws"
+  },
+
+  "astrbot": {
+    "exe": "D:/AstrBot/astrbot-desktop-tauri.exe",
+    "python": "D:/AstrBot/backend/python/python.exe",
+    "app_dir": "D:/AstrBot/backend/app",
+    "webui_port": 6185,
+    "ws_port": 6199
+  },
+
+  "llm": {
+    "api_key": "YOUR_DEEPSEEK_API_KEY",
+    "api_url": "https://api.deepseek.com/v1/chat/completions"
+  },
+
+  "paths": {
+    "var_table": "tables/HD2行动变量对照表.md",
+    "starmap": "tables/星图对照表_修正版.md",
+    "guide": "tables/群使用说明.txt"
+  },
+
+  "webui": {
+    "host": "127.0.0.1",
+    "port": 8630
+  },
+
+  "inject": {
+    "fake_user": 1145141433223,
+    "fake_name": "绝地潜兵·测试员"
+  }
+}

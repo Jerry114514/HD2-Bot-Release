@@ -1,0 +1,5 @@
+---
+name: astrbot_plugin_hd2_monitor
+desc: HD2 指令执行流水监控 - 记录消息接收状态与执行步骤，供 Web 控制台展示
+author: local
+version: 1.0.0

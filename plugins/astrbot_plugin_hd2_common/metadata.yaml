@@ -1,0 +1,4 @@
+name: astrbot_plugin_hd2_common
+desc: HD2 公共库 - 共享常量/HTTP 抓取/表加载/译名映射（供其他 HD2 插件 import，不注册指令）
+author: local
+version: 1.0.0

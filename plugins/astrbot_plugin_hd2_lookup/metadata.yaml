@@ -1,0 +1,5 @@
+---
+name: astrbot_plugin_hd2_lookup
+desc: HD2 查表插件 - 发送 /查表 查询行动变量对照表与星区对照表
+author: local
+version: 1.0.0

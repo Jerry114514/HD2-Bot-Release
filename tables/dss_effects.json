@@ -1,0 +1,52 @@
+{
+ "1208": {
+  "name": "game_PLANETARY_BOMBARDMENT",
+  "cn": "星球轰炸",
+  "cn_full": "💣🌏💣 星球轰炸"
+ },
+ "1209": {
+  "name": "game_EAGLE_STORM",
+  "cn": "飞鹰风暴",
+  "cn_full": "✈ 飞鹰风暴"
+ },
+ "1211": {
+  "name": "mark_PLANETARY_BOMBARDMENT",
+  "cn": "星球轰炸(标记)",
+  "cn_full": "💣🌏💣 星球轰炸"
+ },
+ "1212": {
+  "name": "mark_EAGLE_STORM",
+  "cn": "飞鹰风暴(标记)",
+  "cn_full": "✈ 飞鹰风暴"
+ },
+ "1213": {
+  "name": "mark_ORBITAL_BLOCKADE",
+  "cn": "轨道封锁(标记)",
+  "cn_full": "🚫 轨道封锁"
+ },
+ "1214": {
+  "name": "war_HEAVY_ORDNANCE_DISTRIBUTION",
+  "cn": "重型军械分发",
+  "cn_full": "💣 重型军械分发"
+ },
+ "1215": {
+  "name": "war_ORBITAL_BLOCKADE",
+  "cn": "轨道封锁",
+  "cn_full": "🚫 轨道封锁"
+ },
+ "1216": {
+  "name": "war_EAGLE_STORM_2",
+  "cn": "飞鹰风暴(防御减速)",
+  "cn_full": "✈ 飞鹰风暴"
+ },
+ "1217": {
+  "name": "mark_DssIdle",
+  "cn": "DSS空闲",
+  "cn_full": "🛰️ DSS 待命"
+ },
+ "1238": {
+  "name": "war_OperationalSupport",
+  "cn": "行动支持",
+  "cn_full": "✊ 行动支持"
+ }
+}

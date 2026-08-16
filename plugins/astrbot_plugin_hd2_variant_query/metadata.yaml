@@ -1,0 +1,5 @@
+---
+name: astrbot_plugin_hd2_variant_query
+desc: 绝地潜兵2 变种查询插件 - 被@并发送变种名（如孢裂变种、掠食变种）时，扫描战役星球行动变量，输出所有存在该变种的星球。
+author: local
+version: 1.0.0

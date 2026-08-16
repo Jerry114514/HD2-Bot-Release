@@ -1,0 +1,5 @@
+---
+name: astrbot_plugin_hd2_guard
+desc: HD2 机器人指令守卫 - 拦截非 / 开头的消息，关闭 LLM 聊天，只响应 / 指令。
+author: local
+version: 1.0.0

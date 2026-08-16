@@ -1,0 +1,5 @@
+---
+name: astrbot_plugin_hd2_roll
+desc: 绝地潜兵2 随机战备插件 - 被@并发送 roll/随机战备 时，从全类型战备池随机抽取4个，同类型超过2个附带毒舌评价。
+author: local
+version: 1.0.0

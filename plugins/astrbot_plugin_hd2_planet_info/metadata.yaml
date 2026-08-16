@@ -1,0 +1,5 @@
+---
+name: astrbot_plugin_hd2_planet_info
+desc: 绝地潜兵2 星球信息查询插件 - 当被@并提及"星球名+信息"时，抓取 helldiverscompanion 星球页面，返回敌方抵抗度、行动变量（部队/环境/特殊变种）、特殊状态（POI）等情报。
+author: local
+version: 1.0.0

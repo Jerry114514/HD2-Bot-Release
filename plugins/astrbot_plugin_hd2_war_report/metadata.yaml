@@ -1,0 +1,4 @@
+name: astrbot_plugin_hd2_war_report
+desc: 绝地潜兵2 战况速报插件 - 当提问"目前战况如何/现在在打哪里/重要指令是什么"时，自动抓取 Helldivers Companion 的 Major Order 目标和最新新闻并回复。
+author: local
+version: 1.0.0
