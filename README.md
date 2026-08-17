@@ -15,6 +15,8 @@
 > ⚠️ **数据所有权**：游戏内容、名称、图标等版权归 Arrowhead Game Studios 所有；社区 API 数据归各提供方所有。本项目仅做技术演示。
 >
 > 📧 **联系我们**：若 Arrowhead 官方或相关权利方认为本项目对接口的使用不当，请通过 GitHub Issues 联系我们，我们会第一时间删除相关代码或调整实现方式。
+>
+> 📧 **联系我们**：If `Arrowhead Game Studios` officials or relevant rights holders believe that this project's use of the interface is inappropriate, please contact us via *GitHub Issues*, and we will delete the relevant code or adjust the implementation immediately.
 
 ## ✨ 功能特性
 
