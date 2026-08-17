@@ -1,0 +1,2572 @@
+{
+  "systems": [
+    {
+      "name": "巴纳德",
+      "name_en": "Barnard",
+      "planets": [
+        {
+          "en": "DARROWSPORT",
+          "cn": "达罗斯波特"
+        },
+        {
+          "en": "FORNSKOGUR II",
+          "cn": "福恩斯科古尔II"
+        },
+        {
+          "en": "HYDROFALL PRIME",
+          "cn": "水瀑主星"
+        },
+        {
+          "en": "MARRE IV",
+          "cn": "马尔IV"
+        },
+        {
+          "en": "MIDASBURG",
+          "cn": "弥达斯堡"
+        },
+        {
+          "en": "VEIL",
+          "cn": "帷幕"
+        }
+      ]
+    },
+    {
+      "name": "康古利伊",
+      "name_en": "Kongulii",
+      "planets": [
+        {
+          "en": "CERBERUS IIIc",
+          "cn": "刻耳柏洛斯IIIc"
+        },
+        {
+          "en": "EFFLUVIA",
+          "cn": "艾芙鲁维亚"
+        },
+        {
+          "en": "FORT SANCTUARY",
+          "cn": "庇护堡"
+        },
+        {
+          "en": "PROSPERITY FALLS",
+          "cn": "繁荣瀑布"
+        },
+        {
+          "en": "SEYSHEL BEACH",
+          "cn": "塞舌尔海滩"
+        }
+      ]
+    },
+    {
+      "name": "坎托鲁斯",
+      "name_en": "Cantorus",
+      "planets": [
+        {
+          "en": "FREEDOM PEAK",
+          "cn": "弗里敦峰"
+        },
+        {
+          "en": "KELVINOR",
+          "cn": "开尔文奥尔"
+        },
+        {
+          "en": "MARTYR'S BAY",
+          "cn": "烈士湾"
+        },
+        {
+          "en": "OBARI",
+          "cn": "欧巴里"
+        },
+        {
+          "en": "VIRIDIA PRIME",
+          "cn": "维尔伊迪亚主星"
+        }
+      ]
+    },
+    {
+      "name": "塞勒斯特",
+      "name_en": "Celeste",
+      "planets": [
+        {
+          "en": "IVIS",
+          "cn": "艾维斯"
+        },
+        {
+          "en": "KRAKATWO",
+          "cn": "克拉克图"
+        },
+        {
+          "en": "MORADESH",
+          "cn": "莫拉戴什"
+        },
+        {
+          "en": "NUBLARIA I",
+          "cn": "努布拉里亚I"
+        },
+        {
+          "en": "SLIF",
+          "cn": "斯利夫"
+        },
+        {
+          "en": "SULFURA",
+          "cn": "萨尔弗拉"
+        }
+      ]
+    },
+    {
+      "name": "天龙座",
+      "name_en": "Draco",
+      "planets": [
+        {
+          "en": "CRIMSICA",
+          "cn": "克里姆西卡"
+        },
+        {
+          "en": "ESTANU",
+          "cn": "伊斯塔努"
+        },
+        {
+          "en": "FORI PRIME",
+          "cn": "佛里主星"
+        }
+      ]
+    },
+    {
+      "name": "法尔斯塔夫",
+      "name_en": "Falstaff",
+      "planets": [
+        {
+          "en": "BORE ROCK",
+          "cn": "博尔岩"
+        },
+        {
+          "en": "ERSON SANDS",
+          "cn": "厄尔森桑兹"
+        },
+        {
+          "en": "ESKER",
+          "cn": "艾斯科尔"
+        },
+        {
+          "en": "SOCORRO III",
+          "cn": "索科罗III"
+        }
+      ]
+    },
+    {
+      "name": "费里斯",
+      "name_en": "Ferris",
+      "planets": [
+        {
+          "en": "HADAR",
+          "cn": "马腹一"
+        },
+        {
+          "en": "HALDUS",
+          "cn": "海德斯"
+        },
+        {
+          "en": "HERTHON SECUNDUS",
+          "cn": "赫尔松次星"
+        },
+        {
+          "en": "ZEA RUGOSIA",
+          "cn": "泽亚鲁戈西亚"
+        }
+      ]
+    },
+    {
+      "name": "加卢克斯",
+      "name_en": "Galux",
+      "planets": [
+        {
+          "en": "ACUBENS PRIME",
+          "cn": "柳宿增三主星"
+        },
+        {
+          "en": "ADHARA",
+          "cn": "弧矢七"
+        },
+        {
+          "en": "AFOYAY BAY",
+          "cn": "艾福亚湾"
+        },
+        {
+          "en": "BASHYR",
+          "cn": "巴希尔"
+        },
+        {
+          "en": "KHARST",
+          "cn": "喀斯特"
+        },
+        {
+          "en": "RASP",
+          "cn": "拉斯普"
+        }
+      ]
+    },
+    {
+      "name": "盖勒特",
+      "name_en": "Gelert",
+      "planets": [
+        {
+          "en": "BLISTICA",
+          "cn": "布里斯提卡"
+        },
+        {
+          "en": "MINCHIR",
+          "cn": ""
+        },
+        {
+          "en": "MINTORIA",
+          "cn": "敏托瑞亚"
+        },
+        {
+          "en": "ZOSMA",
+          "cn": "太徽右垣五"
+        },
+        {
+          "en": "ZZANIAH PRIME",
+          "cn": "藏尼亚主星"
+        }
+      ]
+    },
+    {
+      "name": "戈特玛",
+      "name_en": "Gottma",
+      "planets": [
+        {
+          "en": "DILUVIA",
+          "cn": "迪卢维亚"
+        },
+        {
+          "en": "OKUL VI",
+          "cn": "欧库VI"
+        },
+        {
+          "en": "SOLGHAST",
+          "cn": "索尔加斯特"
+        }
+      ]
+    },
+    {
+      "name": "古安",
+      "name_en": "Guan",
+      "planets": [
+        {
+          "en": "ALDERIDGE COVE",
+          "cn": "阿尔德里奇湾"
+        },
+        {
+          "en": "BELLATRIX",
+          "cn": "参宿五"
+        },
+        {
+          "en": "BOTEIN",
+          "cn": "天阴四"
+        },
+        {
+          "en": "ELYSIAN MEADOWS",
+          "cn": "埃律西昂草原"
+        },
+        {
+          "en": "KHANDARK",
+          "cn": "勘达尔克"
+        }
+      ]
+    },
+    {
+      "name": "长蛇座",
+      "name_en": "Hydra",
+      "planets": [
+        {
+          "en": "AESIR PASS",
+          "cn": "亚萨关隘"
+        },
+        {
+          "en": "MENKENT",
+          "cn": "库楼三"
+        },
+        {
+          "en": "VERNEN WELLS",
+          "cn": "佛农井"
+        }
+      ]
+    },
+    {
+      "name": "伊顿",
+      "name_en": "Eaton",
+      "planets": [
+        {
+          "en": "ATRAMA",
+          "cn": "阿特拉玛"
+        },
+        {
+          "en": "MAW",
+          "cn": "深渊"
+        },
+        {
+          "en": "MYRADESH",
+          "cn": "米拉戴什"
+        },
+        {
+          "en": "WRAITH",
+          "cn": "幽灵"
+        }
+      ]
+    },
+    {
+      "name": "伊普都斯",
+      "name_en": "Ipodus",
+      "planets": [
+        {
+          "en": "IRIDICA",
+          "cn": "艾利迪卡"
+        },
+        {
+          "en": "KRAKABOS",
+          "cn": "克拉克博斯"
+        },
+        {
+          "en": "PRIMORDIA",
+          "cn": "普莱默迪亚"
+        },
+        {
+          "en": "PROVIDENCE",
+          "cn": "普罗维登斯"
+        },
+        {
+          "en": "RATCH",
+          "cn": "拉奇"
+        },
+        {
+          "en": "VALGAARD",
+          "cn": "瓦尔加德"
+        }
+      ]
+    },
+    {
+      "name": "凯尔文",
+      "name_en": "Kelvin",
+      "planets": [
+        {
+          "en": "EMERIA",
+          "cn": "埃梅里亚"
+        },
+        {
+          "en": "FORT JUSTICE",
+          "cn": "正义堡"
+        },
+        {
+          "en": "IGLA",
+          "cn": "依格勒"
+        },
+        {
+          "en": "NEW KIRUNA",
+          "cn": "新基鲁纳"
+        },
+        {
+          "en": "ZEGEMA PARADISE",
+          "cn": "泽格玛乐土"
+        }
+      ]
+    },
+    {
+      "name": "科普斯",
+      "name_en": "Corpus",
+      "planets": [
+        {
+          "en": "ALTA V",
+          "cn": "奥尔塔V"
+        },
+        {
+          "en": "CARAMOOR",
+          "cn": "开勒莫尔"
+        },
+        {
+          "en": "CRUCIBLE",
+          "cn": "熔炉"
+        },
+        {
+          "en": "INARI",
+          "cn": "伊纳里"
+        },
+        {
+          "en": "VOLTERRA",
+          "cn": "沃尔泰拉"
+        }
+      ]
+    },
+    {
+      "name": "拉凯欧",
+      "name_en": "Lakieo",
+      "planets": [
+        {
+          "en": "CHOOHE",
+          "cn": "丘伊"
+        },
+        {
+          "en": "CHORT BAY",
+          "cn": "雀特湾"
+        },
+        {
+          "en": "LESATH",
+          "cn": "尾宿八"
+        },
+        {
+          "en": "PENTA",
+          "cn": "彭塔"
+        }
+      ]
+    },
+    {
+      "name": "狮子座",
+      "name_en": "Leo",
+      "planets": [
+        {
+          "en": "HAKA",
+          "cn": "哈卡"
+        },
+        {
+          "en": "HALIES PORT",
+          "cn": "海利斯港"
+        },
+        {
+          "en": "PROPUS",
+          "cn": "五诸侯三"
+        },
+        {
+          "en": "RAS ALGETHI",
+          "cn": "帝座"
+        }
+      ]
+    },
+    {
+      "name": "马斯皮拉",
+      "name_en": "Maspira",
+      "planets": [
+        {
+          "en": "BARABOS",
+          "cn": "巴勒博斯"
+        },
+        {
+          "en": "CURIA",
+          "cn": "居里亚"
+        },
+        {
+          "en": "FENMIRE",
+          "cn": "范迈尔"
+        },
+        {
+          "en": "MASTIA",
+          "cn": "玛斯蒂娅"
+        },
+        {
+          "en": "TARSH",
+          "cn": "塔尔什"
+        }
+      ]
+    },
+    {
+      "name": "莫根",
+      "name_en": "Morgen",
+      "planets": [
+        {
+          "en": "EUKORIA",
+          "cn": "欧科里亚"
+        },
+        {
+          "en": "MOG",
+          "cn": "莫格"
+        },
+        {
+          "en": "MYRIUM",
+          "cn": "梅里翁"
+        },
+        {
+          "en": "REGNUS",
+          "cn": "雷格努斯"
+        }
+      ]
+    },
+    {
+      "name": "纳诺斯",
+      "name_en": "Nanos",
+      "planets": [
+        {
+          "en": "BEKVAM III",
+          "cn": "贝克温"
+        },
+        {
+          "en": "DOLPH",
+          "cn": "多尔夫"
+        },
+        {
+          "en": "DUMA TYR",
+          "cn": "杜马提尔"
+        },
+        {
+          "en": "JULHEIM",
+          "cn": "尤尔海姆"
+        }
+      ]
+    },
+    {
+      "name": "昆图斯",
+      "name_en": "Quintus",
+      "planets": [
+        {
+          "en": "LENG SECUNDUS",
+          "cn": "蓝恩次星"
+        },
+        {
+          "en": "SPHERION",
+          "cn": "斯飞利昂"
+        },
+        {
+          "en": "STOR THA PRIME",
+          "cn": "斯特萨主星"
+        },
+        {
+          "en": "STOUT",
+          "cn": "斯图尔特"
+        },
+        {
+          "en": "TERMADON",
+          "cn": "特尔玛登"
+        }
+      ]
+    },
+    {
+      "name": "瑞克图斯",
+      "name_en": "Rectus",
+      "planets": [
+        {
+          "en": "GENESIS PRIME",
+          "cn": "创世主星"
+        },
+        {
+          "en": "GRAFMERE",
+          "cn": "格拉夫米尔"
+        },
+        {
+          "en": "IRO",
+          "cn": "伊罗"
+        },
+        {
+          "en": "KERTH SECUNDUS",
+          "cn": "克斯次星"
+        },
+        {
+          "en": "OASIS",
+          "cn": "绿洲"
+        },
+        {
+          "en": "PARSH",
+          "cn": "帕尔什"
+        },
+        {
+          "en": "VALMOX",
+          "cn": "瓦尔莫克斯"
+        }
+      ]
+    },
+    {
+      "name": "萨根",
+      "name_en": "Sagan",
+      "planets": [
+        {
+          "en": "BOREA",
+          "cn": "博瑞亚"
+        },
+        {
+          "en": "GUNVALD",
+          "cn": "古恩瓦尔德"
+        },
+        {
+          "en": "OSLO STATION",
+          "cn": "奥斯陆站"
+        }
+      ]
+    },
+    {
+      "name": "萨勒利亚",
+      "name_en": "Saleria",
+      "planets": [
+        {
+          "en": "CALYPSO",
+          "cn": "卡利普索"
+        },
+        {
+          "en": "IRULTA",
+          "cn": "艾鲁尔塔"
+        },
+        {
+          "en": "OUTPOST 32",
+          "cn": "32号哨站"
+        },
+        {
+          "en": "REAF",
+          "cn": "利夫"
+        }
+      ]
+    },
+    {
+      "name": "塞弗林",
+      "name_en": "Severin",
+      "planets": [
+        {
+          "en": "DURGEN",
+          "cn": "德尔根"
+        },
+        {
+          "en": "MAIA",
+          "cn": "昂宿四"
+        },
+        {
+          "en": "MALEVELON CREEK",
+          "cn": "麦拉芬蒙河"
+        },
+        {
+          "en": "TIBIT",
+          "cn": "提比特"
+        },
+        {
+          "en": "UBANEA",
+          "cn": "乌巴尼亚"
+        }
+      ]
+    },
+    {
+      "name": "斯坦",
+      "name_en": "Stein",
+      "planets": [
+        {
+          "en": "AZUR SECUNDUS",
+          "cn": "艾热尔次星"
+        },
+        {
+          "en": "BIG ROCK",
+          "cn": "巨岩"
+        },
+        {
+          "en": "OVERGOE PRIME",
+          "cn": "欧维果主星"
+        },
+        {
+          "en": "PARTION",
+          "cn": "帕尔晨"
+        },
+        {
+          "en": "PEACOCK",
+          "cn": "孔雀十一"
+        },
+        {
+          "en": "TRANDOR",
+          "cn": "特兰道尔"
+        }
+      ]
+    },
+    {
+      "name": "塔洛斯",
+      "name_en": "Talos",
+      "planets": [
+        {
+          "en": "GAELLIVARE",
+          "cn": "耶利瓦勒"
+        },
+        {
+          "en": "IMBER",
+          "cn": "因博尔"
+        },
+        {
+          "en": "SHALLUS",
+          "cn": "沙勒斯"
+        },
+        {
+          "en": "SHELT",
+          "cn": "谢尔特"
+        }
+      ]
+    },
+    {
+      "name": "塔拉戈",
+      "name_en": "Tarago",
+      "planets": [
+        {
+          "en": "BRINK-2",
+          "cn": "布林克2"
+        },
+        {
+          "en": "BUNDA SECUNDUS",
+          "cn": "天垒城一次星"
+        },
+        {
+          "en": "CANOPUS",
+          "cn": "老人"
+        },
+        {
+          "en": "EAST IRIDIUM TRADING BAY",
+          "cn": "东铱贸易湾"
+        },
+        {
+          "en": "OSUPSAM",
+          "cn": "欧苏普森"
+        }
+      ]
+    },
+    {
+      "name": "忒修斯",
+      "name_en": "Theseus",
+      "planets": [
+        {
+          "en": "CAPH",
+          "cn": "王良一"
+        },
+        {
+          "en": "CASTOR",
+          "cn": "北河二"
+        },
+        {
+          "en": "KUPER",
+          "cn": "库珀"
+        },
+        {
+          "en": "LASTOFE",
+          "cn": "赖斯斗夫"
+        },
+        {
+          "en": "THE WEIR",
+          "cn": "维尔"
+        },
+        {
+          "en": "TIEN KWAN",
+          "cn": "天关"
+        }
+      ]
+    },
+    {
+      "name": "大熊座",
+      "name_en": "Ursa Major",
+      "planets": [
+        {
+          "en": "ACRAB XI",
+          "cn": "房宿四 XI"
+        },
+        {
+          "en": "ACRUX IX",
+          "cn": "十字架二 IX"
+        },
+        {
+          "en": "GEMMA",
+          "cn": "贯索四"
+        },
+        {
+          "en": "SKAASH",
+          "cn": "斯卡什"
+        }
+      ]
+    },
+    {
+      "name": "乌姆劳特",
+      "name_en": "Umlaut",
+      "planets": [
+        {
+          "en": "ERATA PRIME",
+          "cn": "艾拉塔主星"
+        },
+        {
+          "en": "FENRIR III",
+          "cn": "芬里尔 III"
+        },
+        {
+          "en": "FRONTERIA",
+          "cn": "边陲"
+        },
+        {
+          "en": "MERIDIA",
+          "cn": "默里迪亚"
+        },
+        {
+          "en": "TURING",
+          "cn": "图灵"
+        }
+      ]
+    },
+    {
+      "name": "仙女座",
+      "name_en": "Andromeda",
+      "planets": [
+        {
+          "en": "CHARBAL-VII",
+          "cn": "查巴尔 VII"
+        },
+        {
+          "en": "CHARON PRIME",
+          "cn": "卡戎主星"
+        },
+        {
+          "en": "MARFARK",
+          "cn": "玛尔法克"
+        },
+        {
+          "en": "MARTALE",
+          "cn": "玛尔特"
+        },
+        {
+          "en": "MATAR BAY",
+          "cn": "玛塔"
+        }
+      ]
+    },
+    {
+      "name": "兹亚尔",
+      "name_en": "Xzar",
+      "planets": [
+        {
+          "en": "DRAUPNIR",
+          "cn": "德罗普尼尔"
+        },
+        {
+          "en": "FURY",
+          "cn": "费里"
+        },
+        {
+          "en": "INGMAR",
+          "cn": "英格玛"
+        },
+        {
+          "en": "MANTES",
+          "cn": "蒙特斯"
+        },
+        {
+          "en": "MORT",
+          "cn": "莫特"
+        },
+        {
+          "en": "PÖPLI IX",
+          "cn": "珀普利 IX"
+        }
+      ]
+    },
+    {
+      "name": "半藏",
+      "name_en": "Hanzo",
+      "planets": [
+        {
+          "en": "AIN-5",
+          "cn": "毕宿一 5"
+        },
+        {
+          "en": "ALAIRT III",
+          "cn": "艾列尔特 III"
+        },
+        {
+          "en": "ALAMAK VII",
+          "cn": "天大将军一 VII"
+        },
+        {
+          "en": "HEZE BAY",
+          "cn": ""
+        },
+        {
+          "en": "NEW STOCKHOLM",
+          "cn": "新斯德哥尔摩"
+        }
+      ]
+    },
+    {
+      "name": "博格斯",
+      "name_en": "Borgus",
+      "planets": [
+        {
+          "en": "ACHERNAR SECUNDUS",
+          "cn": "水委一次星"
+        },
+        {
+          "en": "ACHIRD III",
+          "cn": "王良三 III"
+        },
+        {
+          "en": "DARIUS II",
+          "cn": "大流士 II"
+        },
+        {
+          "en": "URSICA XI",
+          "cn": "厄西卡 XI"
+        }
+      ]
+    },
+    {
+      "name": "参宿七",
+      "name_en": "Rigel",
+      "planets": [
+        {
+          "en": "BASQUINE VIII",
+          "cn": "巴斯金 VIII"
+        },
+        {
+          "en": "HESOE PRIME",
+          "cn": "海索主星"
+        },
+        {
+          "en": "HORT",
+          "cn": "哈尔特"
+        },
+        {
+          "en": "RD-4",
+          "cn": "RD-4"
+        },
+        {
+          "en": "RIRGA BAY",
+          "cn": "里尔加湾"
+        },
+        {
+          "en": "ROGUE 5",
+          "cn": "罗格5"
+        }
+      ]
+    },
+    {
+      "name": "土卫十九",
+      "name_en": "Hyperion",
+      "planets": [
+        {
+          "en": "MEISSA",
+          "cn": "觜宿一"
+        },
+        {
+          "en": "VEGA BAY",
+          "cn": "织女一湾"
+        },
+        {
+          "en": "WASAT",
+          "cn": "天樽二"
+        },
+        {
+          "en": "WEZEN",
+          "cn": "弧矢一"
+        },
+        {
+          "en": "X-45",
+          "cn": "X-45"
+        }
+      ]
+    },
+    {
+      "name": "塔尼斯",
+      "name_en": "Tanis",
+      "planets": [
+        {
+          "en": "CLAORELL",
+          "cn": "可洛威尔"
+        },
+        {
+          "en": "CLASA",
+          "cn": "克拉萨"
+        },
+        {
+          "en": "DEMIURG",
+          "cn": "戴米尔基"
+        },
+        {
+          "en": "VOG-SOJOTH",
+          "cn": "佛戈索约斯"
+        },
+        {
+          "en": "YED PRIOR",
+          "cn": "天市右垣六"
+        },
+        {
+          "en": "ZEFIA",
+          "cn": "塞飞亚"
+        }
+      ]
+    },
+    {
+      "name": "太阳系",
+      "name_en": "Sol",
+      "planets": [
+        {
+          "en": "MARS",
+          "cn": "火星"
+        },
+        {
+          "en": "SUPER EARTH",
+          "cn": "超级地球"
+        }
+      ]
+    },
+    {
+      "name": "欧米茄",
+      "name_en": "Omega",
+      "planets": [
+        {
+          "en": "HYDROBIUS",
+          "cn": "哈卓毕亚斯"
+        },
+        {
+          "en": "KARLIA",
+          "cn": "可利亚"
+        },
+        {
+          "en": "SANGIS",
+          "cn": "赤血"
+        },
+        {
+          "en": "SEASSE",
+          "cn": "西斯"
+        },
+        {
+          "en": "SENGE 23",
+          "cn": "SENGE 23"
+        },
+        {
+          "en": "SETIA",
+          "cn": "塞提亚"
+        }
+      ]
+    },
+    {
+      "name": "法尔赛特",
+      "name_en": "Farsight",
+      "planets": [
+        {
+          "en": "GRAND ERRANT",
+          "cn": "大艾伦特"
+        },
+        {
+          "en": "PHERKAD SECUNDUS",
+          "cn": "北极一次星"
+        },
+        {
+          "en": "POLARIS PRIME",
+          "cn": "北极星主星"
+        },
+        {
+          "en": "POLLUX 31",
+          "cn": "北河三 31"
+        },
+        {
+          "en": "PRASA",
+          "cn": "普拉萨"
+        }
+      ]
+    },
+    {
+      "name": "特里贡",
+      "name_en": "Trigon",
+      "planets": [
+        {
+          "en": "CHOEPESSA IV",
+          "cn": "科埃佩萨 IV"
+        },
+        {
+          "en": "K",
+          "cn": "K"
+        },
+        {
+          "en": "MOX",
+          "cn": "莫克斯"
+        },
+        {
+          "en": "TROOST",
+          "cn": "特鲁斯特"
+        },
+        {
+          "en": "USTOTU",
+          "cn": "伍斯特图"
+        },
+        {
+          "en": "VANDALON IV",
+          "cn": "万达隆 IV"
+        },
+        {
+          "en": "VARYLIA 5",
+          "cn": "瓦拉瑞亚 5"
+        }
+      ]
+    },
+    {
+      "name": "猎户座",
+      "name_en": "Orion",
+      "planets": [
+        {
+          "en": "ANGEL'S VENTURE",
+          "cn": "天使投资"
+        },
+        {
+          "en": "AZTERRA",
+          "cn": "艾孜泰拉"
+        },
+        {
+          "en": "BRILLIANCE",
+          "cn": "璨光"
+        },
+        {
+          "en": "CIRRUS",
+          "cn": "希勒斯"
+        },
+        {
+          "en": "FORT UNION",
+          "cn": "联合堡"
+        },
+        {
+          "en": "HEETH",
+          "cn": "希斯"
+        },
+        {
+          "en": "TERREK",
+          "cn": "泰雷克"
+        },
+        {
+          "en": "VELD",
+          "cn": "维尔德"
+        },
+        {
+          "en": "ZYGOS",
+          "cn": "齐戈斯"
+        }
+      ]
+    },
+    {
+      "name": "瓦尔迪斯",
+      "name_en": "Valdis",
+      "planets": [
+        {
+          "en": "AURORA BAY",
+          "cn": "极光湾"
+        },
+        {
+          "en": "CYBERSTAN",
+          "cn": "生化斯坦"
+        },
+        {
+          "en": "MEKBUDA",
+          "cn": "井宿七"
+        },
+        {
+          "en": "MERAK",
+          "cn": "北斗二"
+        },
+        {
+          "en": "MERGA IV",
+          "cn": "玄戈增二 IV"
+        },
+        {
+          "en": "VINDEMITARIX PRIME",
+          "cn": "文德米塔里克斯主星"
+        }
+      ]
+    },
+    {
+      "name": "米琳",
+      "name_en": "Mirin",
+      "planets": [
+        {
+          "en": "HELLMIRE",
+          "cn": "海尔迈尔"
+        },
+        {
+          "en": "NIVEL 43",
+          "cn": "尼维尔43"
+        },
+        {
+          "en": "OSHAUNE",
+          "cn": "欧绍恩"
+        },
+        {
+          "en": "ZAGON PRIME",
+          "cn": "扎贡主星"
+        }
+      ]
+    },
+    {
+      "name": "莱斯特拉德",
+      "name_en": "L'estrade",
+      "planets": [
+        {
+          "en": "DIASPORA X",
+          "cn": ""
+        },
+        {
+          "en": "ENULIALE",
+          "cn": ""
+        },
+        {
+          "en": "EPSILON PHOENCIS VI",
+          "cn": "凤凰座εVI"
+        },
+        {
+          "en": "GEMSTONE BLUFFS",
+          "cn": ""
+        },
+        {
+          "en": "NABATEA SECUNDUS",
+          "cn": ""
+        },
+        {
+          "en": "NAVI VII",
+          "cn": ""
+        },
+        {
+          "en": "OMICRON",
+          "cn": "奥密克戎"
+        }
+      ]
+    },
+    {
+      "name": "金牛座",
+      "name_en": "Xi Tauri",
+      "planets": [
+        {
+          "en": "SHETE",
+          "cn": "赛特"
+        },
+        {
+          "en": "SIEMNOT",
+          "cn": "西姆诺特"
+        },
+        {
+          "en": "SIRIUS",
+          "cn": "天狼星"
+        },
+        {
+          "en": "SKAT BAY",
+          "cn": "斯卡特湾"
+        }
+      ]
+    },
+    {
+      "name": "锦栖",
+      "name_en": "Jin Xi",
+      "planets": [
+        {
+          "en": "ACAMAR IV",
+          "cn": "天园六 IV"
+        },
+        {
+          "en": "GACRUX",
+          "cn": "十字架一"
+        },
+        {
+          "en": "GAR HAREN",
+          "cn": "轧尔哈伦"
+        },
+        {
+          "en": "GATRIA",
+          "cn": "盖尔崔亚"
+        },
+        {
+          "en": "LUXURIANT",
+          "cn": "富源"
+        },
+        {
+          "en": "PANDION-XXIV",
+          "cn": "帕迪恩 XXIV"
+        },
+        {
+          "en": "PHACT BAY",
+          "cn": "丈人一湾"
+        }
+      ]
+    },
+    {
+      "name": "阿图里昂",
+      "name_en": "Arkturus",
+      "planets": [
+        {
+          "en": "ARKTURUS",
+          "cn": "阿克图勒斯"
+        },
+        {
+          "en": "DENEB SECUNDUS",
+          "cn": "天津四次星"
+        },
+        {
+          "en": "ELECTRA BAY",
+          "cn": "昂宿一湾"
+        },
+        {
+          "en": "KIRRIK",
+          "cn": "基里克"
+        },
+        {
+          "en": "MORTAX PRIME",
+          "cn": "摩尔塔克斯主星"
+        },
+        {
+          "en": "PIONEER II",
+          "cn": "先驱 II"
+        },
+        {
+          "en": "WILFORD STATION",
+          "cn": "威尔福德站"
+        }
+      ]
+    },
+    {
+      "name": "阿基拉",
+      "name_en": "Akira",
+      "planets": [
+        {
+          "en": "ALARAPH",
+          "cn": "右执法"
+        },
+        {
+          "en": "ALATHFAR XI",
+          "cn": "织女增三 XI"
+        },
+        {
+          "en": "ANDAR",
+          "cn": "安达尔"
+        },
+        {
+          "en": "ASPEROTH PRIME",
+          "cn": "阿斯佩洛斯主星"
+        },
+        {
+          "en": "KEID",
+          "cn": "角宿二湾"
+        }
+      ]
+    },
+    {
+      "name": "阿尔斯特拉德",
+      "name_en": "Alstrad",
+      "planets": [
+        {
+          "en": "KLAKA 5",
+          "cn": "克拉卡5"
+        },
+        {
+          "en": "KNETH PORT",
+          "cn": "克奈斯港"
+        },
+        {
+          "en": "KRAZ",
+          "cn": "轸宿四"
+        }
+      ]
+    },
+    {
+      "name": "阿尔特斯",
+      "name_en": "Altus",
+      "planets": [
+        {
+          "en": "KLEN DAHTH II",
+          "cn": "克伦达斯 II"
+        },
+        {
+          "en": "NEW HAVEN",
+          "cn": "纽黑文"
+        },
+        {
+          "en": "PATHFINDER V",
+          "cn": "开拓者 V"
+        },
+        {
+          "en": "PILEN V",
+          "cn": "皮伦 V"
+        },
+        {
+          "en": "WIDOW'S HARBOR",
+          "cn": "寡妇港"
+        }
+      ]
+    },
+    {
+      "name": "霍金",
+      "name_en": "Hawking",
+      "planets": [
+        {
+          "en": "EUPHORIA III",
+          "cn": "欧福利亚 III"
+        },
+        {
+          "en": "KUMA",
+          "cn": "天棓二"
+        },
+        {
+          "en": "MORDIA 9",
+          "cn": "摩帝亚9"
+        },
+        {
+          "en": "SKITTER",
+          "cn": "斯基特"
+        }
+      ]
+    },
+    {
+      "name": "默里迪亚",
+      "name_en": "Meridia",
+      "planets": [
+        {
+          "en": "BALDRICK PRIME",
+          "cn": "巴尔德里克主星"
+        },
+        {
+          "en": "EMORATH",
+          "cn": "艾莫拉斯"
+        },
+        {
+          "en": "ILDUNA PRIME",
+          "cn": "伊尔都纳主星"
+        },
+        {
+          "en": "LIBERTY RIDGE",
+          "cn": "解放岭"
+        }
+      ]
+    },
+    {
+      "name": "寂域",
+      "name_en": "The Void",
+      "planets": [
+        {
+          "en": "UVP GAMMA",
+          "cn": "UVP伽马"
+        },
+        {
+          "en": "UVP ALPHA",
+          "cn": "UVP阿尔法"
+        },
+        {
+          "en": "UVP DELTA",
+          "cn": "UVP德尔塔"
+        },
+        {
+          "en": "UVP BETA",
+          "cn": "UVP贝塔"
+        }
+      ]
+    },
+    {
+      "name": "TBD",
+      "name_en": "",
+      "planets": [
+        {
+          "en": "NEW INSIGHT",
+          "cn": "NEW INSIGHT"
+        },
+        {
+          "en": "WAYWARD",
+          "cn": "WAYWARD"
+        }
+      ]
+    }
+  ],
+  "planets": {
+    "DARROWSPORT": {
+      "cn": "达罗斯波特",
+      "system": "巴纳德"
+    },
+    "FORNSKOGUR II": {
+      "cn": "福恩斯科古尔II",
+      "system": "巴纳德"
+    },
+    "HYDROFALL PRIME": {
+      "cn": "水瀑主星",
+      "system": "巴纳德"
+    },
+    "MARRE IV": {
+      "cn": "马尔IV",
+      "system": "巴纳德"
+    },
+    "MIDASBURG": {
+      "cn": "弥达斯堡",
+      "system": "巴纳德"
+    },
+    "VEIL": {
+      "cn": "帷幕",
+      "system": "巴纳德"
+    },
+    "CERBERUS IIIc": {
+      "cn": "刻耳柏洛斯IIIc",
+      "system": "康古利伊"
+    },
+    "EFFLUVIA": {
+      "cn": "艾芙鲁维亚",
+      "system": "康古利伊"
+    },
+    "FORT SANCTUARY": {
+      "cn": "庇护堡",
+      "system": "康古利伊"
+    },
+    "PROSPERITY FALLS": {
+      "cn": "繁荣瀑布",
+      "system": "康古利伊"
+    },
+    "SEYSHEL BEACH": {
+      "cn": "塞舌尔海滩",
+      "system": "康古利伊"
+    },
+    "FREEDOM PEAK": {
+      "cn": "弗里敦峰",
+      "system": "坎托鲁斯"
+    },
+    "KELVINOR": {
+      "cn": "开尔文奥尔",
+      "system": "坎托鲁斯"
+    },
+    "MARTYR'S BAY": {
+      "cn": "烈士湾",
+      "system": "坎托鲁斯"
+    },
+    "OBARI": {
+      "cn": "欧巴里",
+      "system": "坎托鲁斯"
+    },
+    "VIRIDIA PRIME": {
+      "cn": "维尔伊迪亚主星",
+      "system": "坎托鲁斯"
+    },
+    "IVIS": {
+      "cn": "艾维斯",
+      "system": "塞勒斯特"
+    },
+    "KRAKATWO": {
+      "cn": "克拉克图",
+      "system": "塞勒斯特"
+    },
+    "MORADESH": {
+      "cn": "莫拉戴什",
+      "system": "塞勒斯特"
+    },
+    "NUBLARIA I": {
+      "cn": "努布拉里亚I",
+      "system": "塞勒斯特"
+    },
+    "SLIF": {
+      "cn": "斯利夫",
+      "system": "塞勒斯特"
+    },
+    "SULFURA": {
+      "cn": "萨尔弗拉",
+      "system": "塞勒斯特"
+    },
+    "CRIMSICA": {
+      "cn": "克里姆西卡",
+      "system": "天龙座"
+    },
+    "ESTANU": {
+      "cn": "伊斯塔努",
+      "system": "天龙座"
+    },
+    "FORI PRIME": {
+      "cn": "佛里主星",
+      "system": "天龙座"
+    },
+    "BORE ROCK": {
+      "cn": "博尔岩",
+      "system": "法尔斯塔夫"
+    },
+    "ERSON SANDS": {
+      "cn": "厄尔森桑兹",
+      "system": "法尔斯塔夫"
+    },
+    "ESKER": {
+      "cn": "艾斯科尔",
+      "system": "法尔斯塔夫"
+    },
+    "SOCORRO III": {
+      "cn": "索科罗III",
+      "system": "法尔斯塔夫"
+    },
+    "HADAR": {
+      "cn": "马腹一",
+      "system": "费里斯"
+    },
+    "HALDUS": {
+      "cn": "海德斯",
+      "system": "费里斯"
+    },
+    "HERTHON SECUNDUS": {
+      "cn": "赫尔松次星",
+      "system": "费里斯"
+    },
+    "ZEA RUGOSIA": {
+      "cn": "泽亚鲁戈西亚",
+      "system": "费里斯"
+    },
+    "ACUBENS PRIME": {
+      "cn": "柳宿增三主星",
+      "system": "加卢克斯"
+    },
+    "ADHARA": {
+      "cn": "弧矢七",
+      "system": "加卢克斯"
+    },
+    "AFOYAY BAY": {
+      "cn": "艾福亚湾",
+      "system": "加卢克斯"
+    },
+    "BASHYR": {
+      "cn": "巴希尔",
+      "system": "加卢克斯"
+    },
+    "KHARST": {
+      "cn": "喀斯特",
+      "system": "加卢克斯"
+    },
+    "RASP": {
+      "cn": "拉斯普",
+      "system": "加卢克斯"
+    },
+    "BLISTICA": {
+      "cn": "布里斯提卡",
+      "system": "盖勒特"
+    },
+    "MINCHIR": {
+      "cn": "",
+      "system": "盖勒特"
+    },
+    "MINTORIA": {
+      "cn": "敏托瑞亚",
+      "system": "盖勒特"
+    },
+    "ZOSMA": {
+      "cn": "太徽右垣五",
+      "system": "盖勒特"
+    },
+    "ZZANIAH PRIME": {
+      "cn": "藏尼亚主星",
+      "system": "盖勒特"
+    },
+    "DILUVIA": {
+      "cn": "迪卢维亚",
+      "system": "戈特玛"
+    },
+    "OKUL VI": {
+      "cn": "欧库VI",
+      "system": "戈特玛"
+    },
+    "SOLGHAST": {
+      "cn": "索尔加斯特",
+      "system": "戈特玛"
+    },
+    "ALDERIDGE COVE": {
+      "cn": "阿尔德里奇湾",
+      "system": "古安"
+    },
+    "BELLATRIX": {
+      "cn": "参宿五",
+      "system": "古安"
+    },
+    "BOTEIN": {
+      "cn": "天阴四",
+      "system": "古安"
+    },
+    "ELYSIAN MEADOWS": {
+      "cn": "埃律西昂草原",
+      "system": "古安"
+    },
+    "KHANDARK": {
+      "cn": "勘达尔克",
+      "system": "古安"
+    },
+    "AESIR PASS": {
+      "cn": "亚萨关隘",
+      "system": "长蛇座"
+    },
+    "MENKENT": {
+      "cn": "库楼三",
+      "system": "长蛇座"
+    },
+    "VERNEN WELLS": {
+      "cn": "佛农井",
+      "system": "长蛇座"
+    },
+    "ATRAMA": {
+      "cn": "阿特拉玛",
+      "system": "伊顿"
+    },
+    "MAW": {
+      "cn": "深渊",
+      "system": "伊顿"
+    },
+    "MYRADESH": {
+      "cn": "米拉戴什",
+      "system": "伊顿"
+    },
+    "WRAITH": {
+      "cn": "幽灵",
+      "system": "伊顿"
+    },
+    "IRIDICA": {
+      "cn": "艾利迪卡",
+      "system": "伊普都斯"
+    },
+    "KRAKABOS": {
+      "cn": "克拉克博斯",
+      "system": "伊普都斯"
+    },
+    "PRIMORDIA": {
+      "cn": "普莱默迪亚",
+      "system": "伊普都斯"
+    },
+    "PROVIDENCE": {
+      "cn": "普罗维登斯",
+      "system": "伊普都斯"
+    },
+    "RATCH": {
+      "cn": "拉奇",
+      "system": "伊普都斯"
+    },
+    "VALGAARD": {
+      "cn": "瓦尔加德",
+      "system": "伊普都斯"
+    },
+    "EMERIA": {
+      "cn": "埃梅里亚",
+      "system": "凯尔文"
+    },
+    "FORT JUSTICE": {
+      "cn": "正义堡",
+      "system": "凯尔文"
+    },
+    "IGLA": {
+      "cn": "依格勒",
+      "system": "凯尔文"
+    },
+    "NEW KIRUNA": {
+      "cn": "新基鲁纳",
+      "system": "凯尔文"
+    },
+    "ZEGEMA PARADISE": {
+      "cn": "泽格玛乐土",
+      "system": "凯尔文"
+    },
+    "ALTA V": {
+      "cn": "奥尔塔V",
+      "system": "科普斯"
+    },
+    "CARAMOOR": {
+      "cn": "开勒莫尔",
+      "system": "科普斯"
+    },
+    "CRUCIBLE": {
+      "cn": "熔炉",
+      "system": "科普斯"
+    },
+    "INARI": {
+      "cn": "伊纳里",
+      "system": "科普斯"
+    },
+    "VOLTERRA": {
+      "cn": "沃尔泰拉",
+      "system": "科普斯"
+    },
+    "CHOOHE": {
+      "cn": "丘伊",
+      "system": "拉凯欧"
+    },
+    "CHORT BAY": {
+      "cn": "雀特湾",
+      "system": "拉凯欧"
+    },
+    "LESATH": {
+      "cn": "尾宿八",
+      "system": "拉凯欧"
+    },
+    "PENTA": {
+      "cn": "彭塔",
+      "system": "拉凯欧"
+    },
+    "HAKA": {
+      "cn": "哈卡",
+      "system": "狮子座"
+    },
+    "HALIES PORT": {
+      "cn": "海利斯港",
+      "system": "狮子座"
+    },
+    "PROPUS": {
+      "cn": "五诸侯三",
+      "system": "狮子座"
+    },
+    "RAS ALGETHI": {
+      "cn": "帝座",
+      "system": "狮子座"
+    },
+    "BARABOS": {
+      "cn": "巴勒博斯",
+      "system": "马斯皮拉"
+    },
+    "CURIA": {
+      "cn": "居里亚",
+      "system": "马斯皮拉"
+    },
+    "FENMIRE": {
+      "cn": "范迈尔",
+      "system": "马斯皮拉"
+    },
+    "MASTIA": {
+      "cn": "玛斯蒂娅",
+      "system": "马斯皮拉"
+    },
+    "TARSH": {
+      "cn": "塔尔什",
+      "system": "马斯皮拉"
+    },
+    "EUKORIA": {
+      "cn": "欧科里亚",
+      "system": "莫根"
+    },
+    "MOG": {
+      "cn": "莫格",
+      "system": "莫根"
+    },
+    "MYRIUM": {
+      "cn": "梅里翁",
+      "system": "莫根"
+    },
+    "REGNUS": {
+      "cn": "雷格努斯",
+      "system": "莫根"
+    },
+    "BEKVAM III": {
+      "cn": "贝克温",
+      "system": "纳诺斯"
+    },
+    "DOLPH": {
+      "cn": "多尔夫",
+      "system": "纳诺斯"
+    },
+    "DUMA TYR": {
+      "cn": "杜马提尔",
+      "system": "纳诺斯"
+    },
+    "JULHEIM": {
+      "cn": "尤尔海姆",
+      "system": "纳诺斯"
+    },
+    "LENG SECUNDUS": {
+      "cn": "蓝恩次星",
+      "system": "昆图斯"
+    },
+    "SPHERION": {
+      "cn": "斯飞利昂",
+      "system": "昆图斯"
+    },
+    "STOR THA PRIME": {
+      "cn": "斯特萨主星",
+      "system": "昆图斯"
+    },
+    "STOUT": {
+      "cn": "斯图尔特",
+      "system": "昆图斯"
+    },
+    "TERMADON": {
+      "cn": "特尔玛登",
+      "system": "昆图斯"
+    },
+    "GENESIS PRIME": {
+      "cn": "创世主星",
+      "system": "瑞克图斯"
+    },
+    "GRAFMERE": {
+      "cn": "格拉夫米尔",
+      "system": "瑞克图斯"
+    },
+    "IRO": {
+      "cn": "伊罗",
+      "system": "瑞克图斯"
+    },
+    "KERTH SECUNDUS": {
+      "cn": "克斯次星",
+      "system": "瑞克图斯"
+    },
+    "OASIS": {
+      "cn": "绿洲",
+      "system": "瑞克图斯"
+    },
+    "PARSH": {
+      "cn": "帕尔什",
+      "system": "瑞克图斯"
+    },
+    "VALMOX": {
+      "cn": "瓦尔莫克斯",
+      "system": "瑞克图斯"
+    },
+    "BOREA": {
+      "cn": "博瑞亚",
+      "system": "萨根"
+    },
+    "GUNVALD": {
+      "cn": "古恩瓦尔德",
+      "system": "萨根"
+    },
+    "OSLO STATION": {
+      "cn": "奥斯陆站",
+      "system": "萨根"
+    },
+    "CALYPSO": {
+      "cn": "卡利普索",
+      "system": "萨勒利亚"
+    },
+    "IRULTA": {
+      "cn": "艾鲁尔塔",
+      "system": "萨勒利亚"
+    },
+    "OUTPOST 32": {
+      "cn": "32号哨站",
+      "system": "萨勒利亚"
+    },
+    "REAF": {
+      "cn": "利夫",
+      "system": "萨勒利亚"
+    },
+    "DURGEN": {
+      "cn": "德尔根",
+      "system": "塞弗林"
+    },
+    "MAIA": {
+      "cn": "昂宿四",
+      "system": "塞弗林"
+    },
+    "MALEVELON CREEK": {
+      "cn": "麦拉芬蒙河",
+      "system": "塞弗林"
+    },
+    "TIBIT": {
+      "cn": "提比特",
+      "system": "塞弗林"
+    },
+    "UBANEA": {
+      "cn": "乌巴尼亚",
+      "system": "塞弗林"
+    },
+    "AZUR SECUNDUS": {
+      "cn": "艾热尔次星",
+      "system": "斯坦"
+    },
+    "BIG ROCK": {
+      "cn": "巨岩",
+      "system": "斯坦"
+    },
+    "OVERGOE PRIME": {
+      "cn": "欧维果主星",
+      "system": "斯坦"
+    },
+    "PARTION": {
+      "cn": "帕尔晨",
+      "system": "斯坦"
+    },
+    "PEACOCK": {
+      "cn": "孔雀十一",
+      "system": "斯坦"
+    },
+    "TRANDOR": {
+      "cn": "特兰道尔",
+      "system": "斯坦"
+    },
+    "GAELLIVARE": {
+      "cn": "耶利瓦勒",
+      "system": "塔洛斯"
+    },
+    "IMBER": {
+      "cn": "因博尔",
+      "system": "塔洛斯"
+    },
+    "SHALLUS": {
+      "cn": "沙勒斯",
+      "system": "塔洛斯"
+    },
+    "SHELT": {
+      "cn": "谢尔特",
+      "system": "塔洛斯"
+    },
+    "BRINK-2": {
+      "cn": "布林克2",
+      "system": "塔拉戈"
+    },
+    "BUNDA SECUNDUS": {
+      "cn": "天垒城一次星",
+      "system": "塔拉戈"
+    },
+    "CANOPUS": {
+      "cn": "老人",
+      "system": "塔拉戈"
+    },
+    "EAST IRIDIUM TRADING BAY": {
+      "cn": "东铱贸易湾",
+      "system": "塔拉戈"
+    },
+    "OSUPSAM": {
+      "cn": "欧苏普森",
+      "system": "塔拉戈"
+    },
+    "CAPH": {
+      "cn": "王良一",
+      "system": "忒修斯"
+    },
+    "CASTOR": {
+      "cn": "北河二",
+      "system": "忒修斯"
+    },
+    "KUPER": {
+      "cn": "库珀",
+      "system": "忒修斯"
+    },
+    "LASTOFE": {
+      "cn": "赖斯斗夫",
+      "system": "忒修斯"
+    },
+    "THE WEIR": {
+      "cn": "维尔",
+      "system": "忒修斯"
+    },
+    "TIEN KWAN": {
+      "cn": "天关",
+      "system": "忒修斯"
+    },
+    "ACRAB XI": {
+      "cn": "房宿四 XI",
+      "system": "大熊座"
+    },
+    "ACRUX IX": {
+      "cn": "十字架二 IX",
+      "system": "大熊座"
+    },
+    "GEMMA": {
+      "cn": "贯索四",
+      "system": "大熊座"
+    },
+    "SKAASH": {
+      "cn": "斯卡什",
+      "system": "大熊座"
+    },
+    "ERATA PRIME": {
+      "cn": "艾拉塔主星",
+      "system": "乌姆劳特"
+    },
+    "FENRIR III": {
+      "cn": "芬里尔 III",
+      "system": "乌姆劳特"
+    },
+    "FRONTERIA": {
+      "cn": "边陲",
+      "system": "乌姆劳特"
+    },
+    "MERIDIA": {
+      "cn": "默里迪亚",
+      "system": "乌姆劳特"
+    },
+    "TURING": {
+      "cn": "图灵",
+      "system": "乌姆劳特"
+    },
+    "CHARBAL-VII": {
+      "cn": "查巴尔 VII",
+      "system": "仙女座"
+    },
+    "CHARON PRIME": {
+      "cn": "卡戎主星",
+      "system": "仙女座"
+    },
+    "MARFARK": {
+      "cn": "玛尔法克",
+      "system": "仙女座"
+    },
+    "MARTALE": {
+      "cn": "玛尔特",
+      "system": "仙女座"
+    },
+    "MATAR BAY": {
+      "cn": "玛塔",
+      "system": "仙女座"
+    },
+    "DRAUPNIR": {
+      "cn": "德罗普尼尔",
+      "system": "兹亚尔"
+    },
+    "FURY": {
+      "cn": "费里",
+      "system": "兹亚尔"
+    },
+    "INGMAR": {
+      "cn": "英格玛",
+      "system": "兹亚尔"
+    },
+    "MANTES": {
+      "cn": "蒙特斯",
+      "system": "兹亚尔"
+    },
+    "MORT": {
+      "cn": "莫特",
+      "system": "兹亚尔"
+    },
+    "PÖPLI IX": {
+      "cn": "珀普利 IX",
+      "system": "兹亚尔"
+    },
+    "AIN-5": {
+      "cn": "毕宿一 5",
+      "system": "半藏"
+    },
+    "ALAIRT III": {
+      "cn": "艾列尔特 III",
+      "system": "半藏"
+    },
+    "ALAMAK VII": {
+      "cn": "天大将军一 VII",
+      "system": "半藏"
+    },
+    "HEZE BAY": {
+      "cn": "",
+      "system": "半藏"
+    },
+    "NEW STOCKHOLM": {
+      "cn": "新斯德哥尔摩",
+      "system": "半藏"
+    },
+    "ACHERNAR SECUNDUS": {
+      "cn": "水委一次星",
+      "system": "博格斯"
+    },
+    "ACHIRD III": {
+      "cn": "王良三 III",
+      "system": "博格斯"
+    },
+    "DARIUS II": {
+      "cn": "大流士 II",
+      "system": "博格斯"
+    },
+    "URSICA XI": {
+      "cn": "厄西卡 XI",
+      "system": "博格斯"
+    },
+    "BASQUINE VIII": {
+      "cn": "巴斯金 VIII",
+      "system": "参宿七"
+    },
+    "HESOE PRIME": {
+      "cn": "海索主星",
+      "system": "参宿七"
+    },
+    "HORT": {
+      "cn": "哈尔特",
+      "system": "参宿七"
+    },
+    "RD-4": {
+      "cn": "RD-4",
+      "system": "参宿七"
+    },
+    "RIRGA BAY": {
+      "cn": "里尔加湾",
+      "system": "参宿七"
+    },
+    "ROGUE 5": {
+      "cn": "罗格5",
+      "system": "参宿七"
+    },
+    "MEISSA": {
+      "cn": "觜宿一",
+      "system": "土卫十九"
+    },
+    "VEGA BAY": {
+      "cn": "织女一湾",
+      "system": "土卫十九"
+    },
+    "WASAT": {
+      "cn": "天樽二",
+      "system": "土卫十九"
+    },
+    "WEZEN": {
+      "cn": "弧矢一",
+      "system": "土卫十九"
+    },
+    "X-45": {
+      "cn": "X-45",
+      "system": "土卫十九"
+    },
+    "CLAORELL": {
+      "cn": "可洛威尔",
+      "system": "塔尼斯"
+    },
+    "CLASA": {
+      "cn": "克拉萨",
+      "system": "塔尼斯"
+    },
+    "DEMIURG": {
+      "cn": "戴米尔基",
+      "system": "塔尼斯"
+    },
+    "VOG-SOJOTH": {
+      "cn": "佛戈索约斯",
+      "system": "塔尼斯"
+    },
+    "YED PRIOR": {
+      "cn": "天市右垣六",
+      "system": "塔尼斯"
+    },
+    "ZEFIA": {
+      "cn": "塞飞亚",
+      "system": "塔尼斯"
+    },
+    "MARS": {
+      "cn": "火星",
+      "system": "太阳系"
+    },
+    "SUPER EARTH": {
+      "cn": "超级地球",
+      "system": "太阳系"
+    },
+    "HYDROBIUS": {
+      "cn": "哈卓毕亚斯",
+      "system": "欧米茄"
+    },
+    "KARLIA": {
+      "cn": "可利亚",
+      "system": "欧米茄"
+    },
+    "SANGIS": {
+      "cn": "赤血",
+      "system": "欧米茄"
+    },
+    "SEASSE": {
+      "cn": "西斯",
+      "system": "欧米茄"
+    },
+    "SENGE 23": {
+      "cn": "SENGE 23",
+      "system": "欧米茄"
+    },
+    "SETIA": {
+      "cn": "塞提亚",
+      "system": "欧米茄"
+    },
+    "GRAND ERRANT": {
+      "cn": "大艾伦特",
+      "system": "法尔赛特"
+    },
+    "PHERKAD SECUNDUS": {
+      "cn": "北极一次星",
+      "system": "法尔赛特"
+    },
+    "POLARIS PRIME": {
+      "cn": "北极星主星",
+      "system": "法尔赛特"
+    },
+    "POLLUX 31": {
+      "cn": "北河三 31",
+      "system": "法尔赛特"
+    },
+    "PRASA": {
+      "cn": "普拉萨",
+      "system": "法尔赛特"
+    },
+    "CHOEPESSA IV": {
+      "cn": "科埃佩萨 IV",
+      "system": "特里贡"
+    },
+    "K": {
+      "cn": "K",
+      "system": "特里贡"
+    },
+    "MOX": {
+      "cn": "莫克斯",
+      "system": "特里贡"
+    },
+    "TROOST": {
+      "cn": "特鲁斯特",
+      "system": "特里贡"
+    },
+    "USTOTU": {
+      "cn": "伍斯特图",
+      "system": "特里贡"
+    },
+    "VANDALON IV": {
+      "cn": "万达隆 IV",
+      "system": "特里贡"
+    },
+    "VARYLIA 5": {
+      "cn": "瓦拉瑞亚 5",
+      "system": "特里贡"
+    },
+    "ANGEL'S VENTURE": {
+      "cn": "天使投资",
+      "system": "猎户座"
+    },
+    "AZTERRA": {
+      "cn": "艾孜泰拉",
+      "system": "猎户座"
+    },
+    "BRILLIANCE": {
+      "cn": "璨光",
+      "system": "猎户座"
+    },
+    "CIRRUS": {
+      "cn": "希勒斯",
+      "system": "猎户座"
+    },
+    "FORT UNION": {
+      "cn": "联合堡",
+      "system": "猎户座"
+    },
+    "HEETH": {
+      "cn": "希斯",
+      "system": "猎户座"
+    },
+    "TERREK": {
+      "cn": "泰雷克",
+      "system": "猎户座"
+    },
+    "VELD": {
+      "cn": "维尔德",
+      "system": "猎户座"
+    },
+    "ZYGOS": {
+      "cn": "齐戈斯",
+      "system": "猎户座"
+    },
+    "AURORA BAY": {
+      "cn": "极光湾",
+      "system": "瓦尔迪斯"
+    },
+    "CYBERSTAN": {
+      "cn": "生化斯坦",
+      "system": "瓦尔迪斯"
+    },
+    "MEKBUDA": {
+      "cn": "井宿七",
+      "system": "瓦尔迪斯"
+    },
+    "MERAK": {
+      "cn": "北斗二",
+      "system": "瓦尔迪斯"
+    },
+    "MERGA IV": {
+      "cn": "玄戈增二 IV",
+      "system": "瓦尔迪斯"
+    },
+    "VINDEMITARIX PRIME": {
+      "cn": "文德米塔里克斯主星",
+      "system": "瓦尔迪斯"
+    },
+    "HELLMIRE": {
+      "cn": "海尔迈尔",
+      "system": "米琳"
+    },
+    "NIVEL 43": {
+      "cn": "尼维尔43",
+      "system": "米琳"
+    },
+    "OSHAUNE": {
+      "cn": "欧绍恩",
+      "system": "米琳"
+    },
+    "ZAGON PRIME": {
+      "cn": "扎贡主星",
+      "system": "米琳"
+    },
+    "DIASPORA X": {
+      "cn": "",
+      "system": "莱斯特拉德"
+    },
+    "ENULIALE": {
+      "cn": "",
+      "system": "莱斯特拉德"
+    },
+    "EPSILON PHOENCIS VI": {
+      "cn": "厄普西隆VI",
+      "system": "莱斯特拉德"
+    },
+    "GEMSTONE BLUFFS": {
+      "cn": "",
+      "system": "莱斯特拉德"
+    },
+    "NABATEA SECUNDUS": {
+      "cn": "",
+      "system": "莱斯特拉德"
+    },
+    "NAVI VII": {
+      "cn": "",
+      "system": "莱斯特拉德"
+    },
+    "OMICRON": {
+      "cn": "奥密克戎",
+      "system": "莱斯特拉德"
+    },
+    "SHETE": {
+      "cn": "赛特",
+      "system": "金牛座"
+    },
+    "SIEMNOT": {
+      "cn": "西姆诺特",
+      "system": "金牛座"
+    },
+    "SIRIUS": {
+      "cn": "天狼星",
+      "system": "金牛座"
+    },
+    "SKAT BAY": {
+      "cn": "斯卡特湾",
+      "system": "金牛座"
+    },
+    "ACAMAR IV": {
+      "cn": "天园六 IV",
+      "system": "锦栖"
+    },
+    "GACRUX": {
+      "cn": "十字架一",
+      "system": "锦栖"
+    },
+    "GAR HAREN": {
+      "cn": "轧尔哈伦",
+      "system": "锦栖"
+    },
+    "GATRIA": {
+      "cn": "盖尔崔亚",
+      "system": "锦栖"
+    },
+    "LUXURIANT": {
+      "cn": "富源",
+      "system": "锦栖"
+    },
+    "PANDION-XXIV": {
+      "cn": "帕迪恩 XXIV",
+      "system": "锦栖"
+    },
+    "PHACT BAY": {
+      "cn": "丈人一湾",
+      "system": "锦栖"
+    },
+    "ARKTURUS": {
+      "cn": "阿克图勒斯",
+      "system": "阿图里昂"
+    },
+    "DENEB SECUNDUS": {
+      "cn": "天津四次星",
+      "system": "阿图里昂"
+    },
+    "ELECTRA BAY": {
+      "cn": "昂宿一湾",
+      "system": "阿图里昂"
+    },
+    "KIRRIK": {
+      "cn": "基里克",
+      "system": "阿图里昂"
+    },
+    "MORTAX PRIME": {
+      "cn": "摩尔塔克斯主星",
+      "system": "阿图里昂"
+    },
+    "PIONEER II": {
+      "cn": "先驱 II",
+      "system": "阿图里昂"
+    },
+    "WILFORD STATION": {
+      "cn": "威尔福德站",
+      "system": "阿图里昂"
+    },
+    "ALARAPH": {
+      "cn": "右执法",
+      "system": "阿基拉"
+    },
+    "ALATHFAR XI": {
+      "cn": "织女增三 XI",
+      "system": "阿基拉"
+    },
+    "ANDAR": {
+      "cn": "安达尔",
+      "system": "阿基拉"
+    },
+    "ASPEROTH PRIME": {
+      "cn": "阿斯佩洛斯主星",
+      "system": "阿基拉"
+    },
+    "KEID": {
+      "cn": "角宿二湾",
+      "system": "阿基拉"
+    },
+    "KLAKA 5": {
+      "cn": "克拉卡5",
+      "system": "阿尔斯特拉德"
+    },
+    "KNETH PORT": {
+      "cn": "克奈斯港",
+      "system": "阿尔斯特拉德"
+    },
+    "KRAZ": {
+      "cn": "轸宿四",
+      "system": "阿尔斯特拉德"
+    },
+    "KLEN DAHTH II": {
+      "cn": "克伦达斯 II",
+      "system": "阿尔特斯"
+    },
+    "NEW HAVEN": {
+      "cn": "纽黑文",
+      "system": "阿尔特斯"
+    },
+    "PATHFINDER V": {
+      "cn": "开拓者 V",
+      "system": "阿尔特斯"
+    },
+    "PILEN V": {
+      "cn": "皮伦 V",
+      "system": "阿尔特斯"
+    },
+    "WIDOW'S HARBOR": {
+      "cn": "寡妇港",
+      "system": "阿尔特斯"
+    },
+    "EUPHORIA III": {
+      "cn": "欧福利亚 III",
+      "system": "霍金"
+    },
+    "KUMA": {
+      "cn": "天棓二",
+      "system": "霍金"
+    },
+    "MORDIA 9": {
+      "cn": "摩帝亚9",
+      "system": "霍金"
+    },
+    "SKITTER": {
+      "cn": "斯基特",
+      "system": "霍金"
+    },
+    "BALDRICK PRIME": {
+      "cn": "巴尔德里克主星",
+      "system": "默里迪亚"
+    },
+    "EMORATH": {
+      "cn": "艾莫拉斯",
+      "system": "默里迪亚"
+    },
+    "ILDUNA PRIME": {
+      "cn": "伊尔都纳主星",
+      "system": "默里迪亚"
+    },
+    "LIBERTY RIDGE": {
+      "cn": "解放岭",
+      "system": "默里迪亚"
+    },
+    "UVP GAMMA": {
+      "cn": "UVP伽马",
+      "system": "寂域"
+    },
+    "UVP ALPHA": {
+      "cn": "UVP阿尔法",
+      "system": "寂域"
+    },
+    "UVP DELTA": {
+      "cn": "UVP德尔塔",
+      "system": "寂域"
+    },
+    "UVP BETA": {
+      "cn": "UVP贝塔",
+      "system": "寂域"
+    },
+    "NEW INSIGHT": {
+      "cn": "NEW INSIGHT",
+      "system": "TBD"
+    },
+    "WAYWARD": {
+      "cn": "WAYWARD",
+      "system": "TBD"
+    }
+  }
+}
