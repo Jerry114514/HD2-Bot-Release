@@ -1,725 +1,788 @@
 {
-  "categories": [
+ "categories": [
+  {
+   "name": "终结族变种",
+   "name_en": "TERMINID BROOD",
+   "entries": [
     {
-      "key": "terminid_brood",
-      "name": "🧬 终结族变种",
-      "name_en": "TERMINID BROOD",
-      "entries": [
-        {
-          "key": "spore_burst_strain",
-          "name": "Spore Burst Strain",
-          "cn": "孢裂变种",
-          "desc": "这颗星球上的虫子发生了变异，会释放特殊的信息素，使得其他同变种个体分泌大量肾上腺素。做好准备，以非暴力手段应对这些为彼此提速的敌人。",
-          "effect_ids": []
-        },
-        {
-          "key": "predator_strain",
-          "name": "Predator Strain",
-          "cn": "掠食变种",
-          "desc": "根据报道，这颗星球上的终结族体现出极强的攻击性，且学会了高速移动的能力与表层伪装色，做好准备，以迅雷之势清扫这些变种。",
-          "effect_ids": []
-        },
-        {
-          "key": "rupture_strain",
-          "name": "Rupture Strain",
-          "cn": "爆裂变种",
-          "desc": "情报显示，这颗星球上的终结族体现出极强的腐蚀性，且学会了掘地等手段免疫常规攻击，做好准备，应对这些精通于地下突袭的变种。",
-          "effect_ids": []
-        }
-      ]
+     "key": "Spore Burst Strain",
+     "name": "Spore Burst Strain",
+     "cn": "孢裂变种",
+     "desc": "这颗星球上的虫子发生了变异，会释放特殊的信息素，使得其他同变种个体分泌大量肾上腺素。做好准备，以非暴力手段应对这些为彼此提速的敌人。",
+     "effect_ids": [
+      1244,
+      1386
+     ]
     },
     {
-      "key": "exotic_lifeform",
-      "name": "🦎 终结族特殊个体",
-      "name_en": "EXOTIC LIFEFORM",
-      "entries": [
-        {
-          "key": "dragonroach",
-          "name": "Dragonroach",
-          "cn": "蟑龙",
-          "desc": "该星球上的吐酸泰坦选择进化出了飞行能力，不过原始本能使得它们不会成群出现，做好夺取制空权的准备。",
-          "effect_ids": []
-        },
-        {
-          "key": "hive_lord",
-          "name": "Hive Lord",
-          "cn": "霸王虫",
-          "desc": "该星球上的终结族演变出了复数个皮糙肉厚的庞然大物，做好面对虫群与广域动量攻击的准备。",
-          "effect_ids": []
-        }
-      ]
+     "key": "Predator Strain",
+     "name": "Predator Strain",
+     "cn": "掠食变种",
+     "desc": "根据报道，这颗星球上的终结族体现出极强的攻击性，且学会了高速移动的能力与表层伪装色，做好准备，以迅雷之势清扫这些变种。",
+     "effect_ids": [
+      1243,
+      1245
+     ]
     },
     {
-      "key": "automaton_assemblage",
-      "name": "🤖 机器人军团",
-      "name_en": "AUTOMATON ASSEMBLAGE",
-      "entries": [
-        {
-          "key": "the_incineration_corps",
-          "name": "The Incineration Corps",
-          "cn": "炽灼部队",
-          "desc": "在此处的机器人配备了大量火焰装备。来吧，去给他们浇点油。",
-          "effect_ids": []
-        },
-        {
-          "key": "cyborgs",
-          "name": "Cyborgs",
-          "cn": "生化人",
-          "desc": "做好准备，面对经过精英化训练，涵盖全射程打击的生化人部队与邪恶机器组成的部队。",
-          "effect_ids": []
-        }
-      ]
-    },
-    {
-      "key": "special_unit",
-      "name": "🎖️ 机器人特殊单位",
-      "name_en": "SPECIAL UNIT",
-      "entries": [
-        {
-          "key": "the_jet_brigade",
-          "name": "The Jet Brigade",
-          "cn": "喷气旅",
-          "desc": "在此处的机器人选择抛弃防御力，转而使用低空协同突进战术。做好准备，把他们炸上天。",
-          "effect_ids": []
-        }
-      ]
-    },
-    {
-      "key": "auxiliary_assemblage",
-      "name": "🪖 机器人辅助军团",
-      "name_en": "AUXILIARY ASSEMBLAGE · 兵力部署",
-      "entries": [
-        {
-          "key": "devastator_surge",
-          "name": "Devastator Surge",
-          "cn": "歼灭者狂潮",
-          "desc": "机器人在该星球部署了大量歼灭者。",
-          "effect_ids": []
-        },
-        {
-          "key": "heavy_armor_surge",
-          "name": "Heavy Armor Surge",
-          "cn": "巨型者狂潮",
-          "desc": "做好反坦克准备，面对重甲机器人大军。",
-          "effect_ids": []
-        },
-        {
-          "key": "hulk_surge",
-          "name": "Hulk Surge",
-          "cn": "蹂躏者狂潮",
-          "desc": "地图扫描显示，该地部署了大量的蹂躏者。",
-          "effect_ids": []
-        }
-      ]
-    },
-    {
-      "key": "friendly_hellfire",
-      "name": "🔥 友军火力",
-      "name_en": "FRIENDLY HELLFIRE",
-      "entries": [
-        {
-          "key": "eagle_air_raids",
-          "name": "Eagle Air Raids",
-          "cn": "“飞鹰风暴”空袭",
-          "desc": "任务期间将周期性部署“飞鹰”机枪扫射",
-          "effect_ids": []
-        },
-        {
-          "key": "ordnance_air_raids",
-          "name": "Ordnance Air Raids",
-          "cn": "轨道轰炸支援",
-          "desc": "轨道火力网轰炸在任务期间周期性部署。",
-          "effect_ids": []
-        },
-        {
-          "key": "seaf_garrison",
-          "name": "SEAF Garrison",
-          "cn": "SEAF武装部队驻守",
-          "desc": "战场上会周期性投放多种装备的SEAF重装部队。",
-          "effect_ids": [
-            1400,
-            1401
-          ]
-        },
-        {
-          "key": "seaf_forces_in_region",
-          "name": "SEAF Forces in Region",
-          "cn": "区域内有SEAF部队",
-          "desc": "游戏区域内存在SEAF士兵。（2026-08 新词条，英文名待确认）",
-          "effect_ids": [
-            1400,
-            1401
-          ]
-        }
-      ]
-    },
-    {
-      "key": "illuminate_sect",
-      "name": "👽 光能族宗派",
-      "name_en": "ILLUMINATE SECT",
-      "entries": [
-        {
-          "key": "mindless_masses",
-          "name": "Mindless Masses",
-          "cn": "无脑群氓",
-          "desc": "可恶的光能族，不仅剥夺了这颗星球上的公民投票权，还要把他们变成丧尸来攻击我们。做好准备，应对堪比终结族的丧尸大军——不要有心理负担。",
-          "effect_ids": []
-        },
-        {
-          "key": "appropriators",
-          "name": "Appropriators",
-          "cn": "占领者",
-          "desc": "这颗星球上的光能族只有他们的同类，这或许表现出光能族的极端排外，也可能表明他们的用心极其险恶。做好准备，应对可能出现的异形构造体。",
-          "effect_ids": []
-        },
-        {
-          "key": "spearhead",
-          "name": "Spearhead",
-          "cn": "教团先锋",
-          "desc": "光能族的先遣武装（游戏内已确认存在，效果 ID 1413 = game_IllSpearheadArm）。",
-          "effect_ids": [
-            1413
-          ]
-        },
-        {
-          "key": "voteless_variant",
-          "name": "Voteless Variant",
-          "cn": "窃票者",
-          "desc": "这是比无票者更加暴力的，被光能族奴役的选民，既然如此，我们也以暴力镇压他们。",
-          "effect_ids": [
-            1402,
-            1403
-          ]
-        },
-        {
-          "key": "wretch",
-          "name": "Wretch",
-          "cn": "悲怜体",
-          "desc": "光能族新生物武器（狂暴散兵型变种）。切断其刃状附肢；头部创伤无效。",
-          "effect_ids": []
-        },
-        {
-          "key": "crusher",
-          "name": "Crusher",
-          "cn": "粉碎者",
-          "desc": "光能族新生物武器。通过不忠的再生组织吸收弹道，集中火力攻击其控制头盔可暴露致命弱点。",
-          "effect_ids": []
-        },
-        {
-          "key": "invasion_fleet",
-          "name": "Invasion Fleet",
-          "cn": "入侵舰队",
-          "desc": "光能族的主要入侵舰队已抵达这颗星球，从傲慢的监督者到成群被洗脑的超级地球平民。见到即消灭，否则将面临暴力抵抗，甚至更糟——叛国宣传。",
-          "effect_ids": []
-        }
-      ]
-    },
-    {
-      "key": "cosmic_horror",
-      "name": "🌌 深域惧像",
-      "name_en": "COSMIC HORROR",
-      "entries": [
-        {
-          "key": "the_great_host",
-          "name": "The Great Host",
-          "cn": "大军",
-          "desc": "在默里迪亚虫洞帷幕后秘密建造的光能族入侵舰队，正全速驶向超级地球。",
-          "effect_ids": []
-        },
-        {
-          "key": "exostorm_level_1",
-          "name": "Exostorm Level 1",
-          "cn": "异界风暴 1 级",
-          "desc": "由异界尖塔引发的非自然气候现象。概率引发局部地区的沙尘暴。",
-          "effect_ids": []
-        },
-        {
-          "key": "exostorm_level_2",
-          "name": "Exostorm Level 2",
-          "cn": "异界风暴 2 级",
-          "desc": "这是第二级的异界风暴。会生成出扭曲现实场的闪电。",
-          "effect_ids": []
-        },
-        {
-          "key": "exostorm_level_3",
-          "name": "Exostorm Level 3",
-          "cn": "异界风暴 3 级",
-          "desc": "最高级别的异界风暴。会生成出扭曲现实场的闪电的同时，会不断刮起龙卷风，撕裂被吸入其中的一切。星球表面的颜色，也昭示出不祥之兆。",
-          "effect_ids": []
-        },
-        {
-          "key": "polyvoid",
-          "name": "Polyvoid",
-          "cn": "寂域环境",
-          "desc": "由于过多的异界尖塔导致的重力场域异常现象，已使整颗星球堕入寂域。在任何探测器都找不到的地方...不敢想象发生了什么...",
-          "effect_ids": []
-        }
-      ]
-    },
-    {
-      "key": "tactical_action",
-      "name": "🛰️ DSS 战略行动",
-      "name_en": "TACTICAL ACTION",
-      "entries": [
-        {
-          "key": "eagle_storm",
-          "name": "Eagle Storm",
-          "cn": "✈ 飞鹰风暴",
-          "desc": "DSS的工作人员在大型三层结构附近集结了一支“飞鹰”编队，采取24小时轮班制，为星球上的绝地潜兵提供火力压制支援。在此期间，“飞鹰风暴” 将作为行动变量周期性在任务中部署。若该星球遭到入侵，DSS将会守住防线，阻止敌方入侵进度；在地面执行任务的绝地潜兵小队队长可通过 “标记目标” 功能为 “飞鹰” 标记敌人。",
-          "effect_ids": [
-            1209,
-            1212,
-            1216
-          ]
-        },
-        {
-          "key": "orbital_block",
-          "name": "Orbital Block",
-          "cn": "🚫 轨道封锁",
-          "desc": "DSS启用零重力反舰导弹系统，将会瞄准该星球上所有试图离开的敌方目标。同时将多余战力投入到超级驱逐舰后勤支援。在此期间，在该星球执行任务的小队将自动激活 “强化资源：绝地喷射仓空间优化” ；且该星球上的敌军无法对其他星球发动入侵战役。",
-          "effect_ids": [
-            1213,
-            1215
-          ]
-        },
-        {
-          "key": "heavy_ordnance_distribution",
-          "name": "Heavy Ordnance Distribution",
-          "cn": "💣 重型军械分发",
-          "desc": "DSS后勤舰队将为环绕星球的超级驱逐舰提供富余的380MM高爆弹，SEAF部队的行动也将获得装备支援，加速解放进程。在此期间，在该星球执行任务的小队将获得额外的战略配备：轨道380 MM高爆弹火力网；地面上的SEAF部队将获得更高级的武器支援；且DSS将会额外推进该星球的解放进程。",
-          "effect_ids": [
-            1214
-          ]
-        },
-        {
-          "key": "eagle_block",
-          "name": "Eagle Block",
-          "cn": "🚫✈🚫 飞鹰封锁",
-          "desc": "在该效果激活期间，将同时激活DSS战术行动：“飞鹰风暴”与“轨道封锁”。",
-          "effect_ids": []
-        },
-        {
-          "key": "planetary_bombardment",
-          "name": "Planetary Bombardment",
-          "cn": "💣🌏💣 星球轰炸",
-          "desc": "DSS上搭载的76门“总统级”舰炮同时开火，轰炸整个星球。在此期间，所有小队 +1 可用增援； 且DSS将会额外推进该星球的解放进程。注意了：炮弹可不会区分正义与邪恶！",
-          "effect_ids": [
-            1208,
-            1211
-          ]
-        },
-        {
-          "key": "operational_support",
-          "name": "Operational Support",
-          "cn": "✊ 行动支持",
-          "desc": "DSS停靠在这颗星球附近，一定程度上有助于该星球的解放战争进程。在该星球执行任务的小队所携带的所有“外骨骼机甲”战略配备冷却时间减少35%。",
-          "effect_ids": [
-            1238
-          ]
-        }
-      ]
-    },
-    {
-      "key": "enemy_invasion_level",
-      "name": "⚠️ 入侵等级",
-      "name_en": "ENEMY INVASION LEVEL",
-      "entries": [
-        {
-          "key": "enemy_invasion_level",
-          "name": "ENEMY INVASION LEVEL",
-          "cn": "入侵等级",
-          "desc": "越高的入侵等级，则意味着该星球需要通过完成更多的任务来阻挡攻势。",
-          "effect_ids": []
-        }
-      ]
-    },
-    {
-      "key": "defense_campaign",
-      "name": "⚔️ 入侵战役",
-      "name_en": "DEFENSE CAMPAIGN",
-      "entries": [
-        {
-          "key": "defense_campaign",
-          "name": "DEFENSE CAMPAIGN",
-          "cn": "入侵战役",
-          "desc": "敌方 HP 进度显示（如 212,983/700,000），描述：敌军妄想占领这颗星球，天真。",
-          "effect_ids": []
-        }
-      ]
-    },
-    {
-      "key": "warp_link",
-      "name": "🚀 跃迁航道",
-      "name_en": "WARP LINK",
-      "entries": [
-        {
-          "key": "warp_link_blockade",
-          "name": "Warp Link Blockade",
-          "cn": "跃迁航道封锁",
-          "desc": "由于此地通往{连接星球}的跃迁航道为单向航道，目前无法对该地的光能族发动解放战争。（{连接星球}随星球动态变化，如西斯→里尔加湾、桑吉斯→卡利亚）",
-          "effect_ids": []
-        }
-      ]
-    },
-    {
-      "key": "environmental_condition",
-      "name": "🌍 环境条件",
-      "name_en": "ENVIRONMENTAL CONDITION · 已收集",
-      "entries": [
-        {
-          "key": "rainstorms",
-          "name": "RAINSTORMS",
-          "cn": "暴雨",
-          "desc": "暴雨将降低能见度。",
-          "effect_ids": []
-        },
-        {
-          "key": "extreme_cold",
-          "name": "EXTREME COLD",
-          "cn": "夜间极寒",
-          "desc": "夜间气温大幅降低，同时使需要散热的武器冷却加快。",
-          "effect_ids": []
-        },
-        {
-          "key": "intense_heat",
-          "name": "INTENSE HEAT",
-          "cn": "昼间极暑",
-          "desc": "昼间气温大幅升高，加快体力消耗速度，同时使需要散热的武器冷却变慢。",
-          "effect_ids": []
-        },
-        {
-          "key": "fire_tornadoes",
-          "name": "FIRE TORNADOES",
-          "cn": "火龙卷",
-          "desc": "火龙卷将随机出现在地图上。",
-          "effect_ids": []
-        },
-        {
-          "key": "ion_storms",
-          "name": "ION STORMS",
-          "cn": "离子风暴",
-          "desc": "风暴期间，战略配备不可用（除超级地球大炮）",
-          "effect_ids": []
-        },
-        {
-          "key": "blizzards",
-          "name": "BLIZZARDS",
-          "cn": "暴风雪",
-          "desc": "暴风雪将降低能见度，并使需要散热的武器冷却加快。",
-          "effect_ids": []
-        },
-        {
-          "key": "leviathan_blockade",
-          "name": "Leviathan Blockade",
-          "cn": "利维坦封锁",
-          "desc": "城市上空会出现利维坦。",
-          "effect_ids": [
-            1404,
-            1405
-          ]
-        },
-        {
-          "key": "item",
-          "name": "（其他未捕获环境）",
-          "cn": "—",
-          "desc": "插件内置表已含：沙暴/地震/流星雨/火山活动/酸雨/浓雾/强风/暴雪/冰雹/昏暗天空/血雨/昼间/夜间变体",
-          "effect_ids": []
-        }
-      ]
+     "key": "Rupture Strain",
+     "name": "Rupture Strain",
+     "cn": "爆裂变种",
+     "desc": "情报显示，这颗星球上的终结族体现出极强的腐蚀性，且学会了掘地等手段免疫常规攻击，做好准备，应对这些精通于地下突袭的变种。",
+     "effect_ids": [
+      1303,
+      1310
+     ]
     }
-  ],
-  "entries": {
-    "Spore Burst Strain": {
-      "cn": "孢裂变种",
-      "desc": "这颗星球上的虫子发生了变异，会释放特殊的信息素，使得其他同变种个体分泌大量肾上腺素。做好准备，以非暴力手段应对这些为彼此提速的敌人。",
-      "category": "terminid_brood",
-      "effect_ids": []
+   ],
+   "key": "terminid_brood"
+  },
+  {
+   "name": "终结族特殊个体",
+   "name_en": "EXOTIC LIFEFORM",
+   "entries": [
+    {
+     "key": "Dragonroach",
+     "name": "Dragonroach",
+     "cn": "蟑龙",
+     "desc": "该星球上的吐酸泰坦选择进化出了飞行能力，不过原始本能使得它们不会成群出现，做好夺取制空权的准备。",
+     "effect_ids": [
+      1306,
+      1309
+     ]
     },
-    "Predator Strain": {
-      "cn": "掠食变种",
-      "desc": "根据报道，这颗星球上的终结族体现出极强的攻击性，且学会了高速移动的能力与表层伪装色，做好准备，以迅雷之势清扫这些变种。",
-      "category": "terminid_brood",
-      "effect_ids": []
-    },
-    "Rupture Strain": {
-      "cn": "爆裂变种",
-      "desc": "情报显示，这颗星球上的终结族体现出极强的腐蚀性，且学会了掘地等手段免疫常规攻击，做好准备，应对这些精通于地下突袭的变种。",
-      "category": "terminid_brood",
-      "effect_ids": []
-    },
-    "Dragonroach": {
-      "cn": "蟑龙",
-      "desc": "该星球上的吐酸泰坦选择进化出了飞行能力，不过原始本能使得它们不会成群出现，做好夺取制空权的准备。",
-      "category": "exotic_lifeform",
-      "effect_ids": []
-    },
-    "Hive Lord": {
-      "cn": "霸王虫",
-      "desc": "该星球上的终结族演变出了复数个皮糙肉厚的庞然大物，做好面对虫群与广域动量攻击的准备。",
-      "category": "exotic_lifeform",
-      "effect_ids": []
-    },
-    "The Incineration Corps": {
-      "cn": "炽灼部队",
-      "desc": "在此处的机器人配备了大量火焰装备。来吧，去给他们浇点油。",
-      "category": "automaton_assemblage",
-      "effect_ids": []
-    },
-    "Cyborgs": {
-      "cn": "生化人",
-      "desc": "做好准备，面对经过精英化训练，涵盖全射程打击的生化人部队与邪恶机器组成的部队。",
-      "category": "automaton_assemblage",
-      "effect_ids": []
-    },
-    "The Jet Brigade": {
-      "cn": "喷气旅",
-      "desc": "在此处的机器人选择抛弃防御力，转而使用低空协同突进战术。做好准备，把他们炸上天。",
-      "category": "special_unit",
-      "effect_ids": []
-    },
-    "Devastator Surge": {
-      "cn": "歼灭者狂潮",
-      "desc": "机器人在该星球部署了大量歼灭者。",
-      "category": "auxiliary_assemblage",
-      "effect_ids": []
-    },
-    "Heavy Armor Surge": {
-      "cn": "巨型者狂潮",
-      "desc": "做好反坦克准备，面对重甲机器人大军。",
-      "category": "auxiliary_assemblage",
-      "effect_ids": []
-    },
-    "Hulk Surge": {
-      "cn": "蹂躏者狂潮",
-      "desc": "地图扫描显示，该地部署了大量的蹂躏者。",
-      "category": "auxiliary_assemblage",
-      "effect_ids": []
-    },
-    "Eagle Air Raids": {
-      "cn": "“飞鹰风暴”空袭",
-      "desc": "任务期间将周期性部署“飞鹰”机枪扫射",
-      "category": "friendly_hellfire",
-      "effect_ids": []
-    },
-    "Ordnance Air Raids": {
-      "cn": "轨道轰炸支援",
-      "desc": "轨道火力网轰炸在任务期间周期性部署。",
-      "category": "friendly_hellfire",
-      "effect_ids": []
-    },
-    "SEAF Garrison": {
-      "cn": "SEAF武装部队驻守",
-      "desc": "战场上会周期性投放多种装备的SEAF重装部队。",
-      "category": "friendly_hellfire",
-      "effect_ids": [
-        1400,
-        1401
-      ]
-    },
-    "SEAF Forces in Region": {
-      "cn": "区域内有SEAF部队",
-      "desc": "游戏区域内存在SEAF士兵。（2026-08 新词条，英文名待确认）",
-      "category": "friendly_hellfire",
-      "effect_ids": [
-        1400,
-        1401
-      ]
-    },
-    "Mindless Masses": {
-      "cn": "无脑群氓",
-      "desc": "可恶的光能族，不仅剥夺了这颗星球上的公民投票权，还要把他们变成丧尸来攻击我们。做好准备，应对堪比终结族的丧尸大军——不要有心理负担。",
-      "category": "illuminate_sect",
-      "effect_ids": []
-    },
-    "Appropriators": {
-      "cn": "占领者",
-      "desc": "这颗星球上的光能族只有他们的同类，这或许表现出光能族的极端排外，也可能表明他们的用心极其险恶。做好准备，应对可能出现的异形构造体。",
-      "category": "illuminate_sect",
-      "effect_ids": []
-    },
-    "Spearhead": {
-      "cn": "教团先锋",
-      "desc": "光能族的先遣武装（游戏内已确认存在，效果 ID 1413 = game_IllSpearheadArm）。",
-      "category": "illuminate_sect",
-      "effect_ids": [
-        1413
-      ]
-    },
-    "Voteless Variant": {
-      "cn": "窃票者",
-      "desc": "这是比无票者更加暴力的，被光能族奴役的选民，既然如此，我们也以暴力镇压他们。",
-      "category": "illuminate_sect",
-      "effect_ids": [
-        1402,
-        1403
-      ]
-    },
-    "Wretch": {
-      "cn": "悲怜体",
-      "desc": "光能族新生物武器（狂暴散兵型变种）。切断其刃状附肢；头部创伤无效。",
-      "category": "illuminate_sect",
-      "effect_ids": []
-    },
-    "Crusher": {
-      "cn": "粉碎者",
-      "desc": "光能族新生物武器。通过不忠的再生组织吸收弹道，集中火力攻击其控制头盔可暴露致命弱点。",
-      "category": "illuminate_sect",
-      "effect_ids": []
-    },
-    "Invasion Fleet": {
-      "cn": "入侵舰队",
-      "desc": "光能族的主要入侵舰队已抵达这颗星球，从傲慢的监督者到成群被洗脑的超级地球平民。见到即消灭，否则将面临暴力抵抗，甚至更糟——叛国宣传。",
-      "category": "illuminate_sect",
-      "effect_ids": []
-    },
-    "The Great Host": {
-      "cn": "大军",
-      "desc": "在默里迪亚虫洞帷幕后秘密建造的光能族入侵舰队，正全速驶向超级地球。",
-      "category": "cosmic_horror",
-      "effect_ids": []
-    },
-    "Exostorm Level 1": {
-      "cn": "异界风暴 1 级",
-      "desc": "由异界尖塔引发的非自然气候现象。概率引发局部地区的沙尘暴。",
-      "category": "cosmic_horror",
-      "effect_ids": []
-    },
-    "Exostorm Level 2": {
-      "cn": "异界风暴 2 级",
-      "desc": "这是第二级的异界风暴。会生成出扭曲现实场的闪电。",
-      "category": "cosmic_horror",
-      "effect_ids": []
-    },
-    "Exostorm Level 3": {
-      "cn": "异界风暴 3 级",
-      "desc": "最高级别的异界风暴。会生成出扭曲现实场的闪电的同时，会不断刮起龙卷风，撕裂被吸入其中的一切。星球表面的颜色，也昭示出不祥之兆。",
-      "category": "cosmic_horror",
-      "effect_ids": []
-    },
-    "Polyvoid": {
-      "cn": "寂域环境",
-      "desc": "由于过多的异界尖塔导致的重力场域异常现象，已使整颗星球堕入寂域。在任何探测器都找不到的地方...不敢想象发生了什么...",
-      "category": "cosmic_horror",
-      "effect_ids": []
-    },
-    "Eagle Storm": {
-      "cn": "✈ 飞鹰风暴",
-      "desc": "DSS的工作人员在大型三层结构附近集结了一支“飞鹰”编队，采取24小时轮班制，为星球上的绝地潜兵提供火力压制支援。在此期间，“飞鹰风暴” 将作为行动变量周期性在任务中部署。若该星球遭到入侵，DSS将会守住防线，阻止敌方入侵进度；在地面执行任务的绝地潜兵小队队长可通过 “标记目标” 功能为 “飞鹰” 标记敌人。",
-      "category": "tactical_action",
-      "effect_ids": [
-        1209,
-        1212,
-        1216
-      ]
-    },
-    "Orbital Block": {
-      "cn": "🚫 轨道封锁",
-      "desc": "DSS启用零重力反舰导弹系统，将会瞄准该星球上所有试图离开的敌方目标。同时将多余战力投入到超级驱逐舰后勤支援。在此期间，在该星球执行任务的小队将自动激活 “强化资源：绝地喷射仓空间优化” ；且该星球上的敌军无法对其他星球发动入侵战役。",
-      "category": "tactical_action",
-      "effect_ids": [
-        1213,
-        1215
-      ]
-    },
-    "Heavy Ordnance Distribution": {
-      "cn": "💣 重型军械分发",
-      "desc": "DSS后勤舰队将为环绕星球的超级驱逐舰提供富余的380MM高爆弹，SEAF部队的行动也将获得装备支援，加速解放进程。在此期间，在该星球执行任务的小队将获得额外的战略配备：轨道380 MM高爆弹火力网；地面上的SEAF部队将获得更高级的武器支援；且DSS将会额外推进该星球的解放进程。",
-      "category": "tactical_action",
-      "effect_ids": [
-        1214
-      ]
-    },
-    "Eagle Block": {
-      "cn": "🚫✈🚫 飞鹰封锁",
-      "desc": "在该效果激活期间，将同时激活DSS战术行动：“飞鹰风暴”与“轨道封锁”。",
-      "category": "tactical_action",
-      "effect_ids": []
-    },
-    "Planetary Bombardment": {
-      "cn": "💣🌏💣 星球轰炸",
-      "desc": "DSS上搭载的76门“总统级”舰炮同时开火，轰炸整个星球。在此期间，所有小队 +1 可用增援； 且DSS将会额外推进该星球的解放进程。注意了：炮弹可不会区分正义与邪恶！",
-      "category": "tactical_action",
-      "effect_ids": [
-        1208,
-        1211
-      ]
-    },
-    "Operational Support": {
-      "cn": "✊ 行动支持",
-      "desc": "DSS停靠在这颗星球附近，一定程度上有助于该星球的解放战争进程。在该星球执行任务的小队所携带的所有“外骨骼机甲”战略配备冷却时间减少35%。",
-      "category": "tactical_action",
-      "effect_ids": [
-        1238
-      ]
-    },
-    "ENEMY INVASION LEVEL": {
-      "cn": "入侵等级",
-      "desc": "越高的入侵等级，则意味着该星球需要通过完成更多的任务来阻挡攻势。",
-      "category": "enemy_invasion_level",
-      "effect_ids": []
-    },
-    "DEFENSE CAMPAIGN": {
-      "cn": "入侵战役",
-      "desc": "敌方 HP 进度显示（如 212,983/700,000），描述：敌军妄想占领这颗星球，天真。",
-      "category": "defense_campaign",
-      "effect_ids": []
-    },
-    "Warp Link Blockade": {
-      "cn": "跃迁航道封锁",
-      "desc": "由于此地通往{连接星球}的跃迁航道为单向航道，目前无法对该地的光能族发动解放战争。（{连接星球}随星球动态变化，如西斯→里尔加湾、桑吉斯→卡利亚）",
-      "category": "warp_link",
-      "effect_ids": []
-    },
-    "RAINSTORMS": {
-      "cn": "暴雨",
-      "desc": "暴雨将降低能见度。",
-      "category": "environmental_condition",
-      "effect_ids": []
-    },
-    "EXTREME COLD": {
-      "cn": "夜间极寒",
-      "desc": "夜间气温大幅降低，同时使需要散热的武器冷却加快。",
-      "category": "environmental_condition",
-      "effect_ids": []
-    },
-    "INTENSE HEAT": {
-      "cn": "昼间极暑",
-      "desc": "昼间气温大幅升高，加快体力消耗速度，同时使需要散热的武器冷却变慢。",
-      "category": "environmental_condition",
-      "effect_ids": []
-    },
-    "FIRE TORNADOES": {
-      "cn": "火龙卷",
-      "desc": "火龙卷将随机出现在地图上。",
-      "category": "environmental_condition",
-      "effect_ids": []
-    },
-    "ION STORMS": {
-      "cn": "离子风暴",
-      "desc": "风暴期间，战略配备不可用（除超级地球大炮）",
-      "category": "environmental_condition",
-      "effect_ids": []
-    },
-    "BLIZZARDS": {
-      "cn": "暴风雪",
-      "desc": "暴风雪将降低能见度，并使需要散热的武器冷却加快。",
-      "category": "environmental_condition",
-      "effect_ids": []
-    },
-    "Leviathan Blockade": {
-      "cn": "利维坦封锁",
-      "desc": "城市上空会出现利维坦。",
-      "category": "environmental_condition",
-      "effect_ids": [
-        1404,
-        1405
-      ]
-    },
-    "（其他未捕获环境）": {
-      "cn": "—",
-      "desc": "插件内置表已含：沙暴/地震/流星雨/火山活动/酸雨/浓雾/强风/暴雪/冰雹/昏暗天空/血雨/昼间/夜间变体",
-      "category": "environmental_condition",
-      "effect_ids": []
+    {
+     "key": "Hive Lord",
+     "name": "Hive Lord",
+     "cn": "霸王虫",
+     "desc": "该星球上的终结族演变出了复数个皮糙肉厚的庞然大物，做好面对虫群与广域动量攻击的准备。",
+     "effect_ids": [
+      1307,
+      1308
+     ]
     }
+   ],
+   "key": "exotic_lifeform"
+  },
+  {
+   "name": "机器人军团",
+   "name_en": "AUTOMATON ASSEMBLAGE",
+   "entries": [
+    {
+     "key": "The Incineration Corps",
+     "name": "The Incineration Corps",
+     "cn": "炽灼部队",
+     "desc": "在此处的机器人配备了大量火焰装备。来吧，去给他们浇点油。",
+     "effect_ids": [
+      1248,
+      1249
+     ]
+    },
+    {
+     "key": "Cyborgs",
+     "name": "Cyborgs",
+     "cn": "生化人",
+     "desc": "做好准备，面对经过精英化训练，涵盖全射程打击的生化人部队与邪恶机器组成的部队。",
+     "effect_ids": [
+      1360,
+      1361
+     ]
+    }
+   ],
+   "key": "automaton_assemblage"
+  },
+  {
+   "name": "机器人特殊单位",
+   "name_en": "SPECIAL UNIT",
+   "entries": [
+    {
+     "key": "The Jet Brigade",
+     "name": "The Jet Brigade",
+     "cn": "喷气旅",
+     "desc": "在此处的机器人选择抛弃防御力，转而使用低空协同突进战术。做好准备，把他们炸上天。",
+     "effect_ids": [
+      1202,
+      1203
+     ]
+    }
+   ],
+   "key": "special_unit"
+  },
+  {
+   "name": "机器人辅助军团",
+   "name_en": "AUXILIARY ASSEMBLAGE · 兵力部署",
+   "entries": [
+    {
+     "key": "Devastator Surge",
+     "name": "Devastator Surge",
+     "cn": "歼灭者狂潮",
+     "desc": "机器人在该星球部署了大量歼灭者。",
+     "effect_ids": [
+      1359
+     ]
+    },
+    {
+     "key": "Heavy Armor Surge",
+     "name": "Heavy Armor Surge",
+     "cn": "巨型者狂潮",
+     "desc": "做好反坦克准备，面对重甲机器人大军。",
+     "effect_ids": [
+      1355
+     ]
+    },
+    {
+     "key": "Hulk Surge",
+     "name": "Hulk Surge",
+     "cn": "蹂躏者狂潮",
+     "desc": "地图扫描显示，该地部署了大量的蹂躏者。",
+     "effect_ids": [
+      1357
+     ]
+    }
+   ],
+   "key": "auxiliary_assemblage"
+  },
+  {
+   "name": "友军火力",
+   "name_en": "FRIENDLY HELLFIRE",
+   "entries": [
+    {
+     "key": "Eagle Air Raids",
+     "name": "Eagle Air Raids",
+     "cn": "“飞鹰风暴”空袭",
+     "desc": "任务期间将周期性部署“飞鹰”机枪扫射",
+     "effect_ids": [
+      1209,
+      1212,
+      1216
+     ]
+    },
+    {
+     "key": "Ordnance Air Raids",
+     "name": "Ordnance Air Raids",
+     "cn": "轨道轰炸支援",
+     "desc": "轨道火力网轰炸在任务期间周期性部署。",
+     "effect_ids": [
+      1208,
+      1211
+     ]
+    },
+    {
+     "key": "SEAF Garrison",
+     "name": "SEAF Garrison",
+     "cn": "SEAF武装部队驻守",
+     "desc": "区域内存在SEAF部队，且战场上会周期性投放多种装备的SEAF重装部队。",
+     "effect_ids": [
+      1400,
+      1401
+     ]
+    },
+    {
+     "key": "SEAF Forces in Region",
+     "name": "SEAF Forces in Region",
+     "cn": "区域内有SEAF部队",
+     "desc": "区域内存在SEAF部队，且战场上会周期性投放多种装备的SEAF重装部队。",
+     "effect_ids": [
+      1400,
+      1401
+     ]
+    }
+   ],
+   "key": "friendly_hellfire"
+  },
+  {
+   "name": "光能族宗派",
+   "name_en": "ILLUMINATE SECT",
+   "entries": [
+    {
+     "key": "Mindless Masses",
+     "name": "Mindless Masses",
+     "cn": "无脑群氓",
+     "desc": "可恶的光能族，不仅剥夺了这颗星球上的公民投票权，还要把他们变成丧尸来攻击我们。做好准备，应对堪比终结族的丧尸大军——不要有心理负担。",
+     "effect_ids": [
+      1377,
+      1378
+     ]
+    },
+    {
+     "key": "Appropriators",
+     "name": "Appropriators",
+     "cn": "占领者",
+     "desc": "这颗星球上的光能族只有他们的同类，这或许表现出光能族的极端排外，也可能表明他们的用心极其险恶。做好准备，应对可能出现的异形构造体。",
+     "effect_ids": [
+      1379,
+      1380
+     ]
+    },
+    {
+     "key": "Spearhead",
+     "name": "Spearhead",
+     "cn": "教团先锋",
+     "desc": "光能族的先遣武装（游戏内已确认存在，效果 ID 1413 = game_IllSpearheadArm）。",
+     "effect_ids": [
+      1413
+     ]
+    },
+    {
+     "key": "Voteless Variant",
+     "name": "Voteless Variant",
+     "cn": "窃票者",
+     "desc": "这是比无票者更加暴力的，被光能族奴役的选民，既然如此，我们也以暴力镇压他们。",
+     "effect_ids": [
+      1402,
+      1403
+     ]
+    },
+    {
+     "key": "Invasion Fleet",
+     "name": "Invasion Fleet",
+     "cn": "入侵舰队",
+     "desc": "光能族的主要入侵舰队已抵达这颗星球，从傲慢的监督者到成群被洗脑的超级地球平民。见到即消灭，否则将面临暴力抵抗，甚至更糟——叛国宣传。",
+     "effect_ids": [
+      1417
+     ]
+    }
+   ],
+   "key": "illuminate_sect"
+  },
+  {
+   "name": "深域惧像",
+   "name_en": "COSMIC HORROR",
+   "entries": [
+    {
+     "key": "The Great Host",
+     "name": "The Great Host",
+     "cn": "大军",
+     "desc": "在默里迪亚虫洞帷幕后秘密建造的光能族入侵舰队，正全速驶向超级地球。",
+     "effect_ids": [
+      1269
+     ]
+    },
+    {
+     "key": "Exostorm Level 1",
+     "name": "Exostorm Level 1",
+     "cn": "异界风暴 1 级",
+     "desc": "由异界尖塔引发的非自然气候现象。概率引发局部地区的沙尘暴。",
+     "effect_ids": [
+      1373
+     ]
+    },
+    {
+     "key": "Exostorm Level 2",
+     "name": "Exostorm Level 2",
+     "cn": "异界风暴 2 级",
+     "desc": "这是第二级的异界风暴。会生成出扭曲现实场的闪电。",
+     "effect_ids": [
+      1374
+     ]
+    },
+    {
+     "key": "Exostorm Level 3",
+     "name": "Exostorm Level 3",
+     "cn": "异界风暴 3 级",
+     "desc": "最高级别的异界风暴。会生成出扭曲现实场的闪电的同时，会不断刮起龙卷风，撕裂被吸入其中的一切。星球表面的颜色，也昭示出不祥之兆。",
+     "effect_ids": [
+      1375
+     ]
+    },
+    {
+     "key": "Polyvoid",
+     "name": "Polyvoid",
+     "cn": "寂域环境",
+     "desc": "由于过多的异界尖塔导致的重力场域异常现象，已使整颗星球堕入寂域。在任何探测器都找不到的地方...不敢想象发生了什么...",
+     "effect_ids": [
+      1376
+     ]
+    },
+    {
+     "key": "TERMINID CONTROL SYSTEM +",
+     "name": "TERMINID CONTROL SYSTEM +",
+     "cn": "终结族控制系统 +",
+     "desc": "TCS + 是一项旨在针对“阴霾”威胁的天体包围圈工程。在建成该设施的星球上，其将会不断地向大气中喷洒对终结族极度有害的熏香味气体。该工程将会部署到复数个星球以完成对“阴霾”的包围。",
+     "effect_ids": [
+      1395
+     ]
+    },
+    {
+     "key": "ANNIHILATION",
+     "name": "ANNIHILATION",
+     "cn": "已毁",
+     "desc": "经过代表暴政的默里迪亚虫洞摧残过后，仅留这一片残迹时刻提醒着我们暴政的下场。",
+     "effect_ids": [
+      1241
+     ]
+    },
+    {
+     "key": "Gloom",
+     "name": "Gloom",
+     "cn": "阴影迷雾",
+     "desc": "一朵阴霾云笼罩着这个世界。",
+     "effect_ids": [
+      1187
+     ]
+    },
+    {
+     "key": "Dense Gloom",
+     "name": "Dense Gloom",
+     "cn": "浓阴影迷雾",
+     "desc": "一片厚厚的阴霾云遮住了这个世界。",
+     "effect_ids": [
+      1188
+     ]
+    },
+    {
+     "key": "Unreachable",
+     "name": "Unreachable",
+     "cn": "无法抵达",
+     "desc": "我们的传感器无法再监测这个星球。",
+     "effect_ids": [
+      1190
+     ]
+    },
+    {
+     "key": "Gloom Border",
+     "name": "Gloom Border",
+     "cn": "阴影迷雾边界",
+     "desc": "这个世界位于阴霾星际墙的边界上。",
+     "effect_ids": [
+      1193
+     ]
+    },
+    {
+     "key": "MERIDIAN BLACK HOLE",
+     "name": "MERIDIAN BLACK HOLE",
+     "cn": "梅里迪亚黑洞",
+     "desc": "繁荣的梅里迪亚被腐蚀成终结族超级殖民地，需要使用神秘的暗流将其摧毁。剩下的只有这道银河疤痕。",
+     "effect_ids": [
+      1229
+     ]
+    },
+    {
+     "key": "FRACTURED PLANET",
+     "name": "FRACTURED PLANET",
+     "cn": "碎裂星球",
+     "desc": "一颗被梅里迪亚奇点撕裂的行星所剩的一切，是暴政在身后留下荒凉的庄严警示。",
+     "effect_ids": [
+      1252
+     ]
+    },
+    {
+     "key": "OUTPOST ALPHA",
+     "name": "OUTPOST ALPHA",
+     "cn": "阿尔法前哨",
+     "desc": "在阴霾肆虐的太空中建立的第一个载人航天站。",
+     "effect_ids": [
+      1304
+     ]
+    },
+    {
+     "key": "HIVE WORLD",
+     "name": "HIVE WORLD",
+     "cn": "巢穴世界",
+     "desc": "这颗星球已被终结族完全侵扰，里里外外都变成了暴政的巢穴。它是阴霾孢子的来源。",
+     "effect_ids": [
+      1311
+     ]
+    },
+    {
+     "key": "CONVENTIONAL BLACK HOLE",
+     "name": "CONVENTIONAL BLACK HOLE",
+     "cn": "常规黑洞",
+     "desc": "这颗前行星现在只不过是一个正常、稳定的黑洞。",
+     "effect_ids": [
+      1352
+     ]
+    }
+   ],
+   "key": "cosmic_horror"
+  },
+  {
+   "name": "DSS战略行动",
+   "name_en": "TACTICAL ACTION",
+   "entries": [
+    {
+     "key": "Eagle Storm [1209/1212/1216]",
+     "name": "Eagle Storm [1209/1212/1216]",
+     "cn": "✈ 飞鹰风暴",
+     "desc": "DSS的工作人员在大型三层结构附近集结了一支“飞鹰”编队，采取24小时轮班制，为星球上的绝地潜兵提供火力压制支援。在此期间，“飞鹰风暴” 将作为行动变量周期性在任务中部署。若该星球遭到入侵，DSS将会守住防线，阻止敌方入侵进度；在地面执行任务的绝地潜兵小队队长可通过 “标记目标” 功能为 “飞鹰” 标记敌人。",
+     "effect_ids": [
+      1209,
+      1212,
+      1216
+     ]
+    },
+    {
+     "key": "Orbital Block [1213/1215]",
+     "name": "Orbital Block [1213/1215]",
+     "cn": "🚫 轨道封锁",
+     "desc": "DSS启用零重力反舰导弹系统，将会瞄准该星球上所有试图离开的敌方目标。同时将多余战力投入到超级驱逐舰后勤支援。在此期间，在该星球执行任务的小队将自动激活 “强化资源：绝地喷射仓空间优化” ；且该星球上的敌军无法对其他星球发动入侵战役。",
+     "effect_ids": [
+      1213,
+      1215
+     ]
+    },
+    {
+     "key": "Heavy Ordnance Distribution [1214]",
+     "name": "Heavy Ordnance Distribution [1214]",
+     "cn": "💣 重型军械分发",
+     "desc": "DSS后勤舰队将为环绕星球的超级驱逐舰提供富余的380MM高爆弹，SEAF部队的行动也将获得装备支援，加速解放进程。在此期间，在该星球执行任务的小队将获得额外的战略配备：轨道380 MM高爆弹火力网；地面上的SEAF部队将获得更高级的武器支援；且DSS将会额外推进该星球的解放进程。",
+     "effect_ids": [
+      1214
+     ]
+    },
+    {
+     "key": "Eagle Block [1209+1215 组合]",
+     "name": "Eagle Block [1209+1215 组合]",
+     "cn": "🚫✈🚫 飞鹰封锁",
+     "desc": "在该效果激活期间，将同时激活DSS战术行动：“飞鹰风暴”与“轨道封锁”。",
+     "effect_ids": [
+      1209,
+      1215
+     ]
+    },
+    {
+     "key": "Planetary Bombardment [1208/1211]",
+     "name": "Planetary Bombardment [1208/1211]",
+     "cn": "💣🌏💣 星球轰炸",
+     "desc": "DSS上搭载的76门“总统级”舰炮同时开火，轰炸整个星球。在此期间，所有小队 +1 可用增援； 且DSS将会额外推进该星球的解放进程。注意了：炮弹可不会区分正义与邪恶！",
+     "effect_ids": [
+      1208,
+      1211
+     ]
+    },
+    {
+     "key": "Operational Support [1238]",
+     "name": "Operational Support [1238]",
+     "cn": "✊ 行动支持",
+     "desc": "DSS停靠在这颗星球附近，一定程度上有助于该星球的解放战争进程。在该星球执行任务的小队所携带的所有“外骨骼机甲”战略配备冷却时间减少35%。",
+     "effect_ids": [
+      1238
+     ]
+    }
+   ],
+   "key": "tactical_action"
+  },
+  {
+   "name": "入侵等级",
+   "name_en": "ENEMY INVASION LEVEL",
+   "entries": [
+    {
+     "key": "ENEMY INVASION LEVEL",
+     "name": "ENEMY INVASION LEVEL",
+     "cn": "入侵等级",
+     "desc": "越高的入侵等级，则意味着该星球需要通过完成更多的任务来阻挡攻势。",
+     "effect_ids": []
+    }
+   ],
+   "key": "enemy_invasion_level"
+  },
+  {
+   "name": "入侵战役",
+   "name_en": "DEFENSE CAMPAIGN",
+   "entries": [
+    {
+     "key": "DEFENSE CAMPAIGN",
+     "name": "DEFENSE CAMPAIGN",
+     "cn": "入侵战役",
+     "desc": "敌方 HP 进度显示（如 212,983/700,000），描述：敌军妄想占领这颗星球，天真。",
+     "effect_ids": []
+    }
+   ],
+   "key": "defense_campaign"
+  },
+  {
+   "name": "跃迁航道",
+   "name_en": "WARP LINK",
+   "entries": [
+    {
+     "key": "Warp Link Blockade",
+     "name": "Warp Link Blockade",
+     "cn": "跃迁航道封锁",
+     "desc": "由于此地通往{连接星球}的跃迁航道为单向航道，目前无法对该地的光能族发动解放战争。（{连接星球}随星球动态变化，如西斯→里尔加湾、桑吉斯→卡利亚）",
+     "effect_ids": []
+    }
+   ],
+   "key": "warp_link"
+  },
+  {
+   "name": "环境条件",
+   "name_en": "ENVIRONMENTAL CONDITION · 已收集",
+   "entries": [
+    {
+     "key": "RAINSTORMS",
+     "name": "RAINSTORMS",
+     "cn": "暴雨",
+     "desc": "暴雨将降低能见度。",
+     "effect_ids": []
+    },
+    {
+     "key": "EXTREME COLD",
+     "name": "EXTREME COLD",
+     "cn": "夜间极寒",
+     "desc": "夜间气温大幅降低，同时使需要散热的武器冷却加快。",
+     "effect_ids": []
+    },
+    {
+     "key": "INTENSE HEAT",
+     "name": "INTENSE HEAT",
+     "cn": "昼间极暑",
+     "desc": "昼间气温大幅升高，加快体力消耗速度，同时使需要散热的武器冷却变慢。",
+     "effect_ids": []
+    },
+    {
+     "key": "FIRE TORNADOES",
+     "name": "FIRE TORNADOES",
+     "cn": "火龙卷",
+     "desc": "火龙卷将随机出现在地图上。",
+     "effect_ids": []
+    },
+    {
+     "key": "ION STORMS",
+     "name": "ION STORMS",
+     "cn": "离子风暴",
+     "desc": "风暴期间，战略配备不可用（除超级地球大炮）",
+     "effect_ids": []
+    },
+    {
+     "key": "BLIZZARDS",
+     "name": "BLIZZARDS",
+     "cn": "暴风雪",
+     "desc": "暴风雪将降低能见度，并使需要散热的武器冷却加快。",
+     "effect_ids": []
+    },
+    {
+     "key": "Leviathan Blockade",
+     "name": "Leviathan Blockade",
+     "cn": "利维坦封锁",
+     "desc": "城市上空会出现利维坦。",
+     "effect_ids": [
+      1404,
+      1405
+     ]
+    },
+    {
+     "key": "（其他未捕获环境）",
+     "name": "（其他未捕获环境）",
+     "cn": "—",
+     "desc": "插件内置表已含：沙暴/地震/流星雨/火山活动/酸雨/浓雾/强风/暴雪/冰雹/昏暗天空/血雨/昼间/夜间变体",
+     "effect_ids": []
+    }
+   ],
+   "key": "environmental_condition"
+  },
+  {
+   "key": "combat_restriction",
+   "name": "作战限制",
+   "name_en": "COMBAT RESTRICTION",
+   "entries": [
+    {
+     "key": "班机延误",
+     "name": "班机延误",
+     "cn": "班机延误",
+     "desc": "撤离时间额外延迟 30 秒。",
+     "effect_ids": [
+      1313
+     ]
+    },
+    {
+     "key": "缺少飞行员",
+     "name": "缺少飞行员",
+     "cn": "缺少飞行员",
+     "desc": "“飞鹰”的重新装填时间增加 20%。",
+     "effect_ids": [
+      1314
+     ]
+    },
+    {
+     "key": "班机延误",
+     "name": "班机延误",
+     "cn": "班机延误",
+     "desc": "撤离时间额外延迟 40 秒。",
+     "effect_ids": [
+      1315
+     ]
+    },
+    {
+     "key": "缺少飞行员",
+     "name": "缺少飞行员",
+     "cn": "缺少飞行员",
+     "desc": "“飞鹰”的重新装填时间增加 30%。",
+     "effect_ids": [
+      1316,
+      1320
+     ]
+    },
+    {
+     "key": "补给不足",
+     "name": "补给不足",
+     "cn": "补给不足",
+     "desc": "弹药箱与补给箱的补给数量减少 50%。",
+     "effect_ids": [
+      1317,
+      1319
+     ]
+    },
+    {
+     "key": "预算削减",
+     "name": "预算削减",
+     "cn": "预算削减",
+     "desc": "小队可用的最大增援 -1。",
+     "effect_ids": [
+      1318
+     ]
+    }
+   ]
+  },
+  {
+   "key": "facility",
+   "name": "设施与场所",
+   "name_en": "FACILITY",
+   "entries": [
+    {
+     "key": "Xenoentomology Center",
+     "name": "Xenoentomology Center",
+     "cn": "异虫学研究中心",
+     "desc": "那些研究终结族行为、生态学和E-710潜力的人聚集在这里进行跨学科研究。",
+     "effect_ids": [
+      1197
+     ]
+    },
+    {
+     "key": "Deep Mantle Forge Complex",
+     "name": "Deep Mantle Forge Complex",
+     "cn": "深地幔锻造综合体",
+     "desc": "这个星球上的冶炼厂和炼油厂将原材料转化为可用的硬件。",
+     "effect_ids": [
+      1198
+     ]
+    },
+    {
+     "key": "DEMOCRACY SPACE STATION",
+     "name": "DEMOCRACY SPACE STATION",
+     "cn": "民主空间站",
+     "desc": "由绝地潜兵操作的大规模解放武器。以士兵的鲜血与纳税人的信用点铸造，这一技术奇迹正是民主的具现。",
+     "effect_ids": [
+      1217
+     ]
+    },
+    {
+     "key": "FACTORY HUB",
+     "name": "FACTORY HUB",
+     "cn": "工厂枢纽",
+     "desc": "这个星球上的辛勤劳动者生产着对战争努力以及超级地球繁荣至关重要的商品。",
+     "effect_ids": [
+      1232
+     ]
+    },
+    {
+     "key": "CENTER OF SCIENCE",
+     "name": "CENTER OF SCIENCE",
+     "cn": "科学中心",
+     "desc": "在这个星球上，科学部最优秀、最聪明的人正在努力实现他们的下一个突破。",
+     "effect_ids": [
+      1234
+     ]
+    },
+    {
+     "key": "CENTER FOR CIVILIAN SURVEILLANCE AND SAFETY",
+     "name": "CENTER FOR CIVILIAN SURVEILLANCE AND SAFETY",
+     "cn": "平民监控与安全中心",
+     "desc": "真理部在这里分析公民的活动、言语、数据、DNA、RNA和神经拓扑结构。",
+     "effect_ids": [
+      1236
+     ]
+    },
+    {
+     "key": "JET BRIGADE FACTORIES",
+     "name": "JET BRIGADE FACTORIES",
+     "cn": "喷气旅工厂",
+     "desc": "这里生产了垂直增强的喷气旅士兵。",
+     "effect_ids": [
+      1239
+     ]
+    },
+    {
+     "key": "CAMPAIGN BLOCKER",
+     "name": "CAMPAIGN BLOCKER",
+     "cn": "非军事化",
+     "desc": "无法在此星球发动战役。",
+     "effect_ids": [
+      1246
+     ]
+    },
+    {
+     "key": "ARSENAL AUGMENTATION: M-102 FAST RECONNAISSANCE VEHICLE",
+     "name": "ARSENAL AUGMENTATION: M-102 FAST RECONNAISSANCE VEHICLE",
+     "cn": "战备增强：M-102 快速侦察车",
+     "desc": "最高指挥部已授权在所有绝地潜兵装载中临时增加M-102快速侦察车战略配备。",
+     "effect_ids": [
+      1279
+     ]
+    },
+    {
+     "key": "HELLDIVER TRAINING FACILITIES",
+     "name": "HELLDIVER TRAINING FACILITIES",
+     "cn": "绝地潜兵训练设施",
+     "desc": "在这里，最优秀的人会接受严格的绝地潜兵训练，这将为他们赢得斗篷。",
+     "effect_ids": [
+      1282
+     ]
+    },
+    {
+     "key": "NEW HOPE CITY",
+     "name": "NEW HOPE CITY",
+     "cn": "新希望城",
+     "desc": "旗舰级最高安全城市。暴政无法攻克；这是联邦的未来。",
+     "effect_ids": [
+      1287
+     ]
+    },
+    {
+     "key": "NEW ASPIRATION CITY",
+     "name": "NEW ASPIRATION CITY",
+     "cn": "新憧憬城",
+     "desc": "三大最高安全城市之一。暴政无法攻克；这是联邦的未来。",
+     "effect_ids": [
+      1291
+     ]
+    },
+    {
+     "key": "NEW YEARNING CITY",
+     "name": "NEW YEARNING CITY",
+     "cn": "新渴望城",
+     "desc": "三大最高安全城市之一。暴政无法攻克；这是联邦的未来。",
+     "effect_ids": [
+      1292
+     ]
+    },
+    {
+     "key": "ULTRAMAFIC MINE",
+     "name": "ULTRAMAFIC MINE",
+     "cn": "超镁铁质矿场",
+     "desc": "从火成岩深部矿床中提取铂的矿山。",
+     "effect_ids": [
+      1324
+     ]
+    },
+    {
+     "key": "PANDORA BASE",
+     "name": "PANDORA BASE",
+     "cn": "潘多拉基地",
+     "desc": "绝密基地，民主空间站的强化组件在此建造。",
+     "effect_ids": [
+      1344
+     ]
+    },
+    {
+     "key": "DATA CENTER",
+     "name": "DATA CENTER",
+     "cn": "数据中心",
+     "desc": "机器人在这里存储了大量加密信息。",
+     "effect_ids": [
+      1353
+     ]
+    }
+   ]
   }
+ ]
 }
