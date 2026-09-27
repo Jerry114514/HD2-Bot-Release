@@ -43,7 +43,24 @@ BASE = _ROOT
 HD2 = _ROOT
 TEMP = os.path.join(BASE, "temp")
 os.makedirs(TEMP, exist_ok=True)
-GROUP_ID = int(_g("bot", "default_group", d=0))
+def _default_group() -> int:
+    """默认推送群：**每次调用时**读配置。
+    不能用模块级常量——那样"设为默认推送群"后必须重启控制台才生效。"""
+    try:
+        return int(_g("bot", "default_group", d=0) or 0)
+    except Exception:
+        return 0
+
+
+def _target_group(raw=None) -> int:
+    """解析本次操作的目标群：前端传来的群号优先，否则用默认推送群"""
+    try:
+        v = int(str(raw).strip())
+        if v > 0:
+            return v
+    except Exception:
+        pass
+    return _default_group()
 PORT = int(_g("webui", "port", d=8630))
 
 SEND_SCRIPT = os.path.join(BASE, "scripts", "napcat_send_msg.py")
@@ -213,23 +230,24 @@ def action_open_qrcode() -> str:
         return f"❌ 打开失败: {e}"
 
 
-def action_send_guide() -> str:
+def action_send_guide(group=None) -> str:
     """一键推送：把群聊版使用说明直接发到群"""
     try:
+        gid = _target_group(group)
         with io.open(GUIDE_FILE, encoding="utf-8") as f:
             guide = f.read().strip()
         if not guide:
             return "❌ 使用说明文件为空：" + GUIDE_FILE
-        push = send_msg(guide)
-        return f"📖 使用说明已推送\n{push}\n\n──── 内容预览 ────\n{guide[:200]}"
+        push = send_msg(guide, gid)
+        return f"📖 使用说明已推送（目标群 {gid}）\n{push}\n\n──── 内容预览 ────\n{guide[:200]}"
     except Exception as e:
         return f"❌ 推送使用说明失败: {e}"
 
 
-def action_send_guide_to(group_id) -> str:
-    """推送使用说明到指定群"""
+def action_send_guide_to(group_id=None) -> str:
+    """推送使用说明到指定群（未指定时用默认推送群）"""
     try:
-        gid = int(str(group_id).strip())
+        gid = _target_group(group_id)
         with io.open(GUIDE_FILE, encoding="utf-8") as f:
             guide = f.read().strip()
         push = send_msg(guide, gid)
@@ -305,8 +323,8 @@ def action_push_all_campaigns() -> str:
 
 
 def action_push_all_analysis() -> str:
-    """LLM 战局分析群发（走 WS 注入拿回复后群发）"""
-    r = run_sub([PYTHON, WS_INJECT, "/分析", str(GROUP_ID)], timeout=180)
+    """LLM 战局分析群发（走 WS 注入拿回复后群发；注入群用当前默认群）"""
+    r = run_sub([PYTHON, WS_INJECT, "/分析", str(_default_group())], timeout=180)
     out = (r.stdout or "") + ("\n" + r.stderr if r.stderr else "")
     reply = _extract_reply(out)
     if not reply:
@@ -315,8 +333,8 @@ def action_push_all_analysis() -> str:
 
 
 def action_push_all_campaign_brief() -> str:
-    """战役简报群发（走 WS 注入 /战役 拿回复后群发）"""
-    r = run_sub([PYTHON, WS_INJECT, "/战役", str(GROUP_ID)], timeout=180)
+    """战役简报群发（走 WS 注入 /战役 拿回复后群发；注入群用当前默认群）"""
+    r = run_sub([PYTHON, WS_INJECT, "/战役", str(_default_group())], timeout=180)
     out = (r.stdout or "") + ("\n" + r.stderr if r.stderr else "")
     reply = _extract_reply(out)
     if not reply:
@@ -326,7 +344,7 @@ def action_push_all_campaign_brief() -> str:
 
 def action_groups() -> str:
     """返回可用群列表（供前端下拉）"""
-    return json.dumps({"groups": _g("bot", "groups", d=[]) or [], "default": GROUP_ID}, ensure_ascii=False)
+    return json.dumps({"groups": _g("bot", "groups", d=[]) or [], "default": _default_group()}, ensure_ascii=False)
 
 
 # ============================================================
@@ -1043,8 +1061,8 @@ def run_sub(args, timeout=180):
 
 
 def send_msg(text: str, group_id=None) -> str:
-    """推送消息到群（走 NapCat WebUI API），group_id 缺省用默认群"""
-    gid = int(group_id) if group_id else GROUP_ID
+    """推送消息到群（走 NapCat WebUI API）；group_id 缺省/非法时用默认推送群"""
+    gid = _target_group(group_id)
     msg_file = os.path.join(TEMP, "webui_send_msg.txt")
     with io.open(msg_file, "w", encoding="utf-8") as f:
         f.write(text)
@@ -1053,14 +1071,15 @@ def send_msg(text: str, group_id=None) -> str:
     return ("✅ 已推送到群 %d" % gid) if ok else ("❌ 推送失败: " + (r.stdout or r.stderr)[-300:])
 
 
-def action_report() -> str:
+def action_report(group=None) -> str:
     """生成战报并推送（LLM 翻译，约 30-60 秒）"""
+    gid = _target_group(group)
     r = run_sub([PYTHON, GEN_REPORT], timeout=180)
     if os.path.exists(REPORT_FILE):
         with io.open(REPORT_FILE, encoding="utf-8") as f:
             report = f.read()
-        lines = ["📊 战报已生成（%d 字符），推送结果：" % len(report)]
-        lines.append(send_msg(report))
+        lines = [f"📊 战报已生成（{len(report)} 字符），目标群 {gid}，推送结果："]
+        lines.append(send_msg(report, gid))
         lines.append("")
         lines.append("──── 战报内容 ────")
         lines.append(report)
@@ -1068,20 +1087,22 @@ def action_report() -> str:
     return "❌ 战报生成失败\n" + (r.stdout or r.stderr)[-500:]
 
 
-def action_roll() -> str:
+def action_roll(group=None) -> str:
     try:
+        gid = _target_group(group)
         for p in APP_PATHS:
             sys.path.insert(0, p)
         roll_mod = _load_plugin(PLUGIN_ROLL)
         result = roll_mod._roll_stratagems(4)
-        return "🎲 随机战备\n" + result + "\n\n推送结果：" + send_msg(result)
+        return f"🎲 随机战备（目标群 {gid}）\n" + result + "\n\n推送结果：" + send_msg(result, gid)
     except Exception as e:
         return f"❌ Roll 失败: {e}"
 
 
-def action_planet(name: str) -> str:
+def action_planet(name: str, group=None) -> str:
     import asyncio
     try:
+        gid = _target_group(group)
         for p in APP_PATHS:
             sys.path.insert(0, p)
         planet_mod = _load_plugin(PLUGIN_PLANET)
@@ -1106,14 +1127,15 @@ def action_planet(name: str) -> str:
             return result
 
         result = asyncio.run(run())
-        return "🪐 星球信息\n" + result + "\n\n推送结果：" + send_msg(result)
+        return f"🪐 星球信息（目标群 {gid}）\n" + result + "\n\n推送结果：" + send_msg(result, gid)
     except Exception as e:
         return f"❌ 星球信息失败: {e}"
 
 
-def action_variant(name: str) -> str:
+def action_variant(name: str, group=None) -> str:
     import asyncio
     try:
+        gid = _target_group(group)
         for p in APP_PATHS:
             sys.path.insert(0, p)
         variant_mod = _load_plugin(PLUGIN_VARIANT)
@@ -1141,20 +1163,22 @@ def action_variant(name: str) -> str:
             return "\n".join(lines)
 
         result = asyncio.run(run())
-        return "🧬 变种查询\n" + result + "\n\n推送结果：" + send_msg(result)
+        return f"🧬 变种查询（目标群 {gid}）\n" + result + "\n\n推送结果：" + send_msg(result, gid)
     except Exception as e:
         return f"❌ 变种查询失败: {e}"
 
 
-def action_custom(text: str) -> str:
-    return "📢 自定义消息\n" + text + "\n\n推送结果：" + send_msg(text)
+def action_custom(text: str, group=None) -> str:
+    gid = _target_group(group)
+    return f"📢 自定义消息（目标群 {gid}）\n" + text + "\n\n推送结果：" + send_msg(text, gid)
 
 
-def action_inject(cmd: str) -> str:
+def action_inject(cmd: str, group=None) -> str:
     """WS 注入测试：伪装群成员发指令，显示机器人回复（不推送到群）"""
-    r = run_sub([PYTHON, WS_INJECT, cmd, str(GROUP_ID)], timeout=90)
+    gid = _target_group(group)
+    r = run_sub([PYTHON, WS_INJECT, cmd, str(gid)], timeout=90)
     out = (r.stdout or "") + ("\n" + r.stderr if r.stderr else "")
-    return "🧪 注入指令: " + cmd + "\n\n" + out
+    return f"🧪 注入指令: {cmd}（模拟群 {gid}）\n\n" + out
 
 
 def _extract_reply(out: str) -> str:
@@ -1167,15 +1191,16 @@ def _extract_reply(out: str) -> str:
     return ""
 
 
-def action_inject_push(cmd: str) -> str:
-    """WS 注入 + 推送：拿到机器人回复后直接推送到群"""
-    r = run_sub([PYTHON, WS_INJECT, cmd, str(GROUP_ID)], timeout=90)
+def action_inject_push(cmd: str, group=None) -> str:
+    """WS 注入 + 推送：拿到机器人回复后直接推送到目标群"""
+    gid = _target_group(group)
+    r = run_sub([PYTHON, WS_INJECT, cmd, str(gid)], timeout=90)
     out = (r.stdout or "") + ("\n" + r.stderr if r.stderr else "")
     reply = _extract_reply(out)
     if not reply:
         return "❌ 机器人未返回有效回复，未推送。\n\n" + out[-500:]
-    push = send_msg(reply)
-    return f"📤 注入指令: {cmd}\n\n✅ 机器人回复已推送到群 {GROUP_ID}\n{push}\n\n──── 回复内容 ────\n{reply}"
+    push = send_msg(reply, gid)
+    return f"📤 注入指令: {cmd}（模拟群 {gid}）\n\n✅ 机器人回复已推送到群 {gid}\n{push}\n\n──── 回复内容 ────\n{reply}"
 
 
 ACTIONS = {
@@ -1317,30 +1342,32 @@ PAGE = r"""<!DOCTYPE html>
 
   <div class="card">
     <h3>🚀 一键发送</h3>
-    <p class="desc">点击即生成并推送到群（无需输入）</p>
-    <div class="btn-row">
-      <button onclick="run('inject_push','/战报')">📊 战报</button>
-      <button class="sec" onclick="run('inject_push','/dss')">🛰️ DSS</button>
-      <button class="sec" onclick="run('inject_push','/战线')">⚔️ 战线</button>
-      <button class="sec" onclick="run('inject_push','/战役')">🎬 战役</button>
-      <button onclick="run('inject_push','/分析')">🧠 分析</button>
-      <button class="sec" onclick="run('inject_push','/查表')">📚 查表</button>
-      <button class="sec" onclick="run('inject_push','/roll')">🎲 Roll</button>
-      <button class="danger" onclick="run('send_guide')">📖 使用说明</button>
-    </div>
-    <div class="btn-row" style="margin-top:10px">
-      <select id="targetGroup" style="flex:1;background:#0f141d;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px;font-size:13px">
+    <p class="desc">点击即生成并推送；推送目标 = 下方所选的群</p>
+    <div class="btn-row" style="margin-bottom:10px">
+      <span style="align-self:center;font-size:12px;color:var(--muted)">推送目标</span>
+      <select id="targetGroup" onchange="updateTargetHint()" style="flex:1;background:#0f141d;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px;font-size:13px">
         <option value="">加载中...</option>
       </select>
-      <button class="danger" onclick="run('send_guide_to', document.getElementById('targetGroup').value)">📖 推送说明到所选群</button>
-      <button class="sec" onclick="run('push_all')">🌐 全局推送说明</button>
     </div>
-    <div class="hint">分析约 30~60 秒；战报约 30~60 秒；其余约 5~15 秒</div>
+    <div class="btn-row">
+      <button onclick="run('inject_push','/战报',{group:targetGroup()})">📊 战报</button>
+      <button class="sec" onclick="run('inject_push','/dss',{group:targetGroup()})">🛰️ DSS</button>
+      <button class="sec" onclick="run('inject_push','/战线',{group:targetGroup()})">⚔️ 战线</button>
+      <button class="sec" onclick="run('inject_push','/战役',{group:targetGroup()})">🎬 战役</button>
+      <button onclick="run('inject_push','/分析',{group:targetGroup()})">🧠 分析</button>
+      <button class="sec" onclick="run('inject_push','/查表',{group:targetGroup()})">📚 查表</button>
+      <button class="sec" onclick="run('inject_push','/roll',{group:targetGroup()})">🎲 Roll</button>
+      <button class="danger" onclick="run('send_guide',null,{group:targetGroup()})">📖 使用说明</button>
+    </div>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="sec" onclick="run('push_all')">🌐 推送到所有群（使用说明）</button>
+    </div>
+    <div class="hint" id="targetHint">所选群对上方<b>所有</b>发送按钮生效（战报/DSS/战线/战役/分析/查表/Roll/使用说明）；「推送到所有群」与下方「一键群发」无视选择，固定发给 <code>bot.groups</code> 里的全部群。分析/战报约 30~60 秒，其余约 5~15 秒</div>
   </div>
 
   <div class="card">
-    <h3>📤 一键群发（所有白名单群）</h3>
-    <p class="desc">生成内容并推送到全部群（{GROUP} 等）</p>
+    <h3>📤 一键群发（所有推送群）</h3>
+    <p class="desc">生成内容并推送到全部群（<span class="js-default-group">{GROUP}</span> 等 <code>bot.groups</code> 内所有群）</p>
     <div class="btn-row">
       <button onclick="run('push_all_report')">📊 战报</button>
       <button class="sec" onclick="run('push_all_campaigns')">⚔️ 战线</button>
@@ -1354,35 +1381,35 @@ PAGE = r"""<!DOCTYPE html>
 
   <div class="card">
     <h3>📊 推送战报</h3>
-    <p class="desc">生成最新战况（重要指令 + 目标星球 + 战区分布 + 资讯），推送到群 {GROUP}</p>
-    <div class="btn-row"><button onclick="run('report')">生成并推送</button></div>
+    <p class="desc">生成最新战况（重要指令 + 目标星球 + 战区分布 + 资讯），推送到所选的群</p>
+    <div class="btn-row"><button onclick="run('report',null,{group:targetGroup()})">生成并推送</button></div>
   </div>
 
   <div class="card">
     <h3>🎲 推送随机战备</h3>
-    <p class="desc">从全类型战备池随机抽取 4 个，推送到群</p>
-    <div class="btn-row"><button class="sec" onclick="run('roll')">Roll 并推送</button></div>
+    <p class="desc">从全类型战备池随机抽取 4 个，推送到所选的群</p>
+    <div class="btn-row"><button class="sec" onclick="run('roll',null,{group:targetGroup()})">Roll 并推送</button></div>
   </div>
 
   <div class="card">
     <h3>🪐 星球信息</h3>
     <p class="desc">抓取星球页面：抵抗度 / 行动变量 / POI（群内指令：/星球 &lt;星球名&gt;，中英文均可）</p>
     <input type="text" id="planet" placeholder="如：奥密克戎 或 OMICRON">
-    <div class="btn-row"><button class="sec" onclick="run('planet', document.getElementById('planet').value)">查询并推送</button></div>
+    <div class="btn-row"><button class="sec" onclick="run('planet', document.getElementById('planet').value, {group:targetGroup()})">查询并推送</button></div>
   </div>
 
   <div class="card">
     <h3>🧬 变种查询</h3>
     <p class="desc">扫描战役星球，输出存在该变种的所有星球</p>
     <input type="text" id="variant" placeholder="如：孢裂变种 / 喷气旅">
-    <div class="btn-row"><button class="sec" onclick="run('variant', document.getElementById('variant').value)">查询并推送</button></div>
+    <div class="btn-row"><button class="sec" onclick="run('variant', document.getElementById('variant').value, {group:targetGroup()})">查询并推送</button></div>
   </div>
 
   <div class="card">
     <h3>📢 自定义消息</h3>
-    <p class="desc">直接推送一段文本到群</p>
+    <p class="desc">直接推送一段文本到所选的群</p>
     <input type="text" id="custom" placeholder="输入要推送的内容...">
-    <div class="btn-row"><button onclick="run('custom', document.getElementById('custom').value)">推送</button></div>
+    <div class="btn-row"><button onclick="run('custom', document.getElementById('custom').value, {group:targetGroup()})">推送</button></div>
   </div>
 
   <div class="card">
@@ -1397,11 +1424,11 @@ PAGE = r"""<!DOCTYPE html>
 
   <div class="card">
     <h3>🧪 查询推送 / 响应测试</h3>
-    <p class="desc">输入指令（查表/战报/星球等），「测试并推送」= 注入拿到机器人回复后直接推送到群；「仅测试」= 只看回复不发群</p>
+    <p class="desc">输入指令（查表/战报/星球等），「测试并推送」= 注入拿到机器人回复后直接推送到所选的群；「仅测试」= 只看回复不发群</p>
     <input type="text" id="inject" value="/查表" placeholder="/战报  /查表  /查表 星区 巴纳德  /查表 孢裂变种  /roll">
     <div class="btn-row">
-      <button class="danger" onclick="run('inject_push', document.getElementById('inject').value)">📤 测试并推送</button>
-      <button class="sec" onclick="run('inject', document.getElementById('inject').value)">🧪 仅测试</button>
+      <button class="danger" onclick="run('inject_push', document.getElementById('inject').value, {group:targetGroup()})">📤 测试并推送</button>
+      <button class="sec" onclick="run('inject', document.getElementById('inject').value, {group:targetGroup()})">🧪 仅测试</button>
       <button class="sec" onclick="document.getElementById('inject').value='/查表'">/查表</button>
       <button class="sec" onclick="document.getElementById('inject').value='/查表 星区 巴纳德'">星区</button>
       <button class="sec" onclick="document.getElementById('inject').value='/查表 孢裂变种'">参数</button>
@@ -1409,7 +1436,7 @@ PAGE = r"""<!DOCTYPE html>
       <button class="sec" onclick="document.getElementById('inject').value='/战役'">战役</button>
       <button class="sec" onclick="document.getElementById('inject').value='/分析'">分析</button>
     </div>
-    <div class="hint">快捷按钮仅填充输入框；「测试并推送」会把机器人回复发到群 {GROUP}</div>
+    <div class="hint">快捷按钮仅填充输入框；「测试并推送」会把机器人回复发到<b>上方所选的群</b>（注入也模拟该群）</div>
   </div>
 
   <div class="card" style="grid-column: 1 / -1;">
@@ -1459,10 +1486,16 @@ PAGE = r"""<!DOCTYPE html>
 <script>
 let busy = false;
 function setStatus(s) { document.getElementById('status').textContent = s; }
-async function run(action, value) {
+/** 当前"推送目标"下拉框选中的群号（空串表示未选/未加载） */
+function targetGroup() {
+  const el = document.getElementById('targetGroup');
+  return el ? (el.value || '') : '';
+}
+async function run(action, value, extra) {
   if (busy) return;
   const body = { action };
   if (value !== undefined) body.value = value;
+  if (extra && typeof extra === 'object') Object.assign(body, extra);
   const out = document.getElementById('output');
   const head = document.getElementById('output-head');
   const b = document.getElementById('output-body');
@@ -1500,7 +1533,22 @@ async function loadGroups() {
     const list = d.groups || [];
     sel.innerHTML = list.map(g => `<option value="${g}">群 ${g}${g===d.default?'（默认）':''}</option>`).join('');
     if (!list.length) sel.innerHTML = '<option value="">未配置群</option>';
+    // 用接口返回的真实默认群刷新页面文案（页面初始值是服务端渲染的，改过默认群后需要更新）
+    // 避免"设为默认推送群"后界面仍显示旧群号
+    document.querySelectorAll('.js-default-group').forEach(el => { el.textContent = d.default; });
+    updateTargetHint();
   } catch (e) {}
+}
+/** 把「当前推送目标」显示在下方提示里，避免选错群 */
+function updateTargetHint() {
+  const el = document.getElementById('targetHint');
+  if (!el) return;
+  const g = targetGroup();
+  if (!g) return;
+  if (el.dataset.base === undefined) el.dataset.base = el.innerHTML;
+  el.innerHTML = `🎯 当前推送目标：<b style="color:var(--accent)">群 ${g}</b>　`
+    + `<a href="#" onclick="event.preventDefault();openGroupDialog()" style="color:var(--accent2)">管理群号</a><br>`
+    + el.dataset.base;
 }
 loadGroups();
 async function refreshLogs() {
@@ -1605,6 +1653,8 @@ async function groupAct(action, preset) {
   } finally {
     btns.forEach(b => b.disabled = false);
     groupRefresh();
+    // 默认群/推送列表可能变了：立刻刷新下拉框与页面上的群号文案，免手动刷新页面
+    if (action !== 'group_list') loadGroups();
   }
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeGroupDialog(); });
@@ -1631,7 +1681,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/" or self.path == "/index.html":
-            self._send(200, PAGE.replace("{GROUP}", str(GROUP_ID)), "text/html")
+            self._send(200, PAGE.replace("{GROUP}", str(_default_group())), "text/html")
         elif self.path == "/api/logs":
             self._send(200, action_logs(), "application/json")
         elif self.path == "/api/groups":
@@ -1648,13 +1698,19 @@ class Handler(BaseHTTPRequestHandler):
             req = json.loads(self.rfile.read(length).decode("utf-8"))
             action = req.get("action", "")
             value = str(req.get("value", "")).strip()
+            group = req.get("group")
             fn = ACTIONS.get(action)
             if not fn:
                 self._send(200, json.dumps({"ok": False, "output": "未知操作"}))
                 return
-            output = fn(value) if action in ("planet", "variant", "custom", "inject", "inject_push",
-                                             "send_guide_to", "group_add", "group_remove",
-                                             "group_default") else fn()
+            TWO_ARG = ("planet", "variant", "custom", "inject", "inject_push")
+            GROUP_ARG = TWO_ARG + ("send_guide", "report", "roll", "send_guide_to")
+            if action in TWO_ARG:
+                output = fn(value, group=group)
+            elif action in GROUP_ARG:
+                output = fn(group=group)
+            else:
+                output = fn()
             self._send(200, json.dumps({"ok": True, "output": output}, ensure_ascii=False))
         except Exception as e:
             import traceback
