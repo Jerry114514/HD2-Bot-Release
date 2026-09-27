@@ -666,12 +666,37 @@ def _site_zh(force: bool = False) -> dict:
             mo = doc.get("major_order") or {}
             _SITE_ZH["brief"] = (mo.get("translated_brief") or "").strip()
             _SITE_ZH["brief_title"] = (mo.get("title") or "").strip()
-            _SITE_ZH["news"] = {str(n.get("id")): (n.get("translated") or "").strip()
-                                for n in (doc.get("news") or []) if isinstance(n, dict)}
+            news = {}
+            for n in (doc.get("news") or []):
+                if not isinstance(n, dict) or n.get("id") is None:
+                    continue
+                t = (n.get("translated") or "").strip()
+                if t:
+                    news[str(n["id"])] = {"text": t, "ver": str(n.get("translated_at") or "")}
+            _SITE_ZH["news"] = news
             _SITE_ZH["ts"] = now
     except Exception as e:
         logger.warning(f"[HD2] 读取站点中文失败（将回退 LLM/原文）: {e}")
     return _SITE_ZH
+
+
+def _seed_site_news_cache(cache: dict) -> int:
+    """把站点已有的中文译文**全部**播种进新闻缓存（不止当前要显示的那条）。
+
+    为什么全播：否则同一份资讯列表里，可能"这一条用站点译文、那一条用本机 LLM 译文"，
+    术语与文风不一致。全播之后，站点覆盖到的条目都统一用权威译文。
+    返回新写入条数。
+    """
+    n = 0
+    try:
+        for nid, rec in (_SITE_ZH.get("news") or {}).items():
+            if _news_should_update(cache.get(nid), rec.get("text"), "site", rec.get("ver") or ""):
+                cache[nid] = _news_rec_make(rec["text"], "site", rec.get("ver") or "")
+                n += 1
+    except Exception as e:
+        logger.warning(f"[HD2] 播种站点译文失败: {e}")
+    return n
+
 
 
 # ---------------- /战报 快照：后台预热写入，前台只读 ----------------
@@ -1714,6 +1739,10 @@ class Hd2WarReportPlugin(Star):
         t0 = time.time()
         try:
             zh = _site_zh()
+            seeded = _seed_site_news_cache(self._news_cache)
+            if seeded:
+                self._save_news_cache()
+                logger.info(f"[HD2] 已播种 {seeded} 条站点译文到新闻缓存")
             self._ensure_planet_map()
             news_items = _get_news_items(1)
             news_text = await self._build_news_summary(news_items)
