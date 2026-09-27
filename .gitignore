@@ -11,6 +11,8 @@ __pycache__/
 temp/
 news_cache.json
 *.log
+# 插件运行时缓存（MO / DSS 资讯 / 新闻译文 / 信息流快照），部署后由插件自行重建
+plugins/*/cache/
 
 # NapCat / AstrBot 运行产物
 napcat/
