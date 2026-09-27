@@ -61,6 +61,26 @@
 2. **社区备选**：官方故障（如 500）时自动回退 Helldivers Companion 聚合端点，保证服务不中断
 3. **星球名/译名**：helldivers2.dev 实时星球名 + 本地对照表中文译名（星区显示查本地星图表，不依赖官方 sector 数字）
 
+### 信息流（`/战报` 的「最新资讯」）数据源
+
+新闻/资讯不再由机器人现抓，而是**读站点（HD2-Galatic_war-Map）每 5 分钟生成并提交的 `data.json`**：
+
+```
+站点仓 fetch-data.yml（每 5 分钟）
+  └─ HD2-Galatic_war-Map/data.json
+       ├─ dispatches[]  30 条原始新闻（id / published / type / message）
+       └─ news[]        最新 10 条的中文译文（id / original / translated / translated_at）
+              ↓  机器人只读这个 JSON
+       war_report 插件 _get_news_items()
+              ├─ 主源：站点 data.json（命中 news 的中文译文 → 直接用，**不再调用 LLM 翻译**）
+              ├─ 兜底 1：实时 API（companion live → 官方 NewsFeed）
+              └─ 兜底 2：本地缓存 cache/news_feed_cache.json
+```
+
+- 好处：少一次对外抓取、新闻中文与网站口径一致、`helldivers2.dev` 抖动不再影响资讯
+- 配置：`hd2_config.py` → `data.news_json_url`（JSON 地址）/ `data.news_source`（`hd2map` 默认，`api` 可切回原路径）/ `data.news_cache_ttl`（默认 120 秒）
+- 只有最新的 10 条带中文译文；更早的条目仍走原来的 LLM 翻译路径（按 id 缓存固定输出）
+
 ## 🚀 快速开始
 
 前置：Windows 10/11 + AstrBot 桌面版 + NapCat + QQNT 9.9.x + Python（AstrBot 自带）
@@ -166,6 +186,7 @@ HD2-Galatic_war-Map（公开 Page 仓库）
 - **重要指令缓存**：最近 5 条新闻无 `NEW MAJOR ORDER` 时直接复用本地缓存（MO 未更新，避免重复翻译/防 API 波动）；有新 NMO 时实时抓取并更新缓存
 - **DSS 资讯缓存**：涉及 DSS 的最新一条资讯，抓取后走 LLM 翻译存中文，DSS 离线/移动时作为补充说明输出
 - **新闻缓存**：按新闻 id 缓存 LLM 翻译结果，id 不变则输出固定文案
+- **信息流缓存**：站点 `data.json` 本地缓存 120 秒（站点每 5 分钟更新），站点不可达时作为最后兜底
 - 缓存统一存放在 `plugins/astrbot_plugin_hd2_war_report/cache/` 目录
 
 ## 📄 License

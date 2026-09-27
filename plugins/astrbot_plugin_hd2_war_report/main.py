@@ -426,6 +426,33 @@ _os.makedirs(CACHE_DIR, exist_ok=True)
 MO_CACHE_FILE = _os.path.join(CACHE_DIR, "mo_cache.json")
 MO_CACHE_WINDOW = 5  # 检查最近 N 条新闻是否出现新 NMO
 
+# ============ 信息流数据源 ============
+# 主源：站点（HD2-Galatic_war-Map）每 5 分钟生成的 data.json —— 由 GitHub Pages / Actions
+#       持续抓取并提交，机器人只读现成 JSON，不再自己现抓；其中 news 段还带最新 10 条的中文译文。
+# 兜底：原来的实时 API（companion LIVE_API_URL → 官方 NewsFeed），JSON 不可用时自动回退。
+# 配置项见 hd2_config 的 data.news_json_url / data.news_source / data.news_cache_ttl。
+NEWS_FEED_JSON_URL = "https://jerry114514.github.io/HD2-Galatic_war-Map/data.json"
+NEWS_FEED_SOURCE = "hd2map"      # hd2map=站点 JSON 优先(回退 API)；api=只用 API
+NEWS_FEED_CACHE_TTL = 120        # 站点 JSON 本地缓存秒数（站点每 5 分钟更新一次）
+NEWS_FEED_CACHE_FILE = _os.path.join(CACHE_DIR, "news_feed_cache.json")
+_NEWS_FEED_MEM = {"ts": 0.0, "items": None, "source": ""}
+
+try:
+    import hd2_config as _hd2cfg
+
+    def _dcfg(*keys, default=None):
+        return _hd2cfg.get(*keys, default=default)
+except Exception:
+    def _dcfg(*keys, default=None):
+        return default
+
+NEWS_FEED_JSON_URL = _dcfg("data", "news_json_url", default=NEWS_FEED_JSON_URL)
+NEWS_FEED_SOURCE = str(_dcfg("data", "news_source", default=NEWS_FEED_SOURCE) or "hd2map")
+try:
+    NEWS_FEED_CACHE_TTL = int(_dcfg("data", "news_cache_ttl", default=NEWS_FEED_CACHE_TTL))
+except Exception:
+    NEWS_FEED_CACHE_TTL = 120
+
 # MO 任务类型 → 中文（type 语义：1=解放 2=采集样本 3=消灭敌人 9=完成行动）
 MO_TASK_TYPE_CN = {
     1: "解放星球",
@@ -486,27 +513,107 @@ def _load_mo_cache() -> str | None:
     return None
 
 
-def _get_news_items(limit: int = 1) -> list[dict]:
-    """抓取最新新闻（星图网站 companion 优先，官方 NewsFeed 兜底——官方源疑似有问题待查验）"""
+def _site_feed_items(doc: dict) -> list[dict]:
+    """把站点 data.json 转成插件内部新闻条目格式。
+
+    站点结构：dispatches[*] = {id, published, type, message}（原始英文，30 条）
+              news[*]       = {id, original, translated, published_at, ...}（最新 10 条，带中文译文）
+    转换后：{id, message, published, type, _zh}；_zh 为站点已给的中文译文（有则免翻译）。
+    """
+    if not isinstance(doc, dict):
+        return []
+    zh_by_id = {}
+    for n in (doc.get("news") or []):
+        if isinstance(n, dict) and n.get("id") is not None:
+            t = (n.get("translated") or "").strip()
+            if t:
+                zh_by_id[str(n["id"])] = t
+    out = []
+    for d in (doc.get("dispatches") or []):
+        if not isinstance(d, dict) or d.get("id") is None:
+            continue
+        out.append({
+            "id": d.get("id"),
+            "message": d.get("message") or "",
+            "published": d.get("published") or "",
+            "type": d.get("type"),
+            "_zh": zh_by_id.get(str(d.get("id"))),
+        })
+    return out
+
+
+def _fetch_site_feed() -> list[dict]:
+    """读站点 data.json（信息流主源），带内存 + 文件缓存；失败抛异常由调用方回退"""
+    now = time.time()
+    if _NEWS_FEED_MEM["items"] and now - _NEWS_FEED_MEM["ts"] < NEWS_FEED_CACHE_TTL:
+        return list(_NEWS_FEED_MEM["items"])
+    doc = _fetch_json(NEWS_FEED_JSON_URL, timeout=20)
+    items = _site_feed_items(doc)
+    if not items:
+        raise ValueError("站点 data.json 无 dispatches 数据")
+    _NEWS_FEED_MEM.update({"ts": now, "items": items, "source": "hd2map"})
     try:
-        # 星图网站（companion）优先
-        obj = _fetch_json(LIVE_API_URL, timeout=20)
-        news = obj.get("news") or []
-        if not news:
-            # 官方 NewsFeed 兜底
-            try:
-                news = _fetch_official(f"/api/NewsFeed/{OFFICIAL_WAR_ID}?maxEntries=50", timeout=20)
-            except Exception as e2:
-                logger.warning(f"[HD2] 官方新闻也失败: {e2}")
-                return []
-        if not news:
-            return []
-        # 按 id 降序取最新
-        news_sorted = sorted(news, key=lambda n: n.get("id", 0), reverse=True)
-        return news_sorted[:limit]
+        with open(NEWS_FEED_CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump({"ts": now, "url": NEWS_FEED_JSON_URL,
+                       "fetchedAt": doc.get("fetchedAt"), "items": items}, f, ensure_ascii=False)
+    except Exception as e:
+        logger.warning(f"[HD2] 站点信息流缓存写入失败: {e}")
+    return items
+
+
+def _load_site_feed_cache() -> list[dict]:
+    """站点不可达时的本地兜底（缓存文件）"""
+    try:
+        if _os.path.exists(NEWS_FEED_CACHE_FILE):
+            with open(NEWS_FEED_CACHE_FILE, encoding="utf-8") as f:
+                d = json.load(f)
+            items = d.get("items") or []
+            if items:
+                logger.warning(f"[HD2] 站点信息流不可达，改用本地缓存（{len(items)} 条）")
+                return items
+    except Exception as e:
+        logger.warning(f"[HD2] 站点信息流缓存读取失败: {e}")
+    return []
+
+
+def _api_feed_items(limit: int) -> list[dict]:
+    """原来的实时抓取路径（兜底）：companion live API → 官方 NewsFeed"""
+    obj = _fetch_json(LIVE_API_URL, timeout=20)
+    news = obj.get("news") or []
+    if not news:
+        news = _fetch_official(f"/api/NewsFeed/{OFFICIAL_WAR_ID}?maxEntries=50", timeout=20)
+    if not news:
+        return []
+    news = sorted(news, key=lambda n: n.get("id", 0), reverse=True)
+    return news[:limit]
+
+
+def _get_news_items(limit: int = 1) -> list[dict]:
+    """取最新新闻（信息流）。
+
+    默认走站点 data.json（每 5 分钟由站点 Actions 更新，只读现成 JSON）；
+    站点不可用时回退实时 API；两者都失败时用本地缓存。
+    返回条目含 `_zh`（站点已翻译的中文）时，后续无需再走 LLM 翻译。
+    """
+    if NEWS_FEED_SOURCE != "api":
+        try:
+            items = _fetch_site_feed()
+            if items:
+                logger.info(f"[HD2] 信息流来源：站点 data.json（{len(items)} 条）")
+                return items[:limit]
+        except Exception as e:
+            logger.warning(f"[HD2] 站点信息流失败，回退实时 API: {e}")
+            cached = _load_site_feed_cache()
+            if cached:
+                return cached[:limit]
+    try:
+        items = _api_feed_items(limit)
+        if items:
+            logger.info(f"[HD2] 信息流来源：实时 API（{len(items)} 条）")
+        return items
     except Exception as e:
         logger.warning(f"[HD2] 获取新闻失败: {e}")
-        return []
+        return _load_site_feed_cache()[:limit]
 
 def _get_warzone_distribution() -> str:
     """抓取战区玩家分布（超级地球/终结族/机器人/光能族）带仰齐浜时间"""
@@ -1169,11 +1276,19 @@ class Hd2WarReportPlugin(Star):
             logger.warning(f"[HD2] 保存新闻缓存失败: {e}")
 
     async def _build_news_summary(self, items: list[dict]) -> str:
-        """LLM 翻译新闻全文（按新闻 id 缓存，命中直接复用固定输出）"""
+        """新闻正文：站点已给中文的直接用，其余走 LLM 翻译（按新闻 id 缓存固定输出）"""
         if not items:
             return ""
-        # 收集未缓存的条目
-        fresh_items = [it for it in items if str(it.get("id")) not in self._news_cache]
+        # 站点 data.json 已提供中文译文的条目：直接入库，不消耗 LLM
+        fresh_items = []
+        for it in items:
+            nid = str(it.get("id"))
+            zh = (it.get("_zh") or "").strip()
+            if zh and nid not in self._news_cache:
+                self._news_cache[nid] = zh
+                self._save_news_cache()
+            elif not zh and nid not in self._news_cache:
+                fresh_items.append(it)
         if fresh_items:
             payload = []
             for it in fresh_items:

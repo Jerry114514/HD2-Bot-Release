@@ -55,6 +55,13 @@ DEFAULTS = {
         "live_api_url": "https://helldiverscompanion.com/api/hell-divers-2-api/get-api-data-live",
         "extended_api_url": "https://cdn.helldiverscompanion.com/live/extendedApiInformation/2days.json",
         "planets_url": "https://api.helldivers2.dev/api/v1/planets",
+        # 站点（HD2-Galatic_war-Map）每 5 分钟生成的战况数据：信息流的现成 JSON 源。
+        # 含 dispatches（30 条原始新闻）+ news（最新 10 条的中文译文），机器人直接读它，
+        # 不必自己现抓 API，也顺带省掉这批新闻的 LLM 翻译。
+        "news_json_url": "https://jerry114514.github.io/HD2-Galatic_war-Map/data.json",
+        # 信息流来源：hd2map=优先读上面的 JSON（失败自动回退 API）；api=只走原来的 API
+        "news_source": "hd2map",
+        "news_cache_ttl": 120,
     },
 }
 
