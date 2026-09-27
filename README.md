@@ -1,6 +1,4 @@
-# HD2 Ministry Of Truth Bot — 绝地潜兵2 战况 QQ 机器人  
-
-# 由 真理部 与 科学部 联合奉上
+# HD2 Ministry Of Truth Bot — 绝地潜兵2 真理部战况 QQ 机器人
 
 > 🤖 **AI 生成声明**：本项目由 **DeepSeek V4-Flash 的 Agent 能力**协作完成（代码、架构、文档均通过 Agent 生成与迭代）。项目根目录下 [`Agent/`](Agent/) 文件夹保存了开发过程中的工作报告与记忆记录（已脱敏），可供参考、二次开发与部署。
 
@@ -15,8 +13,6 @@
 > ⚠️ **数据所有权**：游戏内容、名称、图标等版权归 Arrowhead Game Studios 所有；社区 API 数据归各提供方所有。本项目仅做技术演示。
 >
 > 📧 **联系我们**：若 Arrowhead 官方或相关权利方认为本项目对接口的使用不当，请通过 GitHub Issues 联系我们，我们会第一时间删除相关代码或调整实现方式。
->
-> 📧 **Contact Us**：If `Arrowhead Game Studios` officials or relevant rights holders believe that this project's use of the interface is inappropriate, please contact us via *GitHub Issues*, and we will delete the relevant code or adjust the implementation immediately.
 
 ## ✨ 功能特性
 
@@ -96,7 +92,6 @@ python scripts/hd2_webui.py
 | 文档 | 说明 |
 | --- | --- |
 | [功能详解.md](docs/功能详解.md) | 每个功能的**描述 + 实现细节**（数据源/逻辑/缓存/容错） |
-| [第二阶段总结_上线与开源.md](docs/第二阶段总结_上线与开源.md) | 上线稳定化（缓存/进度/公共库/路径修复）+ 开源发布过程 |
 | [部署指南.md](docs/部署指南.md) | 环境准备 / 插件部署 / 配置填写 |
 | [使用说明.md](docs/使用说明.md) | 群内指令与玩法说明 |
 | [模块架构分析报告.md](docs/模块架构分析报告.md) | 模块功能表 / 耦合度 / 可维护性 / 开源隐患 / 建议 |
@@ -144,6 +139,27 @@ hd2-bot/
 - `paths.*` — 对照表路径（相对项目根）
 
 环境变量 `HD2_PROJECT_DIR` 指向项目根（插件读取对照表/配置用）。
+
+## 🌐 中文新闻翻译管道（网站侧）
+
+HD2 战况网站（[Jerry114514.github.io/HD2-Galatic_war-Map](https://jerry114514.github.io/HD2-Galatic_war-Map/)）的中文新闻由独立的私密翻译仓库 **HD2Web-Trans** 提供：
+
+```
+HD2Web-Trans（私密翻译仓库）
+  ├─ 每 5 分钟：抓取官方 dispatches + assignments → 去标签 → 去重 → 百度翻译（含术语库 termIds）
+  ├─ 每 6 分钟：推送 TransNews.json（{ mo_brief, items[最新10条] }）
+  ↓
+HD2-Galatic_war-Map（公开 Page 仓库）
+  ├─ fetch-data.yml：生成 data.json 后运行 scripts/merge_translations.py
+  ├─ 合并 → data.major_order.translated_brief（MO 简报中文）+ data.news（新闻中文）
+  ↓
+网站前端 index.html
+  └─ 优先展示中文 MO/新闻，无翻译时降级英文或隐藏
+```
+
+- **术语库**：百度翻译平台术语库（termIds=41239），配合本地 `术语表.txt`（387 条英→中）
+- **降级策略**：TransNews.json 不存在时网站照常展示原文，两仓库 Actions 相互独立
+- **Secrets**：`BAIDU_APPID` / `BAIDU_SECRET` / `BAIDU_TERM_IDS` / `GH_TOKEN`
 
 ### 缓存策略（war_report 插件）
 

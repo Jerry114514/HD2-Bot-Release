@@ -1,0 +1,1146 @@
+[
+ {
+  "id": "orbital_120mm_he_barrage",
+  "name": "轨道120 MM高爆弹火力网",
+  "type": "轨道",
+  "stats": [
+   6,
+   8,
+   5,
+   6
+  ],
+  "bonus": 1,
+  "subtag": []
+ },
+ {
+  "id": "orbital_380mm_he_barrage",
+  "name": "轨道380 MM高爆弹火力网",
+  "type": "轨道",
+  "stats": [
+   7,
+   7,
+   5,
+   3
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "orbital_napalm_barrage",
+  "name": "轨道凝固汽油弹火力网",
+  "type": "轨道",
+  "stats": [
+   5,
+   8,
+   4,
+   3
+  ],
+  "bonus": 2,
+  "subtag": []
+ },
+ {
+  "id": "orbital_gatling_barrage",
+  "name": "轨道加特林攻击",
+  "type": "轨道",
+  "stats": [
+   4,
+   4,
+   5,
+   8
+  ],
+  "bonus": -1,
+  "subtag": []
+ },
+ {
+  "id": "orbital_gas_strike",
+  "name": "轨道毒气攻击",
+  "type": "轨道",
+  "stats": [
+   3,
+   6,
+   4,
+   6
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "orbital_walking_barrage",
+  "name": "轨道游走火力网",
+  "type": "轨道",
+  "stats": [
+   5,
+   5,
+   5,
+   6
+  ],
+  "bonus": -1,
+  "subtag": []
+ },
+ {
+  "id": "orbital_laser",
+  "name": "轨道激光炮",
+  "type": "轨道",
+  "stats": [
+   9,
+   7,
+   5,
+   1
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "orbital_railcannon_strike",
+  "name": "轨道炮攻击",
+  "type": "轨道",
+  "stats": [
+   10,
+   0,
+   7,
+   4
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "orbital_smoke_strike",
+  "name": "轨道烟雾攻击",
+  "type": "轨道",
+  "stats": [
+   0,
+   0,
+   0,
+   7
+  ],
+  "bonus": 10,
+  "subtag": []
+ },
+ {
+  "id": "orbital_ems_strike",
+  "name": "轨道电磁冲击波攻击",
+  "type": "轨道",
+  "stats": [
+   0,
+   0,
+   0,
+   7
+  ],
+  "bonus": 10,
+  "subtag": []
+ },
+ {
+  "id": "orbital_airburst_strike",
+  "name": "轨道空爆攻击",
+  "type": "轨道",
+  "stats": [
+   3,
+   8,
+   2,
+   7
+  ],
+  "bonus": -2,
+  "subtag": []
+ },
+ {
+  "id": "orbital_precision_strike",
+  "name": "轨道精准攻击",
+  "type": "轨道",
+  "stats": [
+   5,
+   4,
+   5,
+   7
+  ],
+  "bonus": -1,
+  "subtag": []
+ },
+ {
+  "id": "eagle_110mm_rocket_pods",
+  "name": "飞鹰110 MM火箭巢",
+  "type": "飞鹰",
+  "stats": [
+   8,
+   4,
+   5,
+   4
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "eagle_500kg_bomb",
+  "name": "飞鹰500 KG炸弹",
+  "type": "飞鹰",
+  "stats": [
+   10,
+   9,
+   5,
+   2
+  ],
+  "bonus": 1,
+  "subtag": []
+ },
+ {
+  "id": "eagle_napalm_airstrike",
+  "name": "飞鹰凝固汽油弹空袭",
+  "type": "飞鹰",
+  "stats": [
+   3,
+   9,
+   3,
+   3
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "eagle_strafing_run",
+  "name": "飞鹰机枪扫射",
+  "type": "飞鹰",
+  "stats": [
+   5,
+   7,
+   5,
+   5
+  ],
+  "bonus": 1,
+  "subtag": []
+ },
+ {
+  "id": "eagle_smoke_strike",
+  "name": "飞鹰烟雾攻击",
+  "type": "飞鹰",
+  "stats": [
+   0,
+   0,
+   0,
+   3
+  ],
+  "bonus": 10,
+  "subtag": []
+ },
+ {
+  "id": "eagle_airstrike",
+  "name": "飞鹰空袭",
+  "type": "飞鹰",
+  "stats": [
+   6,
+   8,
+   5,
+   3
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "eagle_cluster_bomb",
+  "name": "飞鹰集束炸弹",
+  "type": "飞鹰",
+  "stats": [
+   3,
+   9,
+   2,
+   3
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "support_40_k_thermal_gun",
+  "name": "40-K 热熔枪",
+  "type": "支援武器",
+  "stats": [
+   7,
+   3,
+   7,
+   3
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "support_apw_1_anti_materiel_rifle",
+  "name": "APW-1 反器材步枪",
+  "type": "支援武器",
+  "stats": [
+   7,
+   1,
+   5,
+   5
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "support_arc_3_arc_thrower",
+  "name": "ARC-3 电弧发射器",
+  "type": "支援武器",
+  "stats": [
+   5,
+   6,
+   3,
+   3
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "support_cqc_1_outcast",
+  "name": "CQC-1 唯一真棋",
+  "type": "支援武器",
+  "stats": [
+   10,
+   10,
+   10,
+   10
+  ],
+  "bonus": 10,
+  "subtag": []
+ },
+ {
+  "id": "support_eat_17_expendable_anti_tank",
+  "name": "EAT-17 一次性反坦克火箭",
+  "type": "支援武器",
+  "stats": [
+   8,
+   2,
+   5,
+   3
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "support_eat_411_leveller",
+  "name": "EAT-411 荡平者",
+  "type": "支援武器",
+  "stats": [
+   8,
+   5,
+   5,
+   0
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "support_eat_700_incendiary",
+  "name": "EAT-700 一次性凝固汽油弹",
+  "type": "支援武器",
+  "stats": [
+   3,
+   7,
+   3,
+   6
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "support_flam_40_flamethrower",
+  "name": "FLAM-40 火焰喷射器",
+  "type": "支援武器",
+  "stats": [
+   5,
+   5,
+   4,
+   3
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "support_gl_21_grenade_launcher",
+  "name": "GL-21 榴弹发射器",
+  "type": "支援武器",
+  "stats": [
+   4,
+   6,
+   3,
+   5
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "support_gl_52_conciliator",
+  "name": "GL-52 缓和使者",
+  "type": "支援武器",
+  "stats": [
+   4,
+   6,
+   3,
+   4
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "support_las_98_laser_cannon",
+  "name": "LAS-98 激光大炮",
+  "type": "支援武器",
+  "stats": [
+   7,
+   4,
+   5,
+   3
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "support_las_99_quasar_cannon",
+  "name": "LAS-99 类星体加农炮",
+  "type": "支援武器",
+  "stats": [
+   9,
+   3,
+   5,
+   1
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "support_m_105_stalwart",
+  "name": "M-105 盟友",
+  "type": "支援武器",
+  "stats": [
+   4,
+   5,
+   2,
+   8
+  ],
+  "bonus": 3,
+  "subtag": []
+ },
+ {
+  "id": "support_mg_206_heavy_machine_gun",
+  "name": "MG-206 重机枪",
+  "type": "支援武器",
+  "stats": [
+   7,
+   7,
+   3,
+   3
+  ],
+  "bonus": -3,
+  "subtag": []
+ },
+ {
+  "id": "support_mg_43_machine_gun",
+  "name": "MG-43 机枪",
+  "type": "支援武器",
+  "stats": [
+   5,
+   5,
+   3,
+   5
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "support_mgx_42_bullet_storm",
+  "name": "MGX-42 子弹风暴",
+  "type": "支援武器",
+  "stats": [
+   4,
+   6,
+   3,
+   6
+  ],
+  "bonus": 2,
+  "subtag": []
+ },
+ {
+  "id": "support_mls_4x_commando",
+  "name": "MLS-4X 突击兵",
+  "type": "支援武器",
+  "stats": [
+   6,
+   3,
+   5,
+   4
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "support_ms_11_missile_silo",
+  "name": "MS-11 单兵导弹发射井",
+  "type": "支援武器",
+  "stats": [
+   5,
+   3,
+   5,
+   5
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "support_plas_45_epoch",
+  "name": "PLAS-45 纪元",
+  "type": "支援武器",
+  "stats": [
+   5,
+   4,
+   5,
+   4
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "support_rs_422_railgun",
+  "name": "RS-22 磁轨炮",
+  "type": "支援武器",
+  "stats": [
+   8,
+   0,
+   5,
+   5
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "support_spear",
+  "name": "S-11 矛枪",
+  "type": "支援武器",
+  "stats": [
+   8,
+   3,
+   5,
+   4
+  ],
+  "bonus": 2,
+  "subtag": []
+ },
+ {
+  "id": "support_tx_41_sterilizer",
+  "name": "TX-41 灭菌器",
+  "type": "支援武器",
+  "stats": [
+   3,
+   8,
+   4,
+   4
+  ],
+  "bonus": -3,
+  "subtag": []
+ },
+ {
+  "id": "heavy_support_ac_8_autocannon",
+  "name": "AC-8 机炮",
+  "type": "重型支援武器",
+  "stats": [
+   4,
+   6,
+   5,
+   3
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "heavy_support_b_flam_80_flamer",
+  "name": "B/FLAM-80 焚燃者",
+  "type": "重型支援武器",
+  "stats": [
+   8,
+   8,
+   4,
+   7
+  ],
+  "bonus": 2,
+  "subtag": []
+ },
+ {
+  "id": "heavy_support_faf_14_spear",
+  "name": "FAF-14 飞矛",
+  "type": "重型支援武器",
+  "stats": [
+   8,
+   2,
+   5,
+   4
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "heavy_support_gl_28_belt_fed_grenade_launcher",
+  "name": "GL-28 弹链式榴弹发射器",
+  "type": "重型支援武器",
+  "stats": [
+   4,
+   7,
+   3,
+   8
+  ],
+  "bonus": -3,
+  "subtag": []
+ },
+ {
+  "id": "heavy_support_gr_8_recoilless_rifle",
+  "name": "GR-8 无后坐力炮",
+  "type": "重型支援武器",
+  "stats": [
+   9,
+   3,
+   5,
+   4
+  ],
+  "bonus": 2,
+  "subtag": []
+ },
+ {
+  "id": "heavy_support_m_1000_hmg",
+  "name": "M-1000 重装机枪",
+  "type": "重型支援武器",
+  "stats": [
+   6,
+   6,
+   3,
+   8
+  ],
+  "bonus": -3,
+  "subtag": []
+ },
+ {
+  "id": "heavy_support_sta_x3_wasp_launcher",
+  "name": "StA-X3 WASP发射器",
+  "type": "重型支援武器",
+  "stats": [
+   5,
+   5,
+   5,
+   5
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "heavy_support_rl_77_airburst_rocket_launcher",
+  "name": "空爆火箭弹发射器",
+  "type": "重型支援武器",
+  "stats": [
+   5,
+   7,
+   3,
+   4
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "vehicle_exo_45_patriot_exosuit",
+  "name": "EXO-45 “爱国者”外骨骼装甲",
+  "type": "载具",
+  "stats": [
+   6,
+   7,
+   5,
+   6
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "vehicle_exo_49_emancipator_exosuit",
+  "name": "EXO-49 “解放者”外骨骼装甲",
+  "type": "载具",
+  "stats": [
+   6,
+   8,
+   5,
+   7
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "vehicle_exo_51_lumberjack_exosuit",
+  "name": "EXO-51 “伐木者”外骨骼装甲",
+  "type": "载具",
+  "stats": [
+   8,
+   5,
+   5,
+   6
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "vehicle_exo_55_breakthrough_exosuit",
+  "name": "EXO-55 “突破”外骨骼装甲",
+  "type": "载具",
+  "stats": [
+   5,
+   6,
+   5,
+   8
+  ],
+  "bonus": 2,
+  "subtag": []
+ },
+ {
+  "id": "vehicle_m_102_gunner_fast_recon_vehicle",
+  "name": "M-102 炮手快速侦察载具",
+  "type": "载具",
+  "stats": [
+   3,
+   3,
+   3,
+   6
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "vehicle_m_103_supply_fast_recon_vehicle",
+  "name": "M-103 补给型快速侦察载具",
+  "type": "载具",
+  "stats": [
+   2,
+   1,
+   3,
+   9
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "vehicle_td_220_bastion_mk_xvi",
+  "name": "TD-220 堡垒 MK-XVI",
+  "type": "载具",
+  "stats": [
+   9,
+   7,
+   5,
+   5
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "deployable_gatling_sentry",
+  "name": "加特林哨戒炮",
+  "type": "可部署物",
+  "stats": [
+   6,
+   6,
+   3,
+   5
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "deployable_anti_tank_mines",
+  "name": "反坦克地雷",
+  "type": "可部署物",
+  "stats": [
+   3,
+   2,
+   5,
+   5
+  ],
+  "bonus": -2,
+  "subtag": []
+ },
+ {
+  "id": "deployable_at_emplacement",
+  "name": "反坦克炮台",
+  "type": "可部署物",
+  "stats": [
+   9,
+   3,
+   5,
+   4
+  ],
+  "bonus": 2,
+  "subtag": []
+ },
+ {
+  "id": "deployable_anti_personnel_mines",
+  "name": "反步兵雷区",
+  "type": "可部署物",
+  "stats": [
+   2,
+   6,
+   3,
+   6
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "deployable_machine_gun_sentry",
+  "name": "哨戒机枪",
+  "type": "可部署物",
+  "stats": [
+   4,
+   5,
+   3,
+   7
+  ],
+  "bonus": 2,
+  "subtag": []
+ },
+ {
+  "id": "deployable_grenadier_defense_wall",
+  "name": "掷弹兵防卫墙",
+  "type": "可部署物",
+  "stats": [
+   4,
+   4,
+   3,
+   4
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "deployable_gas_mines",
+  "name": "毒气地雷",
+  "type": "可部署物",
+  "stats": [
+   1,
+   6,
+   4,
+   8
+  ],
+  "bonus": 2,
+  "subtag": []
+ },
+ {
+  "id": "deployable_laser_sentry",
+  "name": "激光哨戒炮",
+  "type": "可部署物",
+  "stats": [
+   5,
+   3,
+   3,
+   5
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "deployable_flame_sentry",
+  "name": "火焰喷射哨戒炮",
+  "type": "可部署物",
+  "stats": [
+   5,
+   5,
+   4,
+   6
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "deployable_rocket_sentry",
+  "name": "火箭哨戒炮",
+  "type": "可部署物",
+  "stats": [
+   7,
+   6,
+   5,
+   3
+  ],
+  "bonus": 1,
+  "subtag": []
+ },
+ {
+  "id": "deployable_incendiary_mines",
+  "name": "燃烧地雷",
+  "type": "可部署物",
+  "stats": [
+   2,
+   6,
+   4,
+   6
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "deployable_tesla_tower",
+  "name": "特斯拉塔",
+  "type": "可部署物",
+  "stats": [
+   5,
+   4,
+   3,
+   4
+  ],
+  "bonus": -2,
+  "subtag": []
+ },
+ {
+  "id": "deployable_gas_mortar_sentry",
+  "name": "瓦斯迫击哨戒炮",
+  "type": "可部署物",
+  "stats": [
+   3,
+   6,
+   4,
+   4
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "deployable_ems_mortar_sentry",
+  "name": "电磁冲击波迫击哨戒炮",
+  "type": "可部署物",
+  "stats": [
+   2,
+   3,
+   0,
+   5
+  ],
+  "bonus": -2,
+  "subtag": []
+ },
+ {
+  "id": "deployable_autocannon_sentry",
+  "name": "自动哨戒炮",
+  "type": "可部署物",
+  "stats": [
+   5,
+   6,
+   4,
+   5
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "deployable_mortar_sentry",
+  "name": "迫击哨戒炮",
+  "type": "可部署物",
+  "stats": [
+   4,
+   8,
+   5,
+   3
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "deployable_hmg_emplacement",
+  "name": "重机枪部署支架",
+  "type": "可部署物",
+  "stats": [
+   4,
+   4,
+   4,
+   5
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "deployable_shield_generator_relay",
+  "name": "防护罩生成中继器",
+  "type": "可部署物",
+  "stats": [
+   0,
+   0,
+   0,
+   7
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "backpack_ax_ar_23_guard_dog",
+  "name": "AX-AR23 护卫犬",
+  "type": "背包",
+  "stats": [
+   4,
+   4,
+   3,
+   4
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "backpack_ax_arc_3_k_9",
+  "name": "AX-ARC3 K-9",
+  "type": "背包",
+  "stats": [
+   5,
+   5,
+   4,
+   4
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "backpack_ax_flam_75_hot_dog",
+  "name": "AX-FLAM75 热狗",
+  "type": "背包",
+  "stats": [
+   5,
+   5,
+   4,
+   5
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "backpack_ax_las_5_guard_dog_rover",
+  "name": "AX-LAS5 漫游车",
+  "type": "背包",
+  "stats": [
+   4,
+   3,
+   3,
+   5
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "backpack_ax_tx_13_purifier",
+  "name": "AX-TX13 腐息",
+  "type": "背包",
+  "stats": [
+   3,
+   6,
+   3,
+   5
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "backpack_b_1_supply_pack",
+  "name": "B-1 补给背包",
+  "type": "背包",
+  "stats": [
+   0,
+   0,
+   0,
+   10
+  ],
+  "bonus": 10,
+  "subtag": []
+ },
+ {
+  "id": "backpack_b_100_portable_hellbomb",
+  "name": "B-100 便携式地狱火炸弹",
+  "type": "背包",
+  "stats": [
+   5,
+   4,
+   5,
+   4
+  ],
+  "bonus": 10,
+  "subtag": []
+ },
+ {
+  "id": "backpack_b_md_c4_pack",
+  "name": "B/MD C4背包",
+  "type": "背包",
+  "stats": [
+   5,
+   4,
+   5,
+   8
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "backpack_lift_182_teleport_pack",
+  "name": "LIFT-182 传送背包",
+  "type": "背包",
+  "stats": [
+   1,
+   1,
+   0,
+   10
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "backpack_lift_850_jump_pack",
+  "name": "LIFT-850 喷射背包",
+  "type": "背包",
+  "stats": [
+   0,
+   0,
+   0,
+   8
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "backpack_lift_860_hover_pack",
+  "name": "LIFT-860 悬浮背包",
+  "type": "背包",
+  "stats": [
+   0,
+   0,
+   0,
+   9
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "backpack_sh_20_ballistic_shield_backpack",
+  "name": "SH-20 防弹护盾背包",
+  "type": "背包",
+  "stats": [
+   0,
+   0,
+   0,
+   5
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "backpack_sh_32_shield_generator_pack",
+  "name": "SH-32 防护罩生成包",
+  "type": "背包",
+  "stats": [
+   0,
+   0,
+   0,
+   7
+  ],
+  "bonus": 0,
+  "subtag": []
+ },
+ {
+  "id": "backpack_sh_51_directional_shield",
+  "name": "SH-51 定向护盾",
+  "type": "背包",
+  "stats": [
+   0,
+   0,
+   0,
+   6
+  ],
+  "bonus": 0,
+  "subtag": []
+ }
+]

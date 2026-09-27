@@ -1,0 +1,387 @@
+Terminids|||终结族
+Automatons|||机器人
+Illuminate|||光能者
+Cyborgs|||生化人
+cyborg|||生化人
+Super Earth|||超级地球
+Helldivers|||绝地潜兵
+Major Order|||重要指令
+STRATEGIC IMPERATIVE|||战略机遇
+Barrier planets|||屏障星球
+Stratagem|||战略配备
+Stratagem|||战略
+The Void|||寂域
+Void-impacted molecules|||受寂域影响的分子
+Gloom|||阴霾
+The Gloom|||阴霾
+Alcubiere|||阿库别瑞
+MegaFactory|||超大型工厂
+Megafactories|||超大型工厂
+destryers|||超级驱逐舰
+super destryers|||超级驱逐舰
+Ministry of Science|||科学部
+y-shapes|||音叉形状
+Voteless|||无票者
+Spore Burst Strain|||孢裂变种
+Predator Strain|||掠食变种
+Rupture Strain|||爆裂变种
+Dragonroach|||蟑龙
+Hive Lord|||霸王虫
+The Incineration Corps|||炽灼部队
+The Jet Brigade|||喷气旅
+Devastator Surge|||歼灭者狂潮
+Heavy Armor Surge|||巨型者狂潮
+Hulk Surge|||蹂躏者狂潮
+Eagle Air Raids|||“飞鹰风暴”空袭
+Ordnance Air Raids|||轨道轰炸支援
+SEAF Garrison|||SEAF武装部队驻守
+SEAF Forces in Region|||区域内有SEAF部队
+Mindless Masses|||无脑群氓
+Appropriators|||占领者
+Spearhead|||教团先锋
+Voteless Variant|||窃票者
+Wretch|||悲怜体
+Crusher|||粉碎者
+Invasion Fleet|||入侵舰队
+The Great Host|||大军
+Exostorm Level 1|||异界风暴 1 级
+Exostorm Level 2|||异界风暴 2 级
+Exostorm Level 3|||异界风暴 3 级
+Polyvoid|||寂域环境
+Eagle Storm|||飞鹰风暴
+Orbital Block|||轨道封锁
+Heavy Ordnance Distribution|||重型军械分发
+Eagle Block|||飞鹰封锁
+Planetary Bombardment|||星球轰炸
+Operational Support|||行动支持
+ENEMY INVASION LEVEL|||入侵等级
+DEFENSE CAMPAIGN|||入侵战役
+Warp Link Blockade|||跃迁航道封锁
+RAINSTORMS|||暴雨
+EXTREME COLD|||夜间极寒
+INTENSE HEAT|||昼间极暑
+FIRE TORNADOES|||火龙卷
+ION STORMS|||离子风暴
+BLIZZARDS|||暴风雪
+Leviathan Blockade|||利维坦封锁
+DARROWSPORT|||达罗斯波特
+FORNSKOGUR II|||福恩斯科古尔II
+HYDROFALL PRIME|||水瀑主星
+MARRE IV|||马尔IV
+MIDASBURG|||弥达斯堡
+VEIL|||帷幕
+CERBERUS IIIc|||刻耳柏洛斯IIIc
+EFFLUVIA|||艾芙鲁维亚
+FORT SANCTUARY|||庇护堡
+PROSPERITY FALLS|||繁荣瀑布
+SEYSHEL BEACH|||塞舌尔海滩
+FREEDOM PEAK|||弗里敦峰
+KELVINOR|||开尔文奥尔
+MARTYR'S BAY|||烈士湾
+OBARI|||欧巴里
+VIRIDIA PRIME|||维尔伊迪亚主星
+IVIS|||艾维斯
+KRAKATWO|||克拉克图
+MORADESH|||莫拉戴什
+NUBLARIA I|||努布拉里亚I
+SLIF|||斯利夫
+SULFURA|||萨尔弗拉
+CRIMSICA|||克里姆西卡
+ESTANU|||伊斯塔努
+FORI PRIME|||佛里主星
+BORE ROCK|||博尔岩
+ERSON SANDS|||厄尔森桑兹
+ESKER|||艾斯科尔
+SOCORRO III|||索科罗III
+HADAR|||马腹一
+HALDUS|||海德斯
+HERTHON SECUNDUS|||赫尔松次星
+ZEA RUGOSIA|||泽亚鲁戈西亚
+ACUBENS PRIME|||柳宿增三主星
+ADHARA|||弧矢七
+AFOYAY BAY|||艾福亚湾
+BASHYR|||巴希尔
+KHARST|||喀斯特
+RASP|||拉斯普
+BLISTICA|||布里斯提卡
+MINTORIA|||敏托瑞亚
+ZOSMA|||太徽右垣五
+ZZANIAH PRIME|||藏尼亚主星
+DILUVIA|||迪卢维亚
+OKUL VI|||欧库VI
+SOLGHAST|||索尔加斯特
+ALDERIDGE COVE|||阿尔德里奇湾
+BELLATRIX|||参宿五
+BOTEIN|||天阴四
+ELYSIAN MEADOWS|||埃律西昂草原
+KHANDARK|||勘达尔克
+AESIR PASS|||亚萨关隘
+MENKENT|||库楼三
+VERNEN WELLS|||佛农井
+ATRAMA|||阿特拉玛
+MAW|||深渊
+MYRADESH|||米拉戴什
+WRAITH|||幽灵
+IRIDICA|||艾利迪卡
+KRAKABOS|||克拉克博斯
+PRIMORDIA|||普莱默迪亚
+PROVIDENCE|||普罗维登斯
+RATCH|||拉奇
+VALGAARD|||瓦尔加德
+EMERIA|||埃梅里亚
+FORT JUSTICE|||正义堡
+IGLA|||依格勒
+NEW KIRUNA|||新基鲁纳
+ZEGEMA PARADISE|||泽格玛乐土
+ALTA V|||奥尔塔V
+CARAMOOR|||开勒莫尔
+CRUCIBLE|||熔炉
+INARI|||伊纳里
+VOLTERRA|||沃尔泰拉
+CHOOHE|||丘伊
+CHORT BAY|||雀特湾
+LESATH|||尾宿八
+PENTA|||彭塔
+HAKA|||哈卡
+HALIES PORT|||海利斯港
+PROPUS|||五诸侯三
+RAS ALGETHI|||帝座
+BARABOS|||巴勒博斯
+CURIA|||居里亚
+FENMIRE|||范迈尔
+MASTIA|||玛斯蒂娅
+TARSH|||塔尔什
+EUKORIA|||欧科里亚
+MOG|||莫格
+MYRIUM|||梅里翁
+REGNUS|||雷格努斯
+BEKVAM III|||贝克温
+DOLPH|||多尔夫
+DUMA TYR|||杜马提尔
+JULHEIM|||尤尔海姆
+LENG SECUNDUS|||蓝恩次星
+SPHERION|||斯飞利昂
+STOR THA PRIME|||斯特萨主星
+STOUT|||斯图尔特
+TERMADON|||特尔玛登
+GENESIS PRIME|||创世主星
+GRAFMERE|||格拉夫米尔
+IRO|||伊罗
+KERTH SECUNDUS|||克斯次星
+OASIS|||绿洲
+PARSH|||帕尔什
+VALMOX|||瓦尔莫克斯
+BOREA|||博瑞亚
+GUNVALD|||古恩瓦尔德
+OSLO STATION|||奥斯陆站
+CALYPSO|||卡利普索
+IRULTA|||艾鲁尔塔
+OUTPOST 32|||32号哨站
+REAF|||利夫
+DURGEN|||德尔根
+MAIA|||昂宿四
+MALEVELON CREEK|||麦拉芬蒙河
+TIBIT|||提比特
+UBANEA|||乌巴尼亚
+AZUR SECUNDUS|||艾热尔次星
+BIG ROCK|||巨岩
+OVERGOE PRIME|||欧维果主星
+PARTION|||帕尔晨
+PEACOCK|||孔雀十一
+TRANDOR|||特兰道尔
+GAELLIVARE|||耶利瓦勒
+IMBER|||因博尔
+SHALLUS|||沙勒斯
+SHELT|||谢尔特
+BRINK-2|||布林克2
+BUNDA SECUNDUS|||天垒城一次星
+CANOPUS|||老人
+EAST IRIDIUM TRADING BAY|||东铱贸易湾
+OSUPSAM|||欧苏普森
+CAPH|||王良一
+CASTOR|||北河二
+KUPER|||库珀
+LASTOFE|||赖斯斗夫
+THE WEIR|||维尔
+TIEN KWAN|||天关
+ACRAB XI|||房宿四 XI
+ACRUX IX|||十字架二 IX
+GEMMA|||贯索四
+SKAASH|||斯卡什
+ERATA PRIME|||艾拉塔主星
+FENRIR III|||芬里尔 III
+FRONTERIA|||边陲
+MERIDIA|||默里迪亚
+TURING|||图灵
+CHARBAL-VII|||查巴尔 VII
+CHARON PRIME|||卡戎主星
+MARFARK|||玛尔法克
+MARTALE|||玛尔特
+MATAR BAY|||玛塔
+DRAUPNIR|||德罗普尼尔
+FURY|||费里
+INGMAR|||英格玛
+MANTES|||蒙特斯
+MORT|||莫特
+PÖPLI IX|||珀普利 IX
+AIN-5|||毕宿一 5
+ALAIRT III|||艾列尔特 III
+ALAMAK VII|||天大将军一 VII
+NEW STOCKHOLM|||新斯德哥尔摩
+ACHERNAR SECUNDUS|||水委一次星
+ACHIRD III|||王良三 III
+DARIUS II|||大流士 II
+URSICA XI|||厄西卡 XI
+BASQUINE VIII|||巴斯金 VIII
+HESOE PRIME|||海索主星
+HORT|||哈尔特
+RIRGA BAY|||里尔加湾
+ROGUE 5|||罗格5
+MEISSA|||觜宿一
+VEGA BAY|||织女一湾
+WASAT|||天樽二
+WEZEN|||弧矢一
+CLAORELL|||可洛威尔
+CLASA|||克拉萨
+DEMIURG|||戴米尔基
+VOG-SOJOTH|||佛戈索约斯
+YED PRIOR|||天市右垣六
+ZEFIA|||塞飞亚
+MARS|||火星
+SUPER EARTH|||超级地球
+HYDROBIUS|||哈卓毕亚斯
+KARLIA|||可利亚
+SANGIS|||赤血
+SEASSE|||西斯
+SETIA|||塞提亚
+GRAND ERRANT|||大艾伦特
+PHERKAD SECUNDUS|||北极一次星
+POLARIS PRIME|||北极星主星
+POLLUX 31|||北河三 31
+PRASA|||普拉萨
+CHOEPESSA IV|||科埃佩萨 IV
+MOX|||莫克斯
+TROOST|||特鲁斯特
+USTOTU|||伍斯特图
+VANDALON IV|||万达隆 IV
+VARYLIA 5|||瓦拉瑞亚 5
+ANGEL'S VENTURE|||天使投资
+AZTERRA|||艾孜泰拉
+BRILLIANCE|||璨光
+CIRRUS|||希勒斯
+FORT UNION|||联合堡
+HEETH|||希斯
+TERREK|||泰雷克
+VELD|||维尔德
+ZYGOS|||齐戈斯
+AURORA BAY|||极光湾
+CYBERSTAN|||生化斯坦
+MEKBUDA|||井宿七
+MERAK|||北斗二
+MERGA IV|||玄戈增二 IV
+VINDEMITARIX PRIME|||文德米塔里克斯主星
+HELLMIRE|||海尔迈尔
+NIVEL 43|||尼维尔43
+OSHAUNE|||欧绍恩
+ZAGON PRIME|||扎贡主星
+EPSILON PHOENCIS VI|||厄普西隆VI
+OMICRON|||奥密克戎
+SHETE|||赛特
+SIEMNOT|||西姆诺特
+SIRIUS|||天狼星
+SKAT BAY|||斯卡特湾
+ACAMAR IV|||天园六 IV
+GACRUX|||十字架一
+GAR HAREN|||轧尔哈伦
+GATRIA|||盖尔崔亚
+LUXURIANT|||富源
+PANDION-XXIV|||帕迪恩 XXIV
+PHACT BAY|||丈人一湾
+ARKTURUS|||阿克图勒斯
+DENEB SECUNDUS|||天津四次星
+ELECTRA BAY|||昂宿一湾
+KIRRIK|||基里克
+MORTAX PRIME|||摩尔塔克斯主星
+PIONEER II|||先驱 II
+WILFORD STATION|||威尔福德站
+ALARAPH|||右执法
+ALATHFAR XI|||织女增三 XI
+ANDAR|||安达尔
+ASPEROTH PRIME|||阿斯佩洛斯主星
+KEID|||角宿二湾
+KLAKA 5|||克拉卡5
+KNETH PORT|||克奈斯港
+KRAZ|||轸宿四
+KLEN DAHTH II|||克伦达斯 II
+NEW HAVEN|||纽黑文
+PATHFINDER V|||开拓者 V
+PILEN V|||皮伦 V
+WIDOW'S HARBOR|||寡妇港
+EUPHORIA III|||欧福利亚 III
+KUMA|||天棓二
+MORDIA 9|||摩帝亚9
+SKITTER|||斯基特
+BALDRICK PRIME|||巴尔德里克主星
+EMORATH|||艾莫拉斯
+ILDUNA PRIME|||伊尔都纳主星
+LIBERTY RIDGE|||解放岭
+UVP GAMMA|||UVP伽马
+UVP ALPHA|||UVP阿尔法
+UVP DELTA|||UVP德尔塔
+UVP BETA|||UVP贝塔
+Barnard|||巴纳德
+Cancri|||康古利伊
+Cantolus|||坎托鲁斯
+Celeste|||塞勒斯特
+Draco|||天龙座
+Falstaff|||法尔斯塔夫
+Ferris|||费里斯
+Gallux|||加卢克斯
+Gellert|||盖勒特
+Gothmar|||戈特玛
+Guang|||古安
+Hydra|||长蛇座
+Idun|||伊顿
+Iptus|||伊普都斯
+Kelvin|||凯尔文
+Korpus|||科普斯
+Lacaille|||拉凯欧
+Leo|||狮子座
+Marspira|||马斯皮拉
+Morgon|||莫根
+Nanos|||纳诺斯
+Quintus|||昆图斯
+Rictus|||瑞克图斯
+Sagan|||萨根
+Saleria|||萨勒利亚
+Severin|||塞弗林
+Sten|||斯坦
+Talus|||塔洛斯
+Tarragon|||塔拉戈
+Theseus|||忒修斯
+Ursa|||大熊座
+Umlaut|||乌姆劳特
+Andromeda|||仙女座
+Xzar|||兹亚尔
+Hanzo|||半藏
+Borgus|||博格斯
+Rigel|||参宿七
+Ymir|||土卫十九
+Tanis|||塔尼斯
+Sol|||太阳系
+Omega|||欧米茄
+Farsight|||法尔赛特
+Trigon|||特里贡
+Orion|||猎户座
+Valdis|||瓦尔迪斯
+Mirin|||米琳
+L'estrade|||莱斯特拉德
+Xi Tauri|||金牛座
+Jin Xi|||锦栖
+Arturion|||阿图里昂
+Akira|||阿基拉
+Alstrad|||阿尔斯特拉德
+Altus|||阿尔特斯
+Hawking|||霍金
+Meridian|||默里迪亚
+Void|||寂域
