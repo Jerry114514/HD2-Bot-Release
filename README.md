@@ -98,9 +98,11 @@
 
 - 站点已提供 **MO 简报中文**与**新闻中文**，所以前台路径**完全不调用 LLM**，冷启动后通常 10ms 级返回
 - 插件重载/机器人重启后会先从磁盘载入上次快照，不会出现"重启后第一条很慢"
-- 处于 **MO 间隙**（源返回空属正常）时不刷新快照，避免把时间戳刷成"数据很新"的假象
+- **星球表也改读站点 JSON**（`data.json` 的 `planets[]`，与 helldivers2.dev 同结构、273 个）：原来只依赖 helldivers2.dev，该源超时（默认 20s）时**每条指令都要白等满 20 秒**；现在按「站点 JSON → 磁盘缓存 → API（6s 短超时）」多源加载，重启后第一条指令也是毫秒级
+- 冷启动第一条实测约 4s（站点抓取）；此后 0.001s 级；重启后第一条 0.0005s
+- 处于 **MO 间隙**（源返回空属正常）时快照带 `quality=gap` 标记、用较短有效期（300s），既如实呈现又不会每条指令都重新组装
 - 配置：`data.report_warm_enable`（默认 1）/ `data.report_warm_interval`（默认 240s，最小 60）/ `data.report_snapshot_ttl`（默认 900s）
-- 快照文件 `cache/report_snapshot.json` 已被 `.gitignore` 排除，不入库
+- 快照文件 `cache/report_snapshot.json`、`cache/planet_table_cache.json` 已被 `.gitignore` 排除，不入库
 
 ## 🚀 快速开始
 
