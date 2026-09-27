@@ -22,7 +22,12 @@
     "python": "D:/AstrBot/backend/python/python.exe",
     "app_dir": "D:/AstrBot/backend/app",
     "webui_port": 6185,
-    "ws_port": 6199
+    "ws_port": 6199,
+    "_data_dir说明": "AstrBot 数据目录（含 cmd_config.json / platform_whitelist.json）。控制台「群号管理」用它读写入群白名单；留空则自动探测（候选：~/.astrbot/data、config.example 同级 data/、astrbot.app_dir 的上级 data/），按 data_v4.db-wal 是否存在等特征挑选正在使用的那份。多份 AstrBot 共存时建议显式填写。",
+    "data_dir": "",
+    "_dashboard_password说明": "AstrBot Dashboard 密码（默认 astrbot）。填了才能用「零重启热重载」；仍是默认密码时 AstrBot 会拒绝登录，控制台会自动降级为重启 AstrBot。",
+    "dashboard_user": "astrbot",
+    "dashboard_password": ""
   },
 
   "llm": {
