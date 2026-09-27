@@ -81,6 +81,27 @@
 - 配置：`hd2_config.py` → `data.news_json_url`（JSON 地址）/ `data.news_source`（`hd2map` 默认，`api` 可切回原路径）/ `data.news_cache_ttl`（默认 120 秒）
 - 只有最新的 10 条带中文译文；更早的条目仍走原来的 LLM 翻译路径（按 id 缓存固定输出）
 
+### `/战报` 的后台静默预热（前台只读缓存）
+
+`/战报` 不再在指令里现抓 + 现调 LLM，而是像网站那样**后台更新、前台读缓存**：
+
+```
+插件 initialize()  启动后台任务（AstrBot 激活插件时调用）
+  └─ _warm_loop  每 report_warm_interval 秒（默认 240s，带随机抖动）
+       ├─ 取站点 data.json 的中文：major_order.translated_brief + news[].translated
+       ├─ 抓 MO / 战区分布 / 资讯，纯本地格式化（**不调 LLM**）
+       └─ _save_report_snapshot()  → cache/report_snapshot.json（原子写）
+                        ↓  用户发 /战报
+             _build_report()  命中快照直接返回（毫秒级）
+                              └─ 快照超期/刚启动无快照时，才走一次实时组装
+```
+
+- 站点已提供 **MO 简报中文**与**新闻中文**，所以前台路径**完全不调用 LLM**，冷启动后通常 10ms 级返回
+- 插件重载/机器人重启后会先从磁盘载入上次快照，不会出现"重启后第一条很慢"
+- 处于 **MO 间隙**（源返回空属正常）时不刷新快照，避免把时间戳刷成"数据很新"的假象
+- 配置：`data.report_warm_enable`（默认 1）/ `data.report_warm_interval`（默认 240s，最小 60）/ `data.report_snapshot_ttl`（默认 900s）
+- 快照文件 `cache/report_snapshot.json` 已被 `.gitignore` 排除，不入库
+
 ## 🚀 快速开始
 
 前置：Windows 10/11 + AstrBot 桌面版 + NapCat + QQNT 9.9.x + Python（AstrBot 自带）

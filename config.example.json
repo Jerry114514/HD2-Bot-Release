@@ -35,6 +35,17 @@
     "api_url": "https://api.deepseek.com/v1/chat/completions"
   },
 
+  "data": {
+    "_说明": "可选。信息流与 /战报 后台预热相关设置，留空则用 hd2_config.py 里的默认值。",
+    "news_json_url": "https://jerry114514.github.io/HD2-Galatic_war-Map/data.json",
+    "news_source": "hd2map",
+    "news_cache_ttl": 120,
+    "_report_warm说明": "后台静默预热 /战报 快照：report_warm_enable=1 开启；report_warm_interval 预热间隔（秒，≥60）；report_snapshot_ttl 快照有效期（秒，超时才现抓）。前台命中快照时响应在毫秒级、且不调用 LLM。",
+    "report_warm_enable": 1,
+    "report_warm_interval": 240,
+    "report_snapshot_ttl": 900
+  },
+
   "paths": {
     "var_table": "tables/HD2行动变量对照表.md",
     "starmap": "tables/星图对照表_修正版.md",

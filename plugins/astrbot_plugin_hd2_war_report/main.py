@@ -2,6 +2,8 @@ import json
 import io
 import re
 import time
+import asyncio
+import random
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
@@ -305,12 +307,17 @@ def _fetch_brief_text() -> str:
 def _get_major_order(
     planet_map: dict,
     brief_translated: str | None = None,
+    brief_cn: str | None = None,
 ) -> str | None:
     """抓取最新 Major Order（翻译简报 + 星球战况）
 
+    返回 None 表示"取不到数据（源故障）"；返回含"当前没有进行中的重要指令"的文案
+    表示"源正常但确实没有 MO"（MO 间隙期属正常状态，不应报错）。
+
     Args:
         planet_map: 星球信息映射
-        brief_translated: 可选，外部传入的简报翻译（LLM 翻译优先）；为空则用本地/MyMemory
+        brief_translated: 可选，外部传入的简报翻译（LLM 翻译）；为空则用本地/MyMemory
+        brief_cn: 可选，站点 data.json 里现成的 MO 简报中文（优先于以上两者，零 LLM）
     """
     try:
         try:
@@ -320,7 +327,9 @@ def _get_major_order(
             obj = _fetch_json(LIVE_API_URL)
             mos = obj.get("majorOrders") or []
         if not mos:
-            return None
+            # 源正常但没有进行中的 MO（两次 MO 之间的间隙）——这是正常状态，如实说明
+            logger.info("[HD2] 当前没有进行中的 Major Order（源返回空）")
+            return "🎖️ 重要指令\n📋 当前没有进行中的重要指令（等待真理部下一道命令）。"
         mo = mos[0]
         setting = mo.get("setting") or {}
         title = setting.get("overrideTitle") or "MAJOR ORDER"
@@ -329,9 +338,9 @@ def _get_major_order(
         rewards = setting.get("rewards") or []
 
         lines = ["🎖️ 重要指令"]
-        # 翻译简报：优先外部传入（LLM），否则本地修正表/MyMemory
-        if brief:
-            translated = brief_translated or _translate_en_zh(brief)
+        # 翻译简报优先级：站点现成中文 > 外部传入(LLM) > 本地修正表/MyMemory
+        if brief or brief_cn:
+            translated = (brief_cn or "").strip() or brief_translated or _translate_en_zh(brief)
             lines.append(f"📋 {translated}")
 
         # 任务进度：progress 数组与 tasks 一一对应，目标量在 valueTypes==3
@@ -452,6 +461,28 @@ try:
     NEWS_FEED_CACHE_TTL = int(_dcfg("data", "news_cache_ttl", default=NEWS_FEED_CACHE_TTL))
 except Exception:
     NEWS_FEED_CACHE_TTL = 120
+
+# ============ /战报 后台静默预热（前台只读缓存） ============
+# 思路与网站一致：后台定时把数据抓好、译文备好，存成快照；用户发 /战报 时直接格式化快照返回。
+# 站点 data.json 已含 major_order.translated_brief 与 news[].translated，
+# 因此前台路径**完全不需要 LLM**，冷启动后响应通常在 10ms 级。
+try:
+    REPORT_WARM_ENABLE = str(_dcfg("data", "report_warm_enable", default="1")).lower() not in ("0", "false", "no")
+except Exception:
+    REPORT_WARM_ENABLE = True
+try:
+    REPORT_WARM_INTERVAL = max(60, int(_dcfg("data", "report_warm_interval", default=240)))
+except Exception:
+    REPORT_WARM_INTERVAL = 240
+try:
+    REPORT_SNAPSHOT_TTL = max(120, int(_dcfg("data", "report_snapshot_ttl", default=900)))
+except Exception:
+    REPORT_SNAPSHOT_TTL = 900
+REPORT_SNAPSHOT_FILE = _os.path.join(CACHE_DIR, "report_snapshot.json")
+
+# 内存快照（避免每条指令读盘）
+_REPORT_WARM = {"ts": 0.0, "text": "", "source": "", "building": False}
+_warm_task = None
 
 # MO 任务类型 → 中文（type 语义：1=解放 2=采集样本 3=消灭敌人 9=完成行动）
 MO_TASK_TYPE_CN = {
@@ -614,6 +645,102 @@ def _get_news_items(limit: int = 1) -> list[dict]:
     except Exception as e:
         logger.warning(f"[HD2] 获取新闻失败: {e}")
         return _load_site_feed_cache()[:limit]
+
+
+# ---------------- 站点中文（MO 简报 / 资讯译文）现成复用 ----------------
+_SITE_ZH = {"ts": 0.0, "brief": "", "brief_title": "", "news": {}}
+
+
+def _site_zh(force: bool = False) -> dict:
+    """取站点 data.json 里的现成中文：MO 简报译文 + 各条新闻译文（按 id）。
+
+    站点（HD2-Galatic_war-Map）已用 DeepSeek 翻好 mo_brief.translated 与 news[].translated，
+    直接复用可让 /战报 完全不调 LLM。站点不可用时返回空值，调用方自动回退原逻辑。
+    """
+    now = time.time()
+    if not force and _SITE_ZH["ts"] and now - _SITE_ZH["ts"] < max(NEWS_FEED_CACHE_TTL, 60):
+        return _SITE_ZH
+    try:
+        doc = _fetch_json(NEWS_FEED_JSON_URL, timeout=15)
+        if isinstance(doc, dict):
+            mo = doc.get("major_order") or {}
+            _SITE_ZH["brief"] = (mo.get("translated_brief") or "").strip()
+            _SITE_ZH["brief_title"] = (mo.get("title") or "").strip()
+            _SITE_ZH["news"] = {str(n.get("id")): (n.get("translated") or "").strip()
+                                for n in (doc.get("news") or []) if isinstance(n, dict)}
+            _SITE_ZH["ts"] = now
+    except Exception as e:
+        logger.warning(f"[HD2] 读取站点中文失败（将回退 LLM/原文）: {e}")
+    return _SITE_ZH
+
+
+# ---------------- /战报 快照：后台预热写入，前台只读 ----------------
+def _load_report_snapshot() -> tuple:
+    """读快照：(text, ts)；无/损坏返回 ("", 0)"""
+    try:
+        if _os.path.exists(REPORT_SNAPSHOT_FILE):
+            with open(REPORT_SNAPSHOT_FILE, encoding="utf-8") as f:
+                d = json.load(f)
+            return (d.get("text") or ""), float(d.get("ts") or 0)
+    except Exception as e:
+        logger.warning(f"[HD2] 读取战报快照失败: {e}")
+    return "", 0.0
+
+
+def _save_report_snapshot(text: str, source: str = "") -> None:
+    """原子写快照（先临时文件再 replace，避免前端读到半截）"""
+    try:
+        tmp = REPORT_SNAPSHOT_FILE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump({"ts": time.time(), "source": source, "text": text}, f, ensure_ascii=False)
+        _os.replace(tmp, REPORT_SNAPSHOT_FILE)
+    except Exception as e:
+        logger.warning(f"[HD2] 保存战报快照失败: {e}")
+
+
+def _report_snapshot_text(max_age: float) -> str:
+    """取快照文本（优先内存，其次磁盘）；超过 max_age 秒返回空串"""
+    now = time.time()
+    if _REPORT_WARM["text"] and now - _REPORT_WARM["ts"] <= max_age:
+        return _REPORT_WARM["text"]
+    text, ts = _load_report_snapshot()
+    if text and now - ts <= max_age:
+        _REPORT_WARM.update({"ts": ts, "text": text, "source": "disk"})
+        return text
+    return ""
+
+
+def _build_report_parts(planet_map: dict, brief_cn: str | None, news_text: str) -> tuple:
+    """组装 /战报 正文（纯格式化：抓 MO + 战区分布，不调 LLM）
+
+    返回 (正文, quality)：
+      quality = "ok"    数据完整可缓存
+              = "gap"   当前处于 MO 间隙（正常状态，但没新数据，无需反复刷新快照）
+              = "broken" MO 取数失败（保留旧快照更好）
+    """
+    mo = None
+    # MO 缓存：最近 5 条新闻没有 NEW MAJOR ORDER 时复用缓存（MO 未更新，省一次抓取）
+    if not _has_recent_new_major_order():
+        mo = _load_mo_cache()
+    if mo is None:
+        mo = _get_major_order(planet_map, brief_cn=brief_cn)
+        if mo:
+            _save_mo_cache(mo)
+    warzone = _get_warzone_distribution()
+    parts = []
+    quality = "ok"
+    if mo:
+        parts.append(mo)
+        if "当前没有进行中的重要指令" in mo:
+            quality = "gap"
+    else:
+        parts.append("⚠️ 暂时无法获取 Major Order 数据。")
+        quality = "broken"
+    if warzone:
+        parts.append(warzone)
+    if news_text:
+        parts.append(news_text)
+    return "\n\n\n".join(parts), quality
 
 def _get_warzone_distribution() -> str:
     """抓取战区玩家分布（超级地球/终结族/机器人/光能族）带仰齐浜时间"""
@@ -1245,7 +1372,6 @@ class Hd2WarReportPlugin(Star):
         self._last_refresh = 0.0
         self._news_cache = {}  # gid -> 固定文案
         self._load_news_cache()
-
     def _ensure_planet_map(self):
         if time.time() - self._last_refresh > 3600 or not self.planet_map:
             self.planet_map = _load_planet_map()
@@ -1500,33 +1626,97 @@ class Hd2WarReportPlugin(Star):
             logger.warning(f"[HD2] 战局分析失败: {e}")
             return f"⚠️ 战局分析失败：{e}"
 
+    async def _warm_report_snapshot(self, reason: str = "定时") -> str:
+        """后台预热：抓数 + 取站点中文，组装成快照存盘（不面向用户，失败不影响前台）"""
+        if _REPORT_WARM["building"]:
+            return ""
+        _REPORT_WARM["building"] = True
+        t0 = time.time()
+        try:
+            zh = _site_zh()
+            self._ensure_planet_map()
+            news_items = _get_news_items(1)
+            news_text = await self._build_news_summary(news_items)
+            text, quality = _build_report_parts(self.planet_map, zh.get("brief") or None, news_text)
+            if quality == "gap" and _REPORT_WARM["text"]:
+                # MO 间隙：内容不会变，保留旧快照，别把时间戳刷新成"数据很新"的假象
+                logger.info(f"[HD2] 战报预热：当前处于 MO 间隙（{reason}），保留旧快照不刷新")
+                return _REPORT_WARM["text"]
+            if text and text.strip():
+                _save_report_snapshot(text, source="warm")
+                _REPORT_WARM.update({"ts": time.time(), "text": text, "source": "warm"})
+                logger.info(f"[HD2] 战报快照已更新（{reason}，耗时 {time.time() - t0:.1f}s，"
+                            f"MO 中文={'站点' if zh.get('brief') else '回退'}，quality={quality}）")
+            else:
+                logger.warning(f"[HD2] 战报预热未取到内容（{reason}），保留旧快照")
+            return text
+        except Exception as e:
+            logger.warning(f"[HD2] 战报预热失败（{reason}）: {e}")
+            return ""
+        finally:
+            _REPORT_WARM["building"] = False
+
+    async def _warm_loop(self) -> None:
+        """后台定时预热循环：启动先等 20 秒（让 AstrBot 起完），之后每 interval 秒一次"""
+        try:
+            await asyncio.sleep(20)
+            while True:
+                await self._warm_report_snapshot("启动预热" if _REPORT_WARM["ts"] == 0 else "定时")
+                # 抖动，避免整点与其他任务撞在一起
+                await asyncio.sleep(REPORT_WARM_INTERVAL + random.uniform(0, 20))
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            logger.warning(f"[HD2] 战报预热循环退出: {e}")
+
+    async def initialize(self) -> None:
+        """插件激活：把上次的快照读进内存，并启动后台预热任务"""
+        global _warm_task
+        text, ts = _load_report_snapshot()
+        if text:
+            _REPORT_WARM.update({"ts": ts, "text": text, "source": "disk"})
+            logger.info(f"[HD2] 已载入战报快照（{int(time.time() - ts)} 秒前生成，{len(text)} 字）")
+        if REPORT_WARM_ENABLE:
+            try:
+                _warm_task = asyncio.create_task(self._warm_loop())
+                logger.info(f"[HD2] 战报后台预热已启动（每 {REPORT_WARM_INTERVAL}s，"
+                            f"快照有效期 {REPORT_SNAPSHOT_TTL}s）")
+            except Exception as e:
+                logger.warning(f"[HD2] 启动战报预热任务失败: {e}")
+        else:
+            logger.info("[HD2] 战报后台预热已关闭（data.report_warm_enable=0）")
+
+    async def terminate(self) -> None:
+        """插件卸载/重载：停掉后台任务"""
+        global _warm_task
+        if _warm_task is not None:
+            try:
+                _warm_task.cancel()
+            except Exception:
+                pass
+            _warm_task = None
+            logger.info("[HD2] 战报后台预热已停止")
+
     async def _build_report(self) -> str:
+        """/战报：优先读后台预热好的快照（毫秒级返回），过快照有效期才现抓"""
         self._ensure_planet_map()
-        # 先抓简报原文用于 LLM 翻译
-        brief_original = _fetch_brief_text()
-        brief_translated = None
-        if brief_original:
-            brief_translated = await _translate_with_llm(self.context, brief_original)
-        # MO 缓存：最近 5 条新闻没有 NEW MAJOR ORDER 时直接复用缓存（MO 未更新，避免重复翻译/防 API 波动）
-        mo = None
-        if not _has_recent_new_major_order():
-            mo = _load_mo_cache()
-            if mo:
-                logger.info("[HD2] 最近5条新闻无 NMO，使用 MO 缓存")
-        if mo is None:
-            mo = _get_major_order(self.planet_map, brief_translated=brief_translated)
-            if mo:
-                _save_mo_cache(mo)  # 每次实时抓取成功后录入缓存
+        snap = _report_snapshot_text(REPORT_SNAPSHOT_TTL)
+        if snap:
+            age = int(time.time() - _REPORT_WARM["ts"]) if _REPORT_WARM["ts"] else -1
+            logger.info(f"[HD2] /战报 命中快照（{age}s 前，来源 {_REPORT_WARM.get('source')}）")
+            return snap
+        # 没有可用快照（刚启动/长时间离线）：走一次完整组装，并顺手补一个快照
+        logger.info("[HD2] /战报 无快照，实时组装一次")
+        zh = _site_zh()
+        brief_cn = zh.get("brief") or None
+        if not brief_cn:
+            brief_original = _fetch_brief_text()
+            if brief_original:
+                brief_cn = await _translate_with_llm(self.context, brief_original)
         news_items = _get_news_items(1)
         news = await self._build_news_summary(news_items)
-        warzone = _get_warzone_distribution()
-        parts = []
-        if mo:
-            parts.append(mo)
-        else:
-            parts.append("⚠️ 暂时无法获取 Major Order 数据。")
-        if warzone:
-            parts.append(warzone)
-        if news:
-            parts.append(news)
-        return "\n\n\n".join(parts)
+        text, quality = _build_report_parts(self.planet_map, brief_cn, news)
+        if text and quality == "ok":
+            _save_report_snapshot(text, source="live")
+            _REPORT_WARM.update({"ts": time.time(), "text": text, "source": "live"})
+        return text
