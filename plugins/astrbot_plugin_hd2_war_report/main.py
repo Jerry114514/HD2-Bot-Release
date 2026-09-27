@@ -1363,14 +1363,83 @@ def _get_campaigns(planet_map: dict) -> str:
         logger.warning(f"[HD2] 战役查询失败: {e}")
         return f"⚠️ 战役查询失败：{e}"
 
-NEWS_CACHE_FILE = "news_cache.json"  # 存 cache/ 目录，新闻 id 不变则输出固定
+# 新闻缓存文件（存 cache/ 目录）：按新闻 id 缓存固定文案
+NEWS_CACHE_FILE = "news_cache.json"
+
+# 新闻缓存记录结构：{id: {"text": ..., "source": ..., "ts": ..., "ver": ..., "h": ...}}
+#   source: "site"（站点/私密仓译文，权威） | "llm"（本机 LLM 翻译） | "raw"（原文占位）
+#   ver   : 站点 translated_at（有则用来判断新旧）
+#   h     : text 的指纹，用于识别"同 id 但内容变了"
+# 兼容旧的纯字符串格式（读取时自动归一化）。
+NEWS_SRC_RANK = {"site": 2, "llm": 1, "raw": 0}
+
+
+def _news_rec(val) -> dict:
+    """把缓存条目归一化为记录 dict（兼容旧的纯字符串格式）"""
+    if isinstance(val, dict):
+        return val
+    if isinstance(val, str):
+        return {"text": val, "source": "llm", "ts": 0, "ver": "", "h": ""}
+    return {}
+
+
+def _news_text(val) -> str:
+    """取缓存条目的正文"""
+    if isinstance(val, dict):
+        return val.get("text") or ""
+    return val if isinstance(val, str) else ""
+
+
+def _news_fp(text: str) -> str:
+    import hashlib
+
+    return hashlib.md5((text or "").encode("utf-8")).hexdigest()[:12]
+
+
+def _site_item_ver(it: dict) -> str:
+    """站点条目的版本号（translated_at），用于判断译文是否更新"""
+    for k in ("translated_at", "published_at", "published"):
+        v = it.get(k)
+        if v:
+            return str(v)
+    return ""
+
+
+def _news_rec_make(text: str, source: str, ver: str = "") -> dict:
+    return {"text": text, "source": source, "ts": time.time(), "ver": ver, "h": _news_fp(text)}
+
+
+def _news_should_update(old_val, new_text: str, new_source: str, new_ver: str = "") -> bool:
+    """是否需要更新缓存条目。
+
+    规则：
+      - 无内容 -> 更新；同 id 内容指纹变了 -> 更新
+      - 站点权威译文(source=site)：缓存不是 site（旧 LLM 译文）或来源版本更新 -> 更新
+        （这就是"本地缓存挡住私密仓新译文"的修复点）
+      - LLM 译文：只在没有 site 译文可放时才补位
+    """
+    if not new_text:
+        return False
+    old = _news_rec(old_val)
+    old_text = old.get("text") or ""
+    if not old_text:
+        return True
+    if _news_fp(old_text) == _news_fp(new_text):
+        return False            # 内容一致，无需写盘
+    if new_source == "site":
+        if old.get("source") != "site":
+            return True         # 旧的是 LLM/原文 -> 站点权威译文覆盖
+        return bool(new_ver) and str(new_ver) != str(old.get("ver") or "")
+    # 新来源是 LLM：只有当缓存里没有 site 权威译文时才补位
+    return old.get("source") != "site"
+
 
 class Hd2WarReportPlugin(Star):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
         self.planet_map = {}
         self._last_refresh = 0.0
-        self._news_cache = {}  # gid -> 固定文案
+        self._news_cache = {}  # 新闻 id -> 缓存记录 {text, source, ts, ver, h}
         self._load_news_cache()
     def _ensure_planet_map(self):
         if time.time() - self._last_refresh > 3600 or not self.planet_map:
@@ -1389,7 +1458,9 @@ class Hd2WarReportPlugin(Star):
             path = self._news_cache_path()
             if os.path.exists(path):
                 with open(path, encoding="utf-8") as f:
-                    self._news_cache = json.load(f)
+                    raw = json.load(f)
+                # 归一化：旧格式是 {id: "文案"}，新格式是 {id: {text, source, ...}}
+                self._news_cache = {str(k): _news_rec(v) for k, v in (raw or {}).items()}
         except Exception as e:
             logger.warning(f"[HD2] 加载新闻缓存失败: {e}")
             self._news_cache = {}
@@ -1402,19 +1473,28 @@ class Hd2WarReportPlugin(Star):
             logger.warning(f"[HD2] 保存新闻缓存失败: {e}")
 
     async def _build_news_summary(self, items: list[dict]) -> str:
-        """新闻正文：站点已给中文的直接用，其余走 LLM 翻译（按新闻 id 缓存固定输出）"""
+        """新闻正文：**站点/私密仓译文优先**（权威，且会覆盖旧的 LLM 译文），其余走 LLM
+
+        缓存策略（按 id 存固定文案，避免同一新闻每次输出不同）：
+          - 站点给出译文 → 若缓存不是站点译文，或站点版本(translated_at)更新 → 覆盖
+          - 站点没给译文 → 缓存已有内容就沿用；没有才调 LLM（LLM 结果不会顶掉站点译文）
+        """
         if not items:
             return ""
-        # 站点 data.json 已提供中文译文的条目：直接入库，不消耗 LLM
+        dirty = False
         fresh_items = []
         for it in items:
             nid = str(it.get("id"))
             zh = (it.get("_zh") or "").strip()
-            if zh and nid not in self._news_cache:
-                self._news_cache[nid] = zh
-                self._save_news_cache()
-            elif not zh and nid not in self._news_cache:
+            old = self._news_cache.get(nid)
+            if zh:
+                if _news_should_update(old, zh, "site", _site_item_ver(it)):
+                    self._news_cache[nid] = _news_rec_make(zh, "site", _site_item_ver(it))
+                    dirty = True
+            elif not _news_text(old):
                 fresh_items.append(it)
+        if dirty:
+            self._save_news_cache()
         if fresh_items:
             payload = []
             for it in fresh_items:
@@ -1444,26 +1524,26 @@ class Hd2WarReportPlugin(Star):
                         # LLM 输出兜底：本地术语修正（防 LLM 不遵循术语表）
                         for old, new in TERM_FIXES:
                             result = result.replace(old, new)
-                        self._news_cache[str(fresh_items[0].get("id"))] = result
-                        self._save_news_cache()
+                        first_id = str(fresh_items[0].get("id"))
+                        # 双保险：绝不顶掉站点权威译文
+                        if _news_rec(self._news_cache.get(first_id)).get("source") != "site":
+                            self._news_cache[first_id] = _news_rec_make(result, "llm")
+                            self._save_news_cache()
             except Exception as e:
                 logger.warning(f"[HD2] LLM 新闻翻译失败: {e}")
-                # LLM 失败时用原文占位
+                # LLM 失败时用原文占位（同样不顶掉站点译文）
                 for it in fresh_items:
                     nid = str(it.get("id"))
-                    if nid not in self._news_cache:
-                        self._news_cache[nid] = _clean_news_message(it.get("message", ""), 500)
+                    if _news_rec(self._news_cache.get(nid)).get("source") != "site":
+                        self._news_cache[nid] = _news_rec_make(
+                            _clean_news_message(it.get("message", ""), 500), "raw")
                 self._save_news_cache()
 
-        # 固定输出：按 items 顺序取缓存文案
+        # 固定输出：按 items 顺序取缓存文案（兼容旧的纯字符串缓存）
         lines = ["📰 最新资讯："]
         for it in items:
-            nid = str(it.get("id"))
-            cached = self._news_cache.get(nid)
-            if cached:
-                lines.append(cached)
-            else:
-                lines.append(_clean_news_message(it.get("message", ""), 500))
+            cached = _news_text(self._news_cache.get(str(it.get("id"))))
+            lines.append(cached or _clean_news_message(it.get("message", ""), 500))
         return "\n".join(lines)
 
     @filter.event_message_type(filter.EventMessageType.ALL)
