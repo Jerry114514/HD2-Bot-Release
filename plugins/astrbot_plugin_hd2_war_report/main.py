@@ -2,6 +2,8 @@ import json
 import io
 import re
 import time
+import asyncio
+import random
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
@@ -85,6 +87,14 @@ FACTION_CN = {
     "Automatons": "机器人",
     "Illuminate": "光能者",
     "Humans": "超级地球",
+}
+
+# 阵营名 -> owner 数字枚举（与 OWNER_ID_CN 对应；站点 planets[].currentOwner 用的是这套字符串）
+OWNER_STR_ID = {
+    "humans": 1,
+    "terminids": 2,
+    "automatons": 3,
+    "illuminate": 4,
 }
 
 # 防御战截止时间换算偏移（UTC -> UTC+8）
@@ -305,12 +315,17 @@ def _fetch_brief_text() -> str:
 def _get_major_order(
     planet_map: dict,
     brief_translated: str | None = None,
+    brief_cn: str | None = None,
 ) -> str | None:
     """抓取最新 Major Order（翻译简报 + 星球战况）
 
+    返回 None 表示"取不到数据（源故障）"；返回含"当前没有进行中的重要指令"的文案
+    表示"源正常但确实没有 MO"（MO 间隙期属正常状态，不应报错）。
+
     Args:
         planet_map: 星球信息映射
-        brief_translated: 可选，外部传入的简报翻译（LLM 翻译优先）；为空则用本地/MyMemory
+        brief_translated: 可选，外部传入的简报翻译（LLM 翻译）；为空则用本地/MyMemory
+        brief_cn: 可选，站点 data.json 里现成的 MO 简报中文（优先于以上两者，零 LLM）
     """
     try:
         try:
@@ -320,7 +335,9 @@ def _get_major_order(
             obj = _fetch_json(LIVE_API_URL)
             mos = obj.get("majorOrders") or []
         if not mos:
-            return None
+            # 源正常但没有进行中的 MO（两次 MO 之间的间隙）——这是正常状态，如实说明
+            logger.info("[HD2] 当前没有进行中的 Major Order（源返回空）")
+            return "🎖️ 重要指令\n📋 当前没有进行中的重要指令（等待真理部下一道命令）。"
         mo = mos[0]
         setting = mo.get("setting") or {}
         title = setting.get("overrideTitle") or "MAJOR ORDER"
@@ -329,9 +346,9 @@ def _get_major_order(
         rewards = setting.get("rewards") or []
 
         lines = ["🎖️ 重要指令"]
-        # 翻译简报：优先外部传入（LLM），否则本地修正表/MyMemory
-        if brief:
-            translated = brief_translated or _translate_en_zh(brief)
+        # 翻译简报优先级：站点现成中文 > 外部传入(LLM) > 本地修正表/MyMemory
+        if brief or brief_cn:
+            translated = (brief_cn or "").strip() or brief_translated or _translate_en_zh(brief)
             lines.append(f"📋 {translated}")
 
         # 任务进度：progress 数组与 tasks 一一对应，目标量在 valueTypes==3
@@ -426,6 +443,186 @@ _os.makedirs(CACHE_DIR, exist_ok=True)
 MO_CACHE_FILE = _os.path.join(CACHE_DIR, "mo_cache.json")
 MO_CACHE_WINDOW = 5  # 检查最近 N 条新闻是否出现新 NMO
 
+# ============ 信息流数据源 ============
+# 主源：站点（HD2-Galatic_war-Map）每 5 分钟生成的 data.json —— 由 GitHub Pages / Actions
+#       持续抓取并提交，机器人只读现成 JSON，不再自己现抓；其中 news 段还带最新 10 条的中文译文。
+# 兜底：原来的实时 API（companion LIVE_API_URL → 官方 NewsFeed），JSON 不可用时自动回退。
+# 配置项见 hd2_config 的 data.news_json_url / data.news_source / data.news_cache_ttl。
+NEWS_FEED_JSON_URL = "https://jerry114514.github.io/HD2-Galatic_war-Map/data.json"
+NEWS_FEED_SOURCE = "hd2map"      # hd2map=站点 JSON 优先(回退 API)；api=只用 API
+NEWS_FEED_CACHE_TTL = 120        # 站点 JSON 本地缓存秒数（站点每 5 分钟更新一次）
+NEWS_FEED_CACHE_FILE = _os.path.join(CACHE_DIR, "news_feed_cache.json")
+_NEWS_FEED_MEM = {"ts": 0.0, "items": None, "source": ""}
+
+try:
+    import hd2_config as _hd2cfg
+
+    def _dcfg(*keys, default=None):
+        return _hd2cfg.get(*keys, default=default)
+except Exception:
+    def _dcfg(*keys, default=None):
+        return default
+
+NEWS_FEED_JSON_URL = _dcfg("data", "news_json_url", default=NEWS_FEED_JSON_URL)
+NEWS_FEED_SOURCE = str(_dcfg("data", "news_source", default=NEWS_FEED_SOURCE) or "hd2map")
+try:
+    NEWS_FEED_CACHE_TTL = int(_dcfg("data", "news_cache_ttl", default=NEWS_FEED_CACHE_TTL))
+except Exception:
+    NEWS_FEED_CACHE_TTL = 120
+
+# ============ /战报 后台静默预热（前台只读缓存） ============
+# 思路与网站一致：后台定时把数据抓好、译文备好，存成快照；用户发 /战报 时直接格式化快照返回。
+# 站点 data.json 已含 major_order.translated_brief 与 news[].translated，
+# 因此前台路径**完全不需要 LLM**，冷启动后响应通常在 10ms 级。
+try:
+    REPORT_WARM_ENABLE = str(_dcfg("data", "report_warm_enable", default="1")).lower() not in ("0", "false", "no")
+except Exception:
+    REPORT_WARM_ENABLE = True
+try:
+    REPORT_WARM_INTERVAL = max(60, int(_dcfg("data", "report_warm_interval", default=240)))
+except Exception:
+    REPORT_WARM_INTERVAL = 240
+try:
+    REPORT_SNAPSHOT_TTL = max(120, int(_dcfg("data", "report_snapshot_ttl", default=900)))
+except Exception:
+    REPORT_SNAPSHOT_TTL = 900
+REPORT_SNAPSHOT_FILE = _os.path.join(CACHE_DIR, "report_snapshot.json")
+
+# ============ 星球表（index -> 星球信息）多源加载 ============
+# 原来只依赖 helldivers2.dev：该源超时（默认 20s）时每条指令都要白等满超时，
+# 且返回空 dict 会让 MO 目标星球、战线等全部缺名。改为：
+#   站点 data.json 的 planets[]（字段与 helldivers2.dev 完全一致，273 个，随站点每 5 分钟更新）
+#   → 本地磁盘缓存 → 最后才回退 helldivers2.dev（且显式短超时）
+PLANET_TABLE_CACHE = _os.path.join(CACHE_DIR, "planet_table_cache.json")
+PLANET_TABLE_TTL = 3600      # 磁盘缓存最长可用时长（秒）
+PLANET_TABLE_REFRESH = 300   # 超过该时长则后台刷新（前台仍用缓存，不等待）
+_PLANET_TABLE_MEM = {"ts": 0.0, "map": {}}
+
+
+def _read_planet_disk_cache() -> tuple:
+    """读星球表磁盘缓存：(map, age)；无则 ({}, None)"""
+    try:
+        if _os.path.exists(PLANET_TABLE_CACHE):
+            with open(PLANET_TABLE_CACHE, encoding="utf-8") as f:
+                d = json.load(f)
+            mp = d.get("map") or {}
+            if mp:
+                return mp, time.time() - float(d.get("ts") or 0)
+    except Exception as e:
+        logger.warning(f"[HD2] 星球表缓存读取失败: {e}")
+    return {}, None
+
+
+def _save_planet_disk_cache(mp: dict) -> None:
+    try:
+        tmp = PLANET_TABLE_CACHE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump({"ts": time.time(), "source": "site", "map": mp}, f, ensure_ascii=False)
+        _os.replace(tmp, PLANET_TABLE_CACHE)
+    except Exception as e:
+        logger.warning(f"[HD2] 星球表缓存写入失败: {e}")
+
+
+async def _refresh_planet_table_bg() -> None:
+    """后台刷新星球表（不阻塞任何指令）"""
+    try:
+        mp, src = await asyncio.to_thread(_load_planet_table, True)
+        logger.info(f"[HD2] 星球表后台刷新完成（来源 {src}，{len(mp or {})} 个）")
+    except Exception as e:
+        logger.warning(f"[HD2] 星球表后台刷新失败: {e}")
+
+
+def _planet_info_from_item(p: dict) -> dict:
+    """把星球条目归一化为插件内部结构（owner 可能是字符串"Terminids"或数字 2）"""
+    owner = p.get("currentOwner", p.get("owner", ""))
+    if isinstance(owner, str):
+        owner = OWNER_STR_ID.get(owner.strip().lower(), owner)
+    return {
+        "name": p.get("name", "未知星球"),
+        "sector": p.get("sector", ""),
+        "owner": owner,
+        "health": p.get("health"),
+        "maxHealth": p.get("maxHealth"),
+        "event": p.get("event"),
+        "players": (p.get("statistics") or {}).get("playerCount", p.get("players", 0)),
+    }
+
+
+def _load_planet_table(force: bool = False) -> tuple:
+    """加载星球表：返回 (map, source)；source ∈ mem/disk/site/api/"" 。
+
+    策略（前台永不因网络抖动等待）：
+      1) 内存/磁盘已有缓存 -> 立刻返回；缓存超过 PLANET_TABLE_REFRESH 时顺手起个后台刷新
+      2) 都没有 -> 才走网络（站点 JSON 优先，最后 helldivers2.dev 短超时）
+    这样机器人重启后第一条指令也是毫秒级，星球表的更新交给后台。
+    """
+    global _planet_refresh_task
+    now = time.time()
+    if not force:
+        if _PLANET_TABLE_MEM["map"] and now - _PLANET_TABLE_MEM["ts"] < PLANET_TABLE_TTL:
+            return _PLANET_TABLE_MEM["map"], "mem"
+        mp, age = _read_planet_disk_cache()
+        if mp and age is not None and age < PLANET_TABLE_TTL:
+            _PLANET_TABLE_MEM.update({"ts": now - age, "map": mp})
+            logger.info(f"[HD2] 星球表来源：本地缓存（{len(mp)} 个，{int(age)}s 前）")
+            if age > PLANET_TABLE_REFRESH:
+                try:
+                    _planet_refresh_task = asyncio.create_task(_refresh_planet_table_bg())
+                except Exception:
+                    pass
+            return mp, "disk"
+    # 1) 站点 data.json（与信息流/中文译文共用一次抓取）
+    try:
+        doc = _site_doc(force=force)
+        plist = (doc or {}).get("planets") or []
+        if plist:
+            mp = {str(p.get("index")): _planet_info_from_item(p)
+                  for p in plist if isinstance(p, dict) and p.get("index") is not None}
+            if mp:
+                _PLANET_TABLE_MEM.update({"ts": now, "map": mp})
+                _save_planet_disk_cache(mp)
+                logger.info(f"[HD2] 星球表来源：站点 data.json（{len(mp)} 个）")
+                return mp, "site"
+    except Exception as e:
+        logger.warning(f"[HD2] 站点星球表失败: {e}")
+    # 2) 过期的本地磁盘缓存（总比没有强）
+    mp, age = _read_planet_disk_cache()
+    if mp:
+        _PLANET_TABLE_MEM.update({"ts": now - (age or 0), "map": mp})
+        logger.warning(f"[HD2] 星球表来源：过期本地缓存（已 {int(age or 0)}s 未更新）")
+        return mp, "disk-stale"
+    # 3) 最后才回退 helldivers2.dev（显式短超时，避免默认 20s 拖死指令）
+    try:
+        planets = _fetch_json(
+            PLANETS_URL, timeout=6,
+            extra_headers={
+                "X-Super-Client": "astrbot-hd2-plugin",
+                "X-Super-Contact": "https://github.com/astrbot",
+            },
+        )
+        mp = {str(p.get("index")): _planet_info_from_item(p)
+              for p in planets if isinstance(p, dict) and p.get("index") is not None}
+        if mp:
+            _PLANET_TABLE_MEM.update({"ts": now, "map": mp})
+            logger.info(f"[HD2] 星球表来源：helldivers2.dev（{len(mp)} 个）")
+            return mp, "api"
+    except Exception as e:
+        logger.warning(f"[HD2] helldivers2.dev 星球表失败（已用短超时）: {e}")
+    return {}, ""
+
+
+def _load_planet_map() -> dict:
+    """index -> 星球信息 dict：直接用多源版（站点 JSON → 磁盘缓存 → API 短超时）
+
+    注意：本文件同名函数会遮蔽 hd2_common 的导入版，故这里显式走多源实现。
+    """
+    return _load_planet_table()[0]
+
+# 内存快照（避免每条指令读盘）
+_REPORT_WARM = {"ts": 0.0, "text": "", "source": "", "building": False}
+_warm_task = None
+_planet_refresh_task = None
+
 # MO 任务类型 → 中文（type 语义：1=解放 2=采集样本 3=消灭敌人 9=完成行动）
 MO_TASK_TYPE_CN = {
     1: "解放星球",
@@ -486,27 +683,254 @@ def _load_mo_cache() -> str | None:
     return None
 
 
-def _get_news_items(limit: int = 1) -> list[dict]:
-    """抓取最新新闻（星图网站 companion 优先，官方 NewsFeed 兜底——官方源疑似有问题待查验）"""
+def _site_feed_items(doc: dict) -> list[dict]:
+    """把站点 data.json 转成插件内部新闻条目格式。
+
+    站点结构：dispatches[*] = {id, published, type, message}（原始英文，30 条）
+              news[*]       = {id, original, translated, published_at, ...}（最新 10 条，带中文译文）
+    转换后：{id, message, published, type, _zh}；_zh 为站点已给的中文译文（有则免翻译）。
+    """
+    if not isinstance(doc, dict):
+        return []
+    zh_by_id = {}
+    for n in (doc.get("news") or []):
+        if isinstance(n, dict) and n.get("id") is not None:
+            t = (n.get("translated") or "").strip()
+            if t:
+                zh_by_id[str(n["id"])] = t
+    out = []
+    for d in (doc.get("dispatches") or []):
+        if not isinstance(d, dict) or d.get("id") is None:
+            continue
+        out.append({
+            "id": d.get("id"),
+            "message": d.get("message") or "",
+            "published": d.get("published") or "",
+            "type": d.get("type"),
+            "_zh": zh_by_id.get(str(d.get("id"))),
+        })
+    return out
+
+
+def _fetch_site_feed() -> list[dict]:
+    """读站点 data.json（信息流主源），带内存 + 文件缓存；失败抛异常由调用方回退"""
+    now = time.time()
+    if _NEWS_FEED_MEM["items"] and now - _NEWS_FEED_MEM["ts"] < NEWS_FEED_CACHE_TTL:
+        return list(_NEWS_FEED_MEM["items"])
+    doc = _site_doc()          # 与星球表/中文译文共用同一次抓取
+    items = _site_feed_items(doc)
+    if not items:
+        raise ValueError("站点 data.json 无 dispatches 数据")
+    _NEWS_FEED_MEM.update({"ts": now, "items": items, "source": "hd2map"})
     try:
-        # 星图网站（companion）优先
-        obj = _fetch_json(LIVE_API_URL, timeout=20)
-        news = obj.get("news") or []
-        if not news:
-            # 官方 NewsFeed 兜底
-            try:
-                news = _fetch_official(f"/api/NewsFeed/{OFFICIAL_WAR_ID}?maxEntries=50", timeout=20)
-            except Exception as e2:
-                logger.warning(f"[HD2] 官方新闻也失败: {e2}")
-                return []
-        if not news:
-            return []
-        # 按 id 降序取最新
-        news_sorted = sorted(news, key=lambda n: n.get("id", 0), reverse=True)
-        return news_sorted[:limit]
+        with open(NEWS_FEED_CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump({"ts": now, "url": NEWS_FEED_JSON_URL,
+                       "fetchedAt": doc.get("fetchedAt"), "items": items}, f, ensure_ascii=False)
+    except Exception as e:
+        logger.warning(f"[HD2] 站点信息流缓存写入失败: {e}")
+    return items
+
+
+def _load_site_feed_cache() -> list[dict]:
+    """站点不可达时的本地兜底（缓存文件）"""
+    try:
+        if _os.path.exists(NEWS_FEED_CACHE_FILE):
+            with open(NEWS_FEED_CACHE_FILE, encoding="utf-8") as f:
+                d = json.load(f)
+            items = d.get("items") or []
+            if items:
+                logger.warning(f"[HD2] 站点信息流不可达，改用本地缓存（{len(items)} 条）")
+                return items
+    except Exception as e:
+        logger.warning(f"[HD2] 站点信息流缓存读取失败: {e}")
+    return []
+
+
+def _api_feed_items(limit: int) -> list[dict]:
+    """原来的实时抓取路径（兜底）：companion live API → 官方 NewsFeed"""
+    obj = _fetch_json(LIVE_API_URL, timeout=20)
+    news = obj.get("news") or []
+    if not news:
+        news = _fetch_official(f"/api/NewsFeed/{OFFICIAL_WAR_ID}?maxEntries=50", timeout=20)
+    if not news:
+        return []
+    news = sorted(news, key=lambda n: n.get("id", 0), reverse=True)
+    return news[:limit]
+
+
+def _get_news_items(limit: int = 1) -> list[dict]:
+    """取最新新闻（信息流）。
+
+    默认走站点 data.json（每 5 分钟由站点 Actions 更新，只读现成 JSON）；
+    站点不可用时回退实时 API；两者都失败时用本地缓存。
+    返回条目含 `_zh`（站点已翻译的中文）时，后续无需再走 LLM 翻译。
+    """
+    if NEWS_FEED_SOURCE != "api":
+        try:
+            items = _fetch_site_feed()
+            if items:
+                logger.info(f"[HD2] 信息流来源：站点 data.json（{len(items)} 条）")
+                return items[:limit]
+        except Exception as e:
+            logger.warning(f"[HD2] 站点信息流失败，回退实时 API: {e}")
+            cached = _load_site_feed_cache()
+            if cached:
+                return cached[:limit]
+    try:
+        items = _api_feed_items(limit)
+        if items:
+            logger.info(f"[HD2] 信息流来源：实时 API（{len(items)} 条）")
+        return items
     except Exception as e:
         logger.warning(f"[HD2] 获取新闻失败: {e}")
-        return []
+        return _load_site_feed_cache()[:limit]
+
+
+# ---------------- 站点中文（MO 简报 / 资讯译文）现成复用 ----------------
+_SITE_ZH = {"ts": 0.0, "brief": "", "brief_title": "", "news": {}}
+
+
+# ---------------- 站点 data.json：一次抓取，多处复用 ----------------
+# 信息流、MO 简报中文、新闻中文、星球表都来自同一个 JSON；
+# 共用一份带 TTL 的内存缓存，避免同一份文件被重复请求 3 次（也少受网络抖动影响）。
+_SITE_DOC = {"ts": 0.0, "doc": None}
+
+
+def _site_doc(force: bool = False) -> dict:
+    """取站点 data.json（内存缓存 TTL=NEWS_FEED_CACHE_TTL）；失败返回 {}"""
+    now = time.time()
+    if not force and _SITE_DOC["doc"] and now - _SITE_DOC["ts"] < NEWS_FEED_CACHE_TTL:
+        return _SITE_DOC["doc"]
+    try:
+        doc = _fetch_json(NEWS_FEED_JSON_URL, timeout=15)
+        if isinstance(doc, dict) and doc:
+            _SITE_DOC.update({"ts": now, "doc": doc})
+            return doc
+    except Exception as e:
+        logger.warning(f"[HD2] 站点 data.json 抓取失败: {e}")
+    return _SITE_DOC["doc"] or {}
+
+
+def _site_zh(force: bool = False) -> dict:
+    """取站点 data.json 里的现成中文：MO 简报译文 + 各条新闻译文（按 id）。
+
+    站点（HD2-Galatic_war-Map）已用 DeepSeek 翻好 mo_brief.translated 与 news[].translated，
+    直接复用可让 /战报 完全不调 LLM。站点不可用时保留上一次取值，调用方按需回退。
+    """
+    doc = _site_doc(force=force)
+    if isinstance(doc, dict) and doc:
+        mo = doc.get("major_order") or {}
+        brief = (mo.get("translated_brief") or "").strip()
+        if brief:
+            _SITE_ZH["brief"] = brief
+        _SITE_ZH["brief_title"] = (mo.get("title") or "").strip()
+        news = {}
+        for n in (doc.get("news") or []):
+            if not isinstance(n, dict) or n.get("id") is None:
+                continue
+            t = (n.get("translated") or "").strip()
+            if t:
+                news[str(n["id"])] = {"text": t, "ver": str(n.get("translated_at") or "")}
+        if news:
+            _SITE_ZH["news"] = news
+        _SITE_ZH["ts"] = time.time()
+    return _SITE_ZH
+
+
+def _seed_site_news_cache(cache: dict) -> int:
+    """把站点已有的中文译文**全部**播种进新闻缓存（不止当前要显示的那条）。
+
+    为什么全播：否则同一份资讯列表里，可能"这一条用站点译文、那一条用本机 LLM 译文"，
+    术语与文风不一致。全播之后，站点覆盖到的条目都统一用权威译文。
+    返回新写入条数。
+    """
+    n = 0
+    try:
+        for nid, rec in (_SITE_ZH.get("news") or {}).items():
+            if _news_should_update(cache.get(nid), rec.get("text"), "site", rec.get("ver") or ""):
+                cache[nid] = _news_rec_make(rec["text"], "site", rec.get("ver") or "")
+                n += 1
+    except Exception as e:
+        logger.warning(f"[HD2] 播种站点译文失败: {e}")
+    return n
+
+
+
+# ---------------- /战报 快照：后台预热写入，前台只读 ----------------
+def _snapshot_ttl_for(quality: str) -> float:
+    """快照有效期：间隙快照（MO 间隙）用较短值，内容本来就少，不必频繁现抓"""
+    return float(min(REPORT_SNAPSHOT_TTL, 300)) if quality == "gap" else float(REPORT_SNAPSHOT_TTL)
+
+
+def _load_report_snapshot() -> tuple:
+    """读快照：(text, ts, quality)；无/损坏返回 ("", 0, "")"""
+    try:
+        if _os.path.exists(REPORT_SNAPSHOT_FILE):
+            with open(REPORT_SNAPSHOT_FILE, encoding="utf-8") as f:
+                d = json.load(f)
+            return (d.get("text") or ""), float(d.get("ts") or 0), str(d.get("quality") or "")
+    except Exception as e:
+        logger.warning(f"[HD2] 读取战报快照失败: {e}")
+    return "", 0.0, ""
+
+
+def _save_report_snapshot(text: str, source: str = "", quality: str = "ok") -> None:
+    """原子写快照（先临时文件再 replace，避免前端读到半截）"""
+    try:
+        tmp = REPORT_SNAPSHOT_FILE + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump({"ts": time.time(), "source": source, "quality": quality, "text": text},
+                      f, ensure_ascii=False)
+        _os.replace(tmp, REPORT_SNAPSHOT_FILE)
+    except Exception as e:
+        logger.warning(f"[HD2] 保存战报快照失败: {e}")
+
+
+def _report_snapshot_text() -> str:
+    """取快照文本（优先内存，其次磁盘）；按快照自身的 quality 决定有效期"""
+    now = time.time()
+    if _REPORT_WARM["text"]:
+        ttl = _snapshot_ttl_for(_REPORT_WARM.get("quality") or "ok")
+        if now - _REPORT_WARM["ts"] <= ttl:
+            return _REPORT_WARM["text"]
+    text, ts, quality = _load_report_snapshot()
+    if text and now - ts <= _snapshot_ttl_for(quality):
+        _REPORT_WARM.update({"ts": ts, "text": text, "source": "disk", "quality": quality})
+        return text
+    return ""
+
+
+def _build_report_parts(planet_map: dict, brief_cn: str | None, news_text: str) -> tuple:
+    """组装 /战报 正文（纯格式化：抓 MO + 战区分布，不调 LLM）
+
+    返回 (正文, quality)：
+      quality = "ok"    数据完整可缓存
+              = "gap"   当前处于 MO 间隙（正常状态，但没新数据，无需反复刷新快照）
+              = "broken" MO 取数失败（保留旧快照更好）
+    """
+    mo = None
+    # MO 缓存：最近 5 条新闻没有 NEW MAJOR ORDER 时复用缓存（MO 未更新，省一次抓取）
+    if not _has_recent_new_major_order():
+        mo = _load_mo_cache()
+    if mo is None:
+        mo = _get_major_order(planet_map, brief_cn=brief_cn)
+        if mo:
+            _save_mo_cache(mo)
+    warzone = _get_warzone_distribution()
+    parts = []
+    quality = "ok"
+    if mo:
+        parts.append(mo)
+        if "当前没有进行中的重要指令" in mo:
+            quality = "gap"
+    else:
+        parts.append("⚠️ 暂时无法获取 Major Order 数据。")
+        quality = "broken"
+    if warzone:
+        parts.append(warzone)
+    if news_text:
+        parts.append(news_text)
+    return "\n\n\n".join(parts), quality
 
 def _get_warzone_distribution() -> str:
     """抓取战区玩家分布（超级地球/终结族/机器人/光能族）带仰齐浜时间"""
@@ -1129,16 +1553,84 @@ def _get_campaigns(planet_map: dict) -> str:
         logger.warning(f"[HD2] 战役查询失败: {e}")
         return f"⚠️ 战役查询失败：{e}"
 
-NEWS_CACHE_FILE = "news_cache.json"  # 存 cache/ 目录，新闻 id 不变则输出固定
+# 新闻缓存文件（存 cache/ 目录）：按新闻 id 缓存固定文案
+NEWS_CACHE_FILE = "news_cache.json"
+
+# 新闻缓存记录结构：{id: {"text": ..., "source": ..., "ts": ..., "ver": ..., "h": ...}}
+#   source: "site"（站点/私密仓译文，权威） | "llm"（本机 LLM 翻译） | "raw"（原文占位）
+#   ver   : 站点 translated_at（有则用来判断新旧）
+#   h     : text 的指纹，用于识别"同 id 但内容变了"
+# 兼容旧的纯字符串格式（读取时自动归一化）。
+NEWS_SRC_RANK = {"site": 2, "llm": 1, "raw": 0}
+
+
+def _news_rec(val) -> dict:
+    """把缓存条目归一化为记录 dict（兼容旧的纯字符串格式）"""
+    if isinstance(val, dict):
+        return val
+    if isinstance(val, str):
+        return {"text": val, "source": "llm", "ts": 0, "ver": "", "h": ""}
+    return {}
+
+
+def _news_text(val) -> str:
+    """取缓存条目的正文"""
+    if isinstance(val, dict):
+        return val.get("text") or ""
+    return val if isinstance(val, str) else ""
+
+
+def _news_fp(text: str) -> str:
+    import hashlib
+
+    return hashlib.md5((text or "").encode("utf-8")).hexdigest()[:12]
+
+
+def _site_item_ver(it: dict) -> str:
+    """站点条目的版本号（translated_at），用于判断译文是否更新"""
+    for k in ("translated_at", "published_at", "published"):
+        v = it.get(k)
+        if v:
+            return str(v)
+    return ""
+
+
+def _news_rec_make(text: str, source: str, ver: str = "") -> dict:
+    return {"text": text, "source": source, "ts": time.time(), "ver": ver, "h": _news_fp(text)}
+
+
+def _news_should_update(old_val, new_text: str, new_source: str, new_ver: str = "") -> bool:
+    """是否需要更新缓存条目。
+
+    规则：
+      - 无内容 -> 更新；同 id 内容指纹变了 -> 更新
+      - 站点权威译文(source=site)：缓存不是 site（旧 LLM 译文）或来源版本更新 -> 更新
+        （这就是"本地缓存挡住私密仓新译文"的修复点）
+      - LLM 译文：只在没有 site 译文可放时才补位
+    """
+    if not new_text:
+        return False
+    old = _news_rec(old_val)
+    old_text = old.get("text") or ""
+    if not old_text:
+        return True
+    if _news_fp(old_text) == _news_fp(new_text):
+        return False            # 内容一致，无需写盘
+    if new_source == "site":
+        if old.get("source") != "site":
+            return True         # 旧的是 LLM/原文 -> 站点权威译文覆盖
+        return bool(new_ver) and str(new_ver) != str(old.get("ver") or "")
+    # 新来源是 LLM：只有当缓存里没有 site 权威译文时才补位
+    return old.get("source") != "site"
+
 
 class Hd2WarReportPlugin(Star):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
         self.planet_map = {}
         self._last_refresh = 0.0
-        self._news_cache = {}  # gid -> 固定文案
+        self._news_cache = {}  # 新闻 id -> 缓存记录 {text, source, ts, ver, h}
         self._load_news_cache()
-
     def _ensure_planet_map(self):
         if time.time() - self._last_refresh > 3600 or not self.planet_map:
             self.planet_map = _load_planet_map()
@@ -1156,7 +1648,9 @@ class Hd2WarReportPlugin(Star):
             path = self._news_cache_path()
             if os.path.exists(path):
                 with open(path, encoding="utf-8") as f:
-                    self._news_cache = json.load(f)
+                    raw = json.load(f)
+                # 归一化：旧格式是 {id: "文案"}，新格式是 {id: {text, source, ...}}
+                self._news_cache = {str(k): _news_rec(v) for k, v in (raw or {}).items()}
         except Exception as e:
             logger.warning(f"[HD2] 加载新闻缓存失败: {e}")
             self._news_cache = {}
@@ -1169,11 +1663,28 @@ class Hd2WarReportPlugin(Star):
             logger.warning(f"[HD2] 保存新闻缓存失败: {e}")
 
     async def _build_news_summary(self, items: list[dict]) -> str:
-        """LLM 翻译新闻全文（按新闻 id 缓存，命中直接复用固定输出）"""
+        """新闻正文：**站点/私密仓译文优先**（权威，且会覆盖旧的 LLM 译文），其余走 LLM
+
+        缓存策略（按 id 存固定文案，避免同一新闻每次输出不同）：
+          - 站点给出译文 → 若缓存不是站点译文，或站点版本(translated_at)更新 → 覆盖
+          - 站点没给译文 → 缓存已有内容就沿用；没有才调 LLM（LLM 结果不会顶掉站点译文）
+        """
         if not items:
             return ""
-        # 收集未缓存的条目
-        fresh_items = [it for it in items if str(it.get("id")) not in self._news_cache]
+        dirty = False
+        fresh_items = []
+        for it in items:
+            nid = str(it.get("id"))
+            zh = (it.get("_zh") or "").strip()
+            old = self._news_cache.get(nid)
+            if zh:
+                if _news_should_update(old, zh, "site", _site_item_ver(it)):
+                    self._news_cache[nid] = _news_rec_make(zh, "site", _site_item_ver(it))
+                    dirty = True
+            elif not _news_text(old):
+                fresh_items.append(it)
+        if dirty:
+            self._save_news_cache()
         if fresh_items:
             payload = []
             for it in fresh_items:
@@ -1203,26 +1714,26 @@ class Hd2WarReportPlugin(Star):
                         # LLM 输出兜底：本地术语修正（防 LLM 不遵循术语表）
                         for old, new in TERM_FIXES:
                             result = result.replace(old, new)
-                        self._news_cache[str(fresh_items[0].get("id"))] = result
-                        self._save_news_cache()
+                        first_id = str(fresh_items[0].get("id"))
+                        # 双保险：绝不顶掉站点权威译文
+                        if _news_rec(self._news_cache.get(first_id)).get("source") != "site":
+                            self._news_cache[first_id] = _news_rec_make(result, "llm")
+                            self._save_news_cache()
             except Exception as e:
                 logger.warning(f"[HD2] LLM 新闻翻译失败: {e}")
-                # LLM 失败时用原文占位
+                # LLM 失败时用原文占位（同样不顶掉站点译文）
                 for it in fresh_items:
                     nid = str(it.get("id"))
-                    if nid not in self._news_cache:
-                        self._news_cache[nid] = _clean_news_message(it.get("message", ""), 500)
+                    if _news_rec(self._news_cache.get(nid)).get("source") != "site":
+                        self._news_cache[nid] = _news_rec_make(
+                            _clean_news_message(it.get("message", ""), 500), "raw")
                 self._save_news_cache()
 
-        # 固定输出：按 items 顺序取缓存文案
+        # 固定输出：按 items 顺序取缓存文案（兼容旧的纯字符串缓存）
         lines = ["📰 最新资讯："]
         for it in items:
-            nid = str(it.get("id"))
-            cached = self._news_cache.get(nid)
-            if cached:
-                lines.append(cached)
-            else:
-                lines.append(_clean_news_message(it.get("message", ""), 500))
+            cached = _news_text(self._news_cache.get(str(it.get("id"))))
+            lines.append(cached or _clean_news_message(it.get("message", ""), 500))
         return "\n".join(lines)
 
     @filter.event_message_type(filter.EventMessageType.ALL)
@@ -1245,6 +1756,7 @@ class Hd2WarReportPlugin(Star):
             # 监控埋点
             _t0 = time.time()
             _log("matched", plugin="war_report", text=text, group=_gid(event), user=_uid(event), name=_uname(event))
+            yield event.plain_result("⏳ 正在获取数据...请稍候")
             self._ensure_planet_map()
             if "dss" in text:
                 report = await _get_dss_status(self.planet_map, self.context)
@@ -1385,33 +1897,110 @@ class Hd2WarReportPlugin(Star):
             logger.warning(f"[HD2] 战局分析失败: {e}")
             return f"⚠️ 战局分析失败：{e}"
 
-    async def _build_report(self) -> str:
-        self._ensure_planet_map()
-        # 先抓简报原文用于 LLM 翻译
-        brief_original = _fetch_brief_text()
-        brief_translated = None
-        if brief_original:
-            brief_translated = await _translate_with_llm(self.context, brief_original)
-        # MO 缓存：最近 5 条新闻没有 NEW MAJOR ORDER 时直接复用缓存（MO 未更新，避免重复翻译/防 API 波动）
-        mo = None
-        if not _has_recent_new_major_order():
-            mo = _load_mo_cache()
-            if mo:
-                logger.info("[HD2] 最近5条新闻无 NMO，使用 MO 缓存")
-        if mo is None:
-            mo = _get_major_order(self.planet_map, brief_translated=brief_translated)
-            if mo:
-                _save_mo_cache(mo)  # 每次实时抓取成功后录入缓存
-        news_items = _get_news_items(1)
-        news = await self._build_news_summary(news_items)
-        warzone = _get_warzone_distribution()
-        parts = []
-        if mo:
-            parts.append(mo)
+    async def _warm_report_snapshot(self, reason: str = "定时") -> str:
+        """后台预热：抓数 + 取站点中文，组装成快照存盘（不面向用户，失败不影响前台）"""
+        if _REPORT_WARM["building"]:
+            return ""
+        _REPORT_WARM["building"] = True
+        t0 = time.time()
+        try:
+            zh = _site_zh()
+            seeded = _seed_site_news_cache(self._news_cache)
+            if seeded:
+                self._save_news_cache()
+                logger.info(f"[HD2] 已播种 {seeded} 条站点译文到新闻缓存")
+            # 预热时顺带把星球表准备好，用户第一条指令就不必等网络
+            try:
+                mp, psrc = await asyncio.to_thread(_load_planet_table, True)
+                if mp:
+                    self.planet_map = mp
+                    self._last_refresh = time.time()
+                    logger.info(f"[HD2] 星球表已预热（来源 {psrc}，{len(mp)} 个）")
+            except Exception as e:
+                logger.warning(f"[HD2] 星球表预热失败: {e}")
+            news_items = _get_news_items(1)
+            news_text = await self._build_news_summary(news_items)
+            text, quality = _build_report_parts(self.planet_map, zh.get("brief") or None, news_text)
+            if text and text.strip():
+                # 间隙快照也写，但带 quality 标记、用更短有效期（避免每条指令都重新组装）
+                _save_report_snapshot(text, source="warm", quality=quality)
+                _REPORT_WARM.update({"ts": time.time(), "text": text, "source": "warm", "quality": quality})
+                logger.info(f"[HD2] 战报快照已更新（{reason}，耗时 {time.time() - t0:.1f}s，"
+                            f"MO 中文={'站点' if zh.get('brief') else '回退'}，quality={quality}）")
+            else:
+                logger.warning(f"[HD2] 战报预热未取到内容（{reason}），保留旧快照")
+            return text
+        except Exception as e:
+            logger.warning(f"[HD2] 战报预热失败（{reason}）: {e}")
+            return ""
+        finally:
+            _REPORT_WARM["building"] = False
+
+    async def _warm_loop(self) -> None:
+        """后台定时预热循环：启动后很快先预热一次，之后每 interval 秒一次"""
+        try:
+            await asyncio.sleep(3)   # 只等这一小会儿，尽快让快照就绪（不依赖网络就绪）
+            while True:
+                await self._warm_report_snapshot("启动预热" if _REPORT_WARM["ts"] == 0 else "定时")
+                # 抖动，避免整点与其他任务撞在一起
+                await asyncio.sleep(REPORT_WARM_INTERVAL + random.uniform(0, 20))
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            logger.warning(f"[HD2] 战报预热循环退出: {e}")
+
+    async def initialize(self) -> None:
+        """插件激活：把上次的快照读进内存，并启动后台预热任务"""
+        global _warm_task
+        text, ts, quality = _load_report_snapshot()
+        if text:
+            _REPORT_WARM.update({"ts": ts, "text": text, "source": "disk", "quality": quality})
+            logger.info(f"[HD2] 已载入战报快照（{int(time.time() - ts)} 秒前生成，{len(text)} 字）")
+        if REPORT_WARM_ENABLE:
+            try:
+                _warm_task = asyncio.create_task(self._warm_loop())
+                logger.info(f"[HD2] 战报后台预热已启动（每 {REPORT_WARM_INTERVAL}s，"
+                            f"快照有效期 {REPORT_SNAPSHOT_TTL}s）")
+            except Exception as e:
+                logger.warning(f"[HD2] 启动战报预热任务失败: {e}")
         else:
-            parts.append("⚠️ 暂时无法获取 Major Order 数据。")
-        if warzone:
-            parts.append(warzone)
-        if news:
-            parts.append(news)
-        return "\n\n\n".join(parts)
+            logger.info("[HD2] 战报后台预热已关闭（data.report_warm_enable=0）")
+
+    async def terminate(self) -> None:
+        """插件卸载/重载：停掉后台任务"""
+        global _warm_task
+        if _warm_task is not None:
+            try:
+                _warm_task.cancel()
+            except Exception:
+                pass
+            _warm_task = None
+            logger.info("[HD2] 战报后台预热已停止")
+
+    async def _build_report(self) -> str:
+        """/战报：优先读后台预热好的快照（毫秒级返回），过快照有效期才现抓"""
+        _t0 = time.time()
+        self._ensure_planet_map()
+        snap = _report_snapshot_text()
+        if snap:
+            age = int(time.time() - _REPORT_WARM["ts"]) if _REPORT_WARM["ts"] else -1
+            logger.info(f"[HD2] /战报 命中快照（{age}s 前，来源 {_REPORT_WARM.get('source')}，"
+                        f"本次取用 {time.time() - _t0:.3f}s）")
+            return snap
+        # 没有可用快照（刚启动/长时间离线）：走一次完整组装，并顺手补一个快照
+        logger.info("[HD2] /战报 无快照，实时组装一次（本次可能较慢）")
+        zh = _site_zh()
+        brief_cn = zh.get("brief") or None
+        if not brief_cn:
+            brief_original = _fetch_brief_text()
+            if brief_original:
+                brief_cn = await _translate_with_llm(self.context, brief_original)
+        news_items = _get_news_items(1)
+        # 站点译文已进缓存时 _build_news_summary 不会调 LLM（只对真正缺译文的条目才翻）
+        news = await self._build_news_summary(news_items)
+        text, quality = _build_report_parts(self.planet_map, brief_cn, news)
+        if text and text.strip():
+            _save_report_snapshot(text, source="live", quality=quality)
+            _REPORT_WARM.update({"ts": time.time(), "text": text, "source": "live", "quality": quality})
+        logger.info(f"[HD2] /战报 实时组装完成（{time.time() - _t0:.1f}s，quality={quality}）")
+        return text

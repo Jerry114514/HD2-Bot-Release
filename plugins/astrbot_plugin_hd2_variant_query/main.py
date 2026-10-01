@@ -287,6 +287,7 @@ class Hd2VariantQueryPlugin(Star):
             return
         _t0 = time.time()
         _log("matched", plugin="variant_query", text=text_clean, group=_gid(event), user=_uid(event), name=_uname(event))
+        yield event.plain_result("⏳ 正在获取数据...请稍候")
         try:
             scan = await _scan_all_variants()
             planets = scan.get(matched_kw, [])

@@ -861,6 +861,7 @@ class Hd2PlanetInfoPlugin(Star):
             return
         _t0 = time.time()
         _log("matched", plugin="planet_info", text=text_clean, group=_gid(event), user=_uid(event), name=_uname(event))
+        yield event.plain_result("⏳ 正在获取数据...请稍候")
         try:
             # 星球中文名标题（经星图对照表查验替换）
             title_cn = None
