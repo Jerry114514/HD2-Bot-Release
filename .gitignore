@@ -21,3 +21,6 @@ napcat/
 .idea/
 Thumbs.db
 .DS_Store
+
+# AstrBot 运行配置快照（易随版本漂移且可能混入真实群号，不入库；部署参考 config.example.json + docs/部署指南.md）
+data/cmd_config.json

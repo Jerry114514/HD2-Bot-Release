@@ -35,7 +35,7 @@ except Exception:
 WS_URL = _g("napcat", "ws_url", d="ws://127.0.0.1:6199/ws")
 SELF_ID = str(_g("bot", "self_id", d=""))   # 机器人 QQ（NapCat 登录号）
 DEFAULT_GROUP = int(_g("bot", "default_group", d=0))
-FAKE_USER = int(_g("inject", "fake_user", d=2428164570))  # 伪装的群成员 user_id（≠ 机器人自己）
+FAKE_USER = int(_g("inject", "fake_user", d=10000))  # 伪装的群成员 user_id（≠ 机器人自己；测试用占位号，请在 config.json 配置真实测试号）
 FAKE_NAME = _g("inject", "fake_name", d="绝地潜兵·测试员")
 
 if not SELF_ID:
