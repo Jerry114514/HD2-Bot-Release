@@ -154,15 +154,18 @@ class TestWarReportFormatting(unittest.TestCase):
             orig_mo = wr._get_major_order
             orig_news = wr._get_news_items
             orig_wz = wr._get_warzone_distribution
+            orig_mocache = wr._load_mo_cache
             wr._get_major_order = lambda *a, **k: "🎖️ 重要指令\n📋 当前没有进行中的重要指令。"
             wr._get_news_items = lambda limit=1: []
             wr._get_warzone_distribution = lambda: ""
+            wr._load_mo_cache = lambda: None  # 隔离冒烟留下的真实 MO 缓存
             try:
                 text, quality = wr._build_report_parts({}, None, "")
             finally:
                 wr._get_major_order = orig_mo
                 wr._get_news_items = orig_news
                 wr._get_warzone_distribution = orig_wz
+                wr._load_mo_cache = orig_mocache
         self.assertEqual(quality, "gap")
         self.assertIn("重要指令", text)
 

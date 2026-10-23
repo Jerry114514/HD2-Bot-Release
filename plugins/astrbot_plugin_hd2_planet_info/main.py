@@ -475,6 +475,7 @@ def _site_region_rows(idx: int, planet_site: dict) -> list:
                 "availability_factor": r.get("availabilityFactor"),
                 "damage_multiplier": r.get("damageMultiplier"),
                 "measured": meas,
+                "_raw": r,   # region_model 按站点原始 camelCase 字段取值
             })
     except Exception as e:
         logger.debug(f"[HD2-PlanetInfo] 区域行构建失败: {e}")
@@ -873,7 +874,7 @@ def _translate_planet_info(info: dict) -> str:
                 try:
                     ri = r.get("region_index")
                     meta = name_tbl[ri] if isinstance(ri, int) and 0 <= ri < len(name_tbl) else {}
-                    m = _ds.region_model(ctx, r, meta)
+                    m = _ds.region_model(ctx, r.get("_raw") or r, meta)
                 except Exception:
                     m = None
             status = (m or {}).get("status") or ("已开放" if r.get("is_available") else "未开放")
@@ -889,7 +890,9 @@ def _translate_planet_info(info: dict) -> str:
                 line += f"｜贡献 +{contrib:.2f}pt"
             meas = r.get("measured") or {}
             if isinstance(meas, dict) and meas.get("measured") and meas.get("net") is not None:
-                line += f"｜实测 {meas['net']:+.2f}%/h"
+                net = meas["net"]
+                net_s = f"{net:+.3f}".replace("-0.000", "+0.000")   # 负零按 0 展示
+                line += f"｜实测 {net_s}%/h"
             elif isinstance(meas, dict) and meas.get("res") is not None:
                 line += f"｜抵抗 {meas['res']:.2f}%/h"
             lines.append(line)

@@ -180,19 +180,23 @@ def _num(v):
 
 
 def _ms(v):
-    """ISO 时间 -> epoch ms；无效返回 None"""
+    """ISO 时间 -> epoch ms；无效返回 None。
+
+    注意：站点/官方时间戳是 UTC（Z 后缀）或带时区（+08:00），
+    必须按带时区解析；不能用 time.mktime（会把 Z 串按本地时区解释，
+    在 UTC+8 机器上整体偏移 8 小时，污染断更判定/剩余时间/预测窗口）。
+    无时区的裸时间串按 UTC 处理。
+    """
     if not v:
         return None
-    try:
-        t = time.mktime(time.strptime(str(v)[:19], "%Y-%m-%dT%H:%M:%S"))
-        return t * 1000.0
-    except Exception:
-        pass
     try:
         from datetime import datetime, timezone
 
         s = str(v).replace("Z", "+00:00")
-        dt = datetime.fromisoformat(s)
+        try:
+            dt = datetime.fromisoformat(s)
+        except ValueError:
+            dt = datetime.fromisoformat(s[:19])
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
         return dt.timestamp() * 1000.0
@@ -546,8 +550,11 @@ _CAP_TOL = 0.0005   # 满血顶格容差 0.05%
 _MIN_SPAN_H = 0.24  # 窗口最短 ≈14 分钟，宁可没有实测也不要假实测
 
 
-def _is_capped(frame: dict) -> bool:
+def _is_capped(frame: dict, fallback_mh: float | None = None) -> bool:
+    """满血顶格判定；区域帧可能缺 maxHealth 字段，用星球/区域传入的满血兜底"""
     mh = _num((frame or {}).get("maxHealth"))
+    if not (mh and mh > 0):
+        mh = fallback_mh
     hp = _num((frame or {}).get("health"))
     return mh is not None and mh > 0 and hp is not None and hp >= mh * (1 - _CAP_TOL)
 
@@ -582,7 +589,8 @@ def net_from_frames(frames: list, max_health: float, window_h: float) -> dict | 
         "first": first_f,
         "last": last_f,
         "owner_changed": first_f.get("owner") != last_f.get("owner"),
-        "capped": _is_capped(first_f) and _is_capped(last_f),
+        "capped": _is_capped(first_f, max_health) and _is_capped(last_f, max_health),
+        "last_age_h": (time.time() * 1000 - last_t) / 3600000.0,
     }
 
 
@@ -609,6 +617,8 @@ def planet_measured(planet: dict, window_h: float | None = None) -> dict | None:
         return None
     if n["owner_changed"] or n["capped"]:
         return None   # 满血顶格 Δ=0 不代表净速率 0，必须交推演兜底
+    if n["last_age_h"] > RECENT_FRESH_MAX_H:
+        return None   # 末帧超过断更阈值：旧差分不得冒充当前实测
     res = _num(p.get("resistance")) or 0.0
     return {
         "net": n["net"], "gross": n["net"] + res, "res": res,
@@ -646,6 +656,8 @@ def region_measured(planet_index: int, region: dict, window_h: float | None = No
         return None
     if n["owner_changed"] or n["capped"]:
         return None
+    if n["last_age_h"] > RECENT_FRESH_MAX_H:
+        return None   # 末帧超过断更阈值：旧差分不得冒充当前实测
     regen = _num(n["last"].get("regerPerSecond")) or 0.0
     return {
         "net": n["net"], "gross": n["net"] + (regen * 3600 / mh * 100), "res": regen * 3600 / mh * 100,

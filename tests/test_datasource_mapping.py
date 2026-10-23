@@ -98,6 +98,19 @@ class TestFieldMapping(unittest.TestCase):
         self.assertEqual(ds.news_zh_map(bad), {})
         self.assertEqual(ds.dss(bad), {})
 
+    def test_to_ms_timezone_semantics(self):
+        """Z 与 +08:00 是同一时刻（回归：mktime 本地解释曾把 Z 串偏移 8 小时）"""
+        z = ds.to_ms("2026-10-24T00:00:00Z")
+        cn = ds.to_ms("2026-10-24T08:00:00+08:00")
+        self.assertEqual(z, cn)
+        # 与 UTC epoch 校验（2026-10-24T00:00:00Z）
+        import calendar
+        import time as _t
+        expect = calendar.timegm(_t.strptime("2026-10-24T00:00:00", "%Y-%m-%dT%H:%M:%S")) * 1000
+        self.assertEqual(z, expect)
+        self.assertIsNone(ds.to_ms("not-a-time"))
+        self.assertIsNone(ds.to_ms(""))
+
 
 if __name__ == "__main__":
     unittest.main()
