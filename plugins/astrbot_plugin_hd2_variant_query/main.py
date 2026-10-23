@@ -75,6 +75,15 @@ from astrbot_plugin_hd2_common.main import (
     PLANETS_URL,
 )
 
+# 统一数据源（hd2_datasource，项目根）
+_DS_ROOT = _os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+if _DS_ROOT not in _sys.path:
+    _sys.path.insert(0, _DS_ROOT)
+try:
+    import hd2_datasource as _ds
+except Exception:  # pragma: no cover
+    _ds = None
+
 
 def _gid(event):
     try:
@@ -151,13 +160,21 @@ async def _scan_all_variants() -> dict:
         eff_cn = _load_effect_id_cn()
         # 中文词条 -> VARIANT_CN key（忽略空格差异）
         cn2key = {v.replace(" ", "").upper(): k for k, v in VARIANT_CN.items()}
-        # 星球名
+        # 星球名：主站 planet_map 优先（免等 helldivers2.dev），dev 表兜底
+        name_map = {}
         try:
-            planets = _fetch_json(PLANETS_URL, extra_headers={
-                "X-Super-Client": "astrbot-hd2-plugin", "X-Super-Contact": "https://github.com/astrbot"})
-            name_map = {p["index"]: p["name"] for p in planets}
+            if _ds:
+                name_map = {int(idx): info.get("name") for idx, info in _ds.planet_map().items()
+                            if info.get("name")}
         except Exception:
             name_map = {}
+        if not name_map:
+            try:
+                planets = _fetch_json(PLANETS_URL, extra_headers={
+                    "X-Super-Client": "astrbot-hd2-plugin", "X-Super-Contact": "https://github.com/astrbot"})
+                name_map = {p["index"]: p["name"] for p in planets}
+            except Exception:
+                name_map = {}
         # 官方 planetActiveEffects：战役星球上的效果 -> 变种
         for p in st.get("planetActiveEffects") or []:
             idx = p.get("index")
