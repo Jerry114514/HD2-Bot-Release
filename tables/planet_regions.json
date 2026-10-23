@@ -1,0 +1,2284 @@
+{
+  "updated_at": "2026-09-24T16:03:55Z",
+  "source": "helldivers.wiki.gg :: Module:Data/PlanetStatistics（Lua 数据模块，英文原名）",
+  "total": 84,
+  "region_total": 211,
+  "planets": {
+    "0": {
+      "name": "SUPER EARTH",
+      "pagename": "Super Earth",
+      "sector": "SOL",
+      "regions": [
+        {
+          "name": "EAGLEOPOLIS",
+          "desc": "This Great Heart of Commerce is renowned galaxy-wide for its Grand Shopping Malls and Splendorous Entertainment Centers.",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "ADMINISTRATIVE CENTER 02",
+          "desc": "Each form and application that passes through the hallowed halls of AdminCen is emblazoned with the Stamp of Ages, and should be given a place of honor in the home.",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "REMEMBRANCE",
+          "desc": "Risen from the ashes of an ancient city, Rememberance is a monument to the Perseverance of Humankind.",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "YORK SUPREME",
+          "desc": "Following the Great York Conundrum, one City rose above the rest, pledging to hold its Hand over all other Yorks, so that no more blood be spilt between them.",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "PORT MERCY",
+          "desc": "Since sheltering millions of loyal refugees in the Last Great War, Port Mercy has been a safe haven for any class-A citizen in need.",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "PROSPERITY CITY",
+          "desc": "Home to the Democratic Council, our proud Capital is a beacon of Progress, Productivity, and Patriotism.",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "EQUALITY-ON-SEA",
+          "desc": "Named for the historic conference where Humanity was found to be the most Equal species in the Galaxy.",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "7": {
+      "name": "ZEA RUGOSIA",
+      "pagename": "Zea Rugosia",
+      "sector": "FERRIS",
+      "regions": [
+        {
+          "name": "NEW COB",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "GENE",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "STARPASS",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "16": {
+      "name": "FORT UNION",
+      "pagename": "Fort Union",
+      "sector": "ORION",
+      "regions": [
+        {
+          "name": "OTARU'S PLEDGE",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "XIAMEN ANEW",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "MUNITION CITY",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "NEW HOPE CITY",
+          "desc": "The flagship Maximum Security City. Impregnable to Tyranny; the future of the Federation.",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "28": {
+      "name": "VOLTERRA",
+      "pagename": "Volterra",
+      "sector": "KORPUS",
+      "regions": [
+        {
+          "name": "SCARLET HAVEN",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "EDWARD'S GRAVE",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "LIGHT-OF-LIBERTY",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "29": {
+      "name": "CRUCIBLE",
+      "pagename": "Crucible",
+      "sector": "KORPUS",
+      "regions": [
+        {
+          "name": "KURRI KURRI",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "ANNWN",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "AGARTHA",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "PROMINENCE",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "32": {
+      "name": "FORT SANCTUARY",
+      "pagename": "Fort Sanctuary",
+      "sector": "CANCRI",
+      "regions": [
+        {
+          "name": "NEW YEARNING CITY",
+          "desc": "One of 3 Maximum Security Cities. Impregnable to Tyranny; the future of the Federation.",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "33": {
+      "name": "SEYSHEL BEACH",
+      "pagename": "Seyshel Beach",
+      "sector": "CANCRI",
+      "regions": [
+        {
+          "name": "ACCOUNTANT GRAEBER",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "BEACHVIEW",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "THE VILLAS",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "NEW ALEXANDRIA",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "36": {
+      "name": "SOLGHAST",
+      "pagename": "Solghast",
+      "sector": "GOTHMAR",
+      "regions": [
+        {
+          "name": "LUXE POINT",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "SHADY OAKS",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "DOSTOINSTVO",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "37": {
+      "name": "DILUVIA",
+      "pagename": "Diluvia",
+      "sector": "GOTHMAR",
+      "regions": [
+        {
+          "name": "GRACIOUS LIBERTY",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "LUSCIOUS LIBERTY",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "COUNCILLOR RORA",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "42": {
+      "name": "EMERIA",
+      "pagename": "Emeria",
+      "sector": "KELVIN",
+      "regions": [
+        {
+          "name": "NEW ASPIRATION CITY",
+          "desc": "One of 3 Maximum Security Cities. Impregnable to Tyranny; the future of the Federation.",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "44": {
+      "name": "FENMIRE",
+      "pagename": "Fenmire",
+      "sector": "MARSPIRA",
+      "regions": [
+        {
+          "name": "BRAWFERMLAND",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "NEW ABERDEEN",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "SAORSA GLEN",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "53": {
+      "name": "CARAMOOR",
+      "pagename": "Caramoor",
+      "sector": "KORPUS",
+      "regions": [
+        {
+          "name": "LEMURIA RISING",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "PIONEER'S DREAM",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "BASE CAMP 8",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "56": {
+      "name": "MYRIUM",
+      "pagename": "Myrium",
+      "sector": "MORGON",
+      "regions": [
+        {
+          "name": "PILOT'S BERTH",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "PLETHORA",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "ANTBOOT",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "57": {
+      "name": "KERTH SECUNDUS",
+      "pagename": "Kerth Secundus",
+      "sector": "RICTUS",
+      "regions": [
+        {
+          "name": "SCHOLAR'S MOOR",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "BLESTRAIL",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "HILDOARA CENTRAL",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "58": {
+      "name": "PARSH",
+      "pagename": "Parsh",
+      "sector": "RICTUS",
+      "regions": [
+        {
+          "name": "PORUGU",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "PADOSAN",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "60": {
+      "name": "IRULTA",
+      "pagename": "Irulta",
+      "sector": "SALERIA",
+      "regions": [
+        {
+          "name": "RECON HEIGHTS",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "SILO A",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "VOTER'S FALLOW",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "61": {
+      "name": "EMORATH",
+      "pagename": "Emorath",
+      "sector": "MERIDIAN",
+      "regions": [
+        {
+          "name": "FARMHANDSTOWN",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "FORT BOUNTY",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "FUTURIA",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "67": {
+      "name": "TARSH",
+      "pagename": "Tarsh",
+      "sector": "MARSPIRA",
+      "regions": [
+        {
+          "name": "FORTITUDE",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "FREEDOM'S TORCH",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "FEARLESS HOLLOW",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "72": {
+      "name": "JULHEIM",
+      "pagename": "Julheim",
+      "sector": "NANOS",
+      "regions": [
+        {
+          "name": "FROSTOWN",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "78": {
+      "name": "CRIMSICA",
+      "pagename": "Crimsica",
+      "sector": "DRACO",
+      "regions": [
+        {
+          "name": "LIL'OME",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "LLANFAIRPWLLGWYNGYLLGOGERYCHWYRNDROBWLLLLANTYSILIOGOGOGOCH II",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "80": {
+      "name": "VELD",
+      "pagename": "Veld",
+      "sector": "ORION",
+      "regions": [
+        {
+          "name": "CLE ELUM REDIVIVA",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "LAELIA",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "81": {
+      "name": "ALTA V",
+      "pagename": "Alta V",
+      "sector": "KORPUS",
+      "regions": [
+        {
+          "name": "PORTE LIBERTÉ",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "UNDERVATTEN",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "82": {
+      "name": "URSICA XI",
+      "pagename": "Ursica XI",
+      "sector": "BORGUS",
+      "regions": [
+        {
+          "name": "NEW KATHMANDU",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "PO'S RAVENNA",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "88": {
+      "name": "REGNUS",
+      "pagename": "Regnus",
+      "sector": "MORGON",
+      "regions": [
+        {
+          "name": "PEOPLE'S HAND",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "TOPSOIL",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "HUMAN WILL",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "90": {
+      "name": "VALMOX",
+      "pagename": "Valmox",
+      "sector": "RICTUS",
+      "regions": [
+        {
+          "name": "REBELSGRAVE",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "REFORMED-BY-TRUTH",
+          "desc": "",
+          "size": "City",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "OBEDIENCE",
+          "desc": "",
+          "size": "City",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "92": {
+      "name": "GRAFMERE",
+      "pagename": "Grafmere",
+      "sector": "RICTUS",
+      "regions": [
+        {
+          "name": "GRAFSART",
+          "desc": "",
+          "size": "City",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "GRAFSWALLIT",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "GRAFSEAD",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "94": {
+      "name": "OASIS",
+      "pagename": "Oasis",
+      "sector": "RICTUS",
+      "regions": [
+        {
+          "name": "RESPITE",
+          "desc": "",
+          "size": "City",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "95": {
+      "name": "GENESIS PRIME",
+      "pagename": "Genesis Prime",
+      "sector": "RICTUS",
+      "regions": [
+        {
+          "name": "MALLSTRIP NODES",
+          "desc": "",
+          "size": "Town",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "BIRTH",
+          "desc": "",
+          "size": "City",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "100": {
+      "name": "TRANDOR",
+      "pagename": "Trandor",
+      "sector": "STEN",
+      "regions": [
+        {
+          "name": "NYA SKELLEFTEA",
+          "desc": "",
+          "size": "City",
+          "owner": "Terminids",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "ÖDESHÖGRE",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Terminids",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "GOTHENBURG III",
+          "desc": "",
+          "size": "City",
+          "owner": "Terminids",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "102": {
+      "name": "LIBERTY RIDGE",
+      "pagename": "Liberty Ridge",
+      "sector": "MERIDIAN",
+      "regions": [
+        {
+          "name": "VANQUISHMENT",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "FREECREST",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "107": {
+      "name": "PÖPLI IX",
+      "pagename": "Pöpli IX",
+      "sector": "XZAR",
+      "regions": [
+        {
+          "name": "RESILIENCE",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "HOT GATES",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "110": {
+      "name": "BEKVAM III",
+      "pagename": "Bekvam III",
+      "sector": "NANOS",
+      "regions": [
+        {
+          "name": "CONVENIENCE",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "FIREFLY MEADOWS",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "112": {
+      "name": "VERNEN WELLS",
+      "pagename": "Vernen Wells",
+      "sector": "HYDRA",
+      "regions": [
+        {
+          "name": "BLACKVEIN MINES",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "BENEVOLENCE",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "ANNE'S VIGIL",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "114": {
+      "name": "AURORA BAY",
+      "pagename": "Aurora Bay",
+      "sector": "VALDIS",
+      "regions": [
+        {
+          "name": "BATU BELIG",
+          "desc": "",
+          "size": "City",
+          "owner": "Automaton",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "EAGLEMOUNT",
+          "desc": "",
+          "size": "Town",
+          "owner": "Automaton",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "116": {
+      "name": "GAELLIVARE",
+      "pagename": "Gaellivare",
+      "sector": "TALUS",
+      "regions": [
+        {
+          "name": "VÁHTJER",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "MALMBERGET",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "117": {
+      "name": "VOG-SOJOTH",
+      "pagename": "Vog-Sojoth",
+      "sector": "TANIS",
+      "regions": [
+        {
+          "name": "HAERSTVIK",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "125": {
+      "name": "FENRIR III",
+      "pagename": "Fenrir III",
+      "sector": "UMLAUT",
+      "regions": [
+        {
+          "name": "LOKAHEIM",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "PSEUDOTOPIA",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "FAMEWOLF PEAK",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "126": {
+      "name": "TURING",
+      "pagename": "Turing",
+      "sector": "UMLAUT",
+      "regions": [
+        {
+          "name": "CHATOYANT",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "CARBONDALE",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "PERIWINKLE MILLS",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "128": {
+      "name": "DARIUS II",
+      "pagename": "Darius II",
+      "sector": "BORGUS",
+      "regions": [
+        {
+          "name": "BUJU",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "129": {
+      "name": "ACAMAR IV",
+      "pagename": "Acamar IV",
+      "sector": "JIN XI",
+      "regions": [
+        {
+          "name": "DEMOCRACY ALWAYS",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "ERIDANI",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "130": {
+      "name": "ACHERNAR SECUNDUS",
+      "pagename": "Achernar Secundus",
+      "sector": "BORGUS",
+      "regions": [
+        {
+          "name": "CURRENCY",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "NEW NEWTONVILLE",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "OL' OLDHAM",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "131": {
+      "name": "ACHIRD III",
+      "pagename": "Achird III",
+      "sector": "BORGUS",
+      "regions": [
+        {
+          "name": "TIMELY",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "APPROVAL CITY",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "OLD BRANCH",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "135": {
+      "name": "ADHARA",
+      "pagename": "Adhara",
+      "sector": "GALLUX",
+      "regions": [
+        {
+          "name": "TRAITOR'S END",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "STRENGTH",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "138": {
+      "name": "ALAIRT III",
+      "pagename": "Alairt III",
+      "sector": "HANZO",
+      "regions": [
+        {
+          "name": "GREATER STOROUSE",
+          "desc": "",
+          "size": "Town",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "NEW STOROUSE",
+          "desc": "",
+          "size": "Town",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "SHED",
+          "desc": "",
+          "size": "Town",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "FREE TRADE",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "139": {
+      "name": "ALAMAK VII",
+      "pagename": "Alamak VII",
+      "sector": "HANZO",
+      "regions": [
+        {
+          "name": "KESUMA",
+          "desc": "",
+          "size": "Town",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "UNGU",
+          "desc": "",
+          "size": "City",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "NO COMPOUND",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "FILIBUSTER",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "140": {
+      "name": "ALARAPH",
+      "pagename": "Alaraph",
+      "sector": "AKIRA",
+      "regions": [
+        {
+          "name": "PERMACURIS",
+          "desc": "",
+          "size": "City",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "HANGAR 6",
+          "desc": "",
+          "size": "City",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "141": {
+      "name": "ALATHFAR XI",
+      "pagename": "Alathfar XI",
+      "sector": "AKIRA",
+      "regions": [
+        {
+          "name": "UNNAMED",
+          "desc": "NoDescription",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": null,
+          "region_faction": null
+        },
+        {
+          "name": "WORKSONG",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "SEVERITY",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "142": {
+      "name": "ANDAR",
+      "pagename": "Andar",
+      "sector": "AKIRA",
+      "regions": [
+        {
+          "name": "NEW TOKYO",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "143": {
+      "name": "ASPEROTH PRIME",
+      "pagename": "Asperoth Prime",
+      "sector": "AKIRA",
+      "regions": [
+        {
+          "name": "ASPEN HILLS",
+          "desc": "",
+          "size": "City",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "MEGACORPUS",
+          "desc": "",
+          "size": "City",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "150": {
+      "name": "CAPH",
+      "pagename": "Caph",
+      "sector": "THESEUS",
+      "regions": [
+        {
+          "name": "EASTCLEFT",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "KINABATANGAN",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "DOWNPOUR",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "153": {
+      "name": "DRAUPNIR",
+      "pagename": "Draupnir",
+      "sector": "XZAR",
+      "regions": [
+        {
+          "name": "EIGHTRINGS",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "BROKER'S WEALTH",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "154": {
+      "name": "MORT",
+      "pagename": "Mort",
+      "sector": "XZAR",
+      "regions": [
+        {
+          "name": "SAPPHIRE LAKE",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "155": {
+      "name": "INGMAR",
+      "pagename": "Ingmar",
+      "sector": "XZAR",
+      "regions": [
+        {
+          "name": "FORT SANGUINE",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "KNIGHT'S HONOR",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "SEVENSEAL",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "156": {
+      "name": "CHARBAL-VII",
+      "pagename": "Charbal-VII",
+      "sector": "ANDROMEDA",
+      "regions": [
+        {
+          "name": "UTOPIA VAREN",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Megafactory",
+          "region_faction": "Automaton"
+        }
+      ]
+    },
+    "158": {
+      "name": "CHOEPESSA IV",
+      "pagename": "Choepessa IV",
+      "sector": "TRIGON",
+      "regions": [
+        {
+          "name": "HILJAISUUS",
+          "desc": "",
+          "size": "Town",
+          "owner": "Automaton",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "KALASATAMA",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "YDINKESKUSTA",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Automaton",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "EVOLUTION PLATS",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Automaton",
+          "region_type": "Megafactory",
+          "region_faction": "Automaton"
+        }
+      ]
+    },
+    "161": {
+      "name": "CLAORELL",
+      "pagename": "Claorell",
+      "sector": "TANIS",
+      "regions": [
+        {
+          "name": "MAJOSYRI",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "QUASAR",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "ZENITH",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "162": {
+      "name": "CLASA",
+      "pagename": "Clasa",
+      "sector": "TANIS",
+      "regions": [
+        {
+          "name": "SYCAMORE GARDENS",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "KODIAK FALLS",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "VOTING DISTRICT F-012357",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "168": {
+      "name": "ERATA PRIME",
+      "pagename": "Erata Prime",
+      "sector": "UMLAUT",
+      "regions": [
+        {
+          "name": "NEW DA NANG",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "PHAM'S SITE",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "OLD CHEMLAND",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "173": {
+      "name": "GATRIA",
+      "pagename": "Gatria",
+      "sector": "JIN XI",
+      "regions": [
+        {
+          "name": "ALTONBURG",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "ERSATZ",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "180": {
+      "name": "HERTHON SECUNDUS",
+      "pagename": "Herthon Secundus",
+      "sector": "FERRIS",
+      "regions": [
+        {
+          "name": "PENSCEWT",
+          "desc": "",
+          "size": "Town",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "EAGLE'S LIKENESS",
+          "desc": "",
+          "size": "Town",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "CONSENSUS",
+          "desc": "",
+          "size": "City",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "182": {
+      "name": "HEZE BAY",
+      "pagename": "Heze Bay",
+      "sector": "HANZO",
+      "regions": [
+        {
+          "name": "UNANIMITY",
+          "desc": "",
+          "size": "City",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "UNISON",
+          "desc": "",
+          "size": "City",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "183": {
+      "name": "HORT",
+      "pagename": "Hort",
+      "sector": "RIGEL",
+      "regions": [
+        {
+          "name": "ON-EARSAHOU",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "CLOCKSTOP",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "MAGNITUDE",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "184": {
+      "name": "HYDROBIUS",
+      "pagename": "Hydrobius",
+      "sector": "OMEGA",
+      "regions": [
+        {
+          "name": "GENERATORSVILLE",
+          "desc": "",
+          "size": "City",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "185": {
+      "name": "KARLIA",
+      "pagename": "Karlia",
+      "sector": "OMEGA",
+      "regions": [
+        {
+          "name": "ADNAN",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "194": {
+      "name": "LESATH",
+      "pagename": "Lesath",
+      "sector": "LACAILLE",
+      "regions": [
+        {
+          "name": "SERENITY SUMMIT",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "MORSKIE OKO",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "CRYSTAL SLOPES",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "BUCU'S REST",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "196": {
+      "name": "MALEVELON CREEK",
+      "pagename": "Malevelon Creek",
+      "sector": "SEVERIN",
+      "regions": [
+        {
+          "name": "LIFEBLOOD",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "REQUIEM",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "DIVER'S REST",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "198": {
+      "name": "MARFARK",
+      "pagename": "Marfark",
+      "sector": "ANDROMEDA",
+      "regions": [
+        {
+          "name": "TECHNOLOCKIA ALLATEED",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Automaton",
+          "region_type": "Megafactory",
+          "region_faction": "Automaton"
+        }
+      ]
+    },
+    "199": {
+      "name": "MARTALE",
+      "pagename": "Martale",
+      "sector": "ANDROMEDA",
+      "regions": [
+        {
+          "name": "SONGGUO CUN",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Automaton",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "XIN FUZHOU",
+          "desc": "",
+          "size": "City",
+          "owner": "Automaton",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "200": {
+      "name": "MATAR BAY",
+      "pagename": "Matar Bay",
+      "sector": "ANDROMEDA",
+      "regions": [
+        {
+          "name": "PARRHESIA",
+          "desc": "",
+          "size": "City",
+          "owner": "Automaton",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "ISEGORIA",
+          "desc": "",
+          "size": "Town",
+          "owner": "Automaton",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "207": {
+      "name": "MINTORIA",
+      "pagename": "Mintoria",
+      "sector": "GELLERT",
+      "regions": [
+        {
+          "name": "SEORAKSAN",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "GYEONGSEONG",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "216": {
+      "name": "PEACOCK",
+      "pagename": "Peacock",
+      "sector": "STEN",
+      "regions": [
+        {
+          "name": "QUASAR",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Terminids",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "SYZYGY",
+          "desc": "",
+          "size": "Town",
+          "owner": "Terminids",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "217": {
+      "name": "PHACT BAY",
+      "pagename": "Phact Bay",
+      "sector": "JIN XI",
+      "regions": [
+        {
+          "name": "OLD DOVE",
+          "desc": "",
+          "size": "Town",
+          "owner": "Terminids",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "BRNO",
+          "desc": "",
+          "size": "City",
+          "owner": "Terminids",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "NEW EAGLE",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "219": {
+      "name": "POLARIS PRIME",
+      "pagename": "Polaris Prime",
+      "sector": "FARSIGHT",
+      "regions": [
+        {
+          "name": "VILHELMINA DOROTHEA FREDRIKA",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "MOGO PLAINS",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "KALASATAMA PORT",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "221": {
+      "name": "PRASA",
+      "pagename": "Prasa",
+      "sector": "FARSIGHT",
+      "regions": [
+        {
+          "name": "HANDAKAS",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "HAKU CITY",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "226": {
+      "name": "RIRGA BAY",
+      "pagename": "Rirga Bay",
+      "sector": "RIGEL",
+      "regions": [
+        {
+          "name": "BLIGHTSMURK",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "BASE CAMP 8",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "ZONE 3",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "228": {
+      "name": "SENGE 23",
+      "pagename": "Senge 23",
+      "sector": "OMEGA",
+      "regions": [
+        {
+          "name": "EXALT",
+          "desc": "",
+          "size": "Town",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "EAGLESTAR ETERNAL",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "230": {
+      "name": "SHETE",
+      "pagename": "Shete",
+      "sector": "XI TAURI",
+      "regions": [
+        {
+          "name": "HOLL",
+          "desc": "",
+          "size": "City",
+          "owner": "Illuminate",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "239": {
+      "name": "TIEN KWAN",
+      "pagename": "Tien Kwan",
+      "sector": "THESEUS",
+      "regions": [
+        {
+          "name": "FOUNDRY",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "STEEL RESOLVE",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "241": {
+      "name": "UBANEA",
+      "pagename": "Ubanea",
+      "sector": "SEVERIN",
+      "regions": [
+        {
+          "name": "FREEDOM ETERNAL",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "NUOVA ROMA",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "244": {
+      "name": "VARYLIA 5",
+      "pagename": "Varylia 5",
+      "sector": "TRIGON",
+      "regions": [
+        {
+          "name": "SEQUIM",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "245": {
+      "name": "WASAT",
+      "pagename": "Wasat",
+      "sector": "YMIR",
+      "regions": [
+        {
+          "name": "MIRAGE",
+          "desc": "",
+          "size": "City",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "DRYWELL",
+          "desc": "",
+          "size": "MegaCity",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "246": {
+      "name": "VEGA BAY",
+      "pagename": "Vega Bay",
+      "sector": "YMIR",
+      "regions": [
+        {
+          "name": "ONSEN",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "GIRI",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        },
+        {
+          "name": "SAPPORO",
+          "desc": "",
+          "size": "Town",
+          "owner": "Humans",
+          "region_type": "Metropolis",
+          "region_faction": "Super Earth"
+        }
+      ]
+    },
+    "253": {
+      "name": "ZZANIAH PRIME",
+      "pagename": "Zzaniah Prime",
+      "sector": "GELLERT",
+      "regions": [
+        {
+          "name": "GEMSTELLE GENERATOR",
+          "desc": "",
+          "size": "Settlement",
+          "owner": "Automaton",
+          "region_type": "Megafactory",
+          "region_faction": "Automaton"
+        }
+      ]
+    },
+    "260": {
+      "name": "CYBERSTAN",
+      "pagename": "Cyberstan",
+      "sector": "VALDIS",
+      "regions": [
+        {
+          "name": "TRANSCENDENCE",
+          "desc": "The first and most well-defended Megafactory. The nexus of Cyborg command. Its destruction will trigger the collapse of the enemy's defenses on Cyberstan. Expect extreme resistance.",
+          "size": "MegaCity",
+          "owner": "Automaton",
+          "region_type": "Cyberstan Megafactory",
+          "region_faction": "Automaton"
+        },
+        {
+          "name": "AUTONOMY",
+          "desc": "High Command has identified this Megafactory as one of two potential beachheads for the invasion of Cyberstan. Rapid insertion protocols will restrict deployment ammunition.",
+          "size": "Settlement",
+          "owner": "Automaton",
+          "region_type": "Cyberstan Megafactory",
+          "region_faction": "Automaton"
+        },
+        {
+          "name": "STAR KIELD",
+          "desc": "Roughly translates to \"All Humans Must Die.\" One of the largest Megafactories on Cyberstan. A critical military production node. Defended by the Jet Brigade.",
+          "size": "City",
+          "owner": "Automaton",
+          "region_type": "Cyberstan Megafactory",
+          "region_faction": "Automaton"
+        },
+        {
+          "name": "OMNIPARITUS",
+          "desc": "Roughly translates to \"Destroy Freedom At All Costs.\" Significant conventional SEAF assaults will be required to support an offensive here, straining ammunition resources.",
+          "size": "Town",
+          "owner": "Automaton",
+          "region_type": "Cyberstan Megafactory",
+          "region_faction": "Automaton"
+        },
+        {
+          "name": "SOLIDARITET",
+          "desc": "High Command has identified this Megafactory as one of two potential beachheads for the invasion of Cyberstan. Anti-air fixtures will hamper Pelican extraction.",
+          "size": "Settlement",
+          "owner": "Automaton",
+          "region_type": "Cyberstan Megafactory",
+          "region_faction": "Automaton"
+        },
+        {
+          "name": "URSOOT NINE",
+          "desc": "Likely one of the earliest Megafactories to be constructed on Cyberstan. The most significant producer of Cyborg combatants. Defended by the Incineration Corps.",
+          "size": "City",
+          "owner": "Automaton",
+          "region_type": "Cyberstan Megafactory",
+          "region_faction": "Automaton"
+        },
+        {
+          "name": "LURZA",
+          "desc": "Monuments in this Megafactory twist history to valorize the supposed resolve of Cyborgs to \"endure\" Super Earth's benevolent attempts to rehabilitate them. nnAnti-air defenses will hinder Eagle operations.",
+          "size": "Town",
+          "owner": "Automaton",
+          "region_type": "Cyberstan Megafactory",
+          "region_faction": "Automaton"
+        },
+        {
+          "name": "CAMRAT FOR",
+          "desc": "This Megafactory contains significant Automaton production facilities. Anti-orbital defenses will tax Super Destroyer resources, resulting in longer orbital cooldowns.",
+          "size": "Town",
+          "owner": "Automaton",
+          "region_type": "Cyberstan Megafactory",
+          "region_faction": "Automaton"
+        }
+      ]
+    }
+  }
+}

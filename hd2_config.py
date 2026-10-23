@@ -55,11 +55,24 @@ DEFAULTS = {
         "live_api_url": "https://helldiverscompanion.com/api/hell-divers-2-api/get-api-data-live",
         "extended_api_url": "https://cdn.helldiverscompanion.com/live/extendedApiInformation/2days.json",
         "planets_url": "https://api.helldivers2.dev/api/v1/planets",
-        # 站点（HD2-Galatic_war-Map）每 5 分钟生成的战况数据：信息流的现成 JSON 源。
-        # 含 dispatches（30 条原始新闻）+ news（最新 10 条的中文译文），机器人直接读它，
-        # 不必自己现抓 API，也顺带省掉这批新闻的 LLM 翻译。
+        # ---- 主站数据源（Jerry114514.github.io，Actions 每 5 分钟更新，全部可覆盖）----
+        # 站点基址：data.json / 实测帧 / 翻译产物 / tables 的公共前缀
+        "site_base": "https://jerry114514.github.io/HD2-Galatic_war-Map",
+        # 站点战况主文件：含 dispatches（30 条原始新闻）+ news（最新 10 条官方中文）
+        #   + assignments/dss/campaigns/planets/player_distribution/ownership_history 等
         "news_json_url": "https://jerry114514.github.io/HD2-Galatic_war-Map/data.json",
-        # 信息流来源：hd2map=优先读上面的 JSON（失败自动回退 API）；api=只走原来的 API
+        # 实测帧目录（15 分钟粒度，解放速率 / MO 速率实测；生成时间超 3 小时视为断更自动停用）
+        "recent_base": "https://jerry114514.github.io/HD2-Galatic_war-Map/data/recent",
+        "recent_fresh_max_hours": 3,
+        # 翻译仓库推送到公开 Pages 的产物（data.json 合并滞后时的译文回退层）
+        "transnews_url": "https://jerry114514.github.io/HD2-Galatic_war-Map/data/translated/TransNews.json",
+        "campaign_zh_url": "https://jerry114514.github.io/HD2-Galatic_war-Map/data/campaign_zh.json",
+        # 主站 tables 目录（本地 tables/ 缺文件时从这里拉）
+        "tables_base": "https://jerry114514.github.io/HD2-Galatic_war-Map/tables",
+        # 官方 API（最后兜底链）与风控头（无密钥；建议换成自己的 QQ 号）
+        "official_api_url": "https://api.live.prod.thehelldiversgame.com",
+        "super_client": "YOUR_QQ_NUMBER",
+        # 信息流来源：hd2map=优先读站点 JSON（失败自动回退 TransNews→API）；api=只走原来的 API
         "news_source": "hd2map",
         "news_cache_ttl": 120,
     },
