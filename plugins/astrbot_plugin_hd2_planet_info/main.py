@@ -26,6 +26,16 @@ from astrbot_plugin_hd2_common.main import (
     OFFICIAL_WAR_ID,
 )
 
+# 统一数据源（hd2_datasource，项目根）：主站 data.json / 实测帧 / 区域模型
+import os as _dsos, sys as _dssys
+_DS_ROOT = _dsos.path.dirname(_dsos.path.dirname(_dsos.path.dirname(_dsos.path.abspath(__file__))))
+if _DS_ROOT not in _dssys.path:
+    _dssys.path.insert(0, _DS_ROOT)
+try:
+    import hd2_datasource as _ds
+except Exception:  # pragma: no cover
+    _ds = None
+
 
 def _gid(event):
     try:
@@ -373,45 +383,201 @@ def _planet_slug_from_query(text: str) -> str | None:
     return None
 
 
-# slug -> index 缓存（hd2dev 星球名，3600s）
+# slug -> index 缓存（站点 planet_map 优先，helldivers2.dev 兜底，3600s）
 _INDEX_CACHE = {"ts": 0, "map": {}}
 
 
+def _slug_of(name: str) -> str:
+    return (name or "").lower().replace(" ", "_").replace("-", "_")
+
+
 def _slug_to_index(slug: str):
-    """星球 slug -> 官方 index（helldivers2.dev 名字，带缓存）"""
+    """星球 slug -> 官方 index：主站 planet_map（免等 helldivers2.dev）优先，dev 表兜底"""
     import time as _time
     now = _time.time()
     if not _INDEX_CACHE["map"] or now - _INDEX_CACHE["ts"] > 3600:
-        try:
-            planets = _fetch_json(
-                "https://api.helldivers2.dev/api/v1/planets",
-                {"X-Super-Client": "astrbot-hd2-plugin", "X-Super-Contact": "https://github.com/astrbot"},
-            )
-            _INDEX_CACHE["map"] = {p["name"].lower().replace(" ", "_").replace("-", "_"): p["index"] for p in planets}
+        m = {}
+        if _ds:
+            try:
+                for idx, info in _ds.planet_map().items():
+                    if info.get("name"):
+                        m[_slug_of(info["name"])] = int(idx)
+            except Exception:
+                pass
+        if not m:
+            try:
+                from astrbot_plugin_hd2_common.main import fetch_json as _fj, PLANETS_URL as _PU
+                planets = _fj(
+                    _PU,
+                    extra_headers={
+                        "X-Super-Client": "astrbot-hd2-plugin",
+                        "X-Super-Contact": "https://github.com/astrbot",
+                    },
+                )
+                m = {_slug_of(p["name"]): p["index"] for p in planets if isinstance(p, dict) and p.get("name")}
+            except Exception:
+                pass
+        if m:
+            _INDEX_CACHE["map"] = m
             _INDEX_CACHE["ts"] = now
-        except Exception:
-            pass
     return _INDEX_CACHE["map"].get(slug)
 
 
+def _resistance_level(rpct: float) -> str:
+    """抵抗度百分比 -> 等级（与主站星球卡口径一致的阈值）"""
+    if rpct >= 5:
+        return "UNBREAKABLE"
+    if rpct >= 3:
+        return "CRITICAL"
+    if rpct >= 2:
+        return "DIRE"
+    if rpct >= 1:
+        return "HIGH"
+    if rpct >= 0.5:
+        return "AVERAGE"
+    if rpct > 0:
+        return "LOW"
+    return "NONE"
+
+
+def _site_region_rows(idx: int, planet_site: dict) -> list:
+    """站点 planets[idx].regions -> info['regions'] 行（名称表 + 实测/当前值可选）"""
+    rows = []
+    if not _ds:
+        return rows
+    try:
+        name_tbl = _ds.region_names(idx)
+        for r in planet_site.get("regions") or []:
+            if not isinstance(r, dict):
+                continue
+            ri = r.get("regionIndex")
+            meta = name_tbl[ri] if isinstance(ri, int) and ri < len(name_tbl) else {}
+            meas = None
+            try:
+                meas = _ds.region_measured(idx, r)
+            except Exception:
+                meas = None
+            if meas is None:
+                try:
+                    meas = _ds.region_meta(idx, r)
+                except Exception:
+                    meas = None
+            rows.append({
+                "region_index": ri,
+                "name_en": meta.get("name_en") or "",
+                "name_cn": meta.get("name_cn") or "",
+                "size": meta.get("size") or "",
+                "owner": r.get("owner"),
+                "health": r.get("health"),
+                "maxHealth": r.get("maxHealth"),
+                "players": r.get("players"),
+                "is_available": r.get("isAvailable"),
+                "availability_factor": r.get("availabilityFactor"),
+                "damage_multiplier": r.get("damageMultiplier"),
+                "measured": meas,
+                "_raw": r,   # region_model 按站点原始 camelCase 字段取值
+            })
+    except Exception as e:
+        logger.debug(f"[HD2-PlanetInfo] 区域行构建失败: {e}")
+    return rows
+
+
+def _fetch_planet_site(idx: int) -> dict | None:
+    """主站 data.json 星球详情：抵抗度/行动变量/区域；站点缺该星球返回 None"""
+    if not _ds:
+        return None
+    try:
+        doc = _ds.site_doc()
+        pm = _ds.planet_map(doc)
+        p = pm.get(str(idx))
+        if not p:
+            return None
+        info = {}
+        owner = p.get("owner")
+        if owner == 1 or p.get("currentOwner") == "Humans":
+            info["secured"] = (p.get("health") or 0) >= (p.get("maxHealth") or 1)
+        # 抵抗度：站点 planets[].resistance 为预计算 %/h（regenPerSecond/maxHealth*100）
+        rpct = p.get("resistance")
+        if rpct is not None:
+            info["resistance_pct"] = f"{rpct:.2f}%"
+            info["resistance_level"] = _resistance_level(rpct)
+        else:
+            info["resistance_level"] = "未知"
+        # 行动变量（站点 activeEffects = 官方 galacticEffectId 列表）
+        eff_cn = _load_effect_id_cn()
+        effs = []
+        for eid in p.get("activeEffects") or []:
+            cn = eff_cn.get(eid) if isinstance(eid, int) else None
+            if cn and cn not in effs:
+                effs.append(cn)
+        if effs:
+            info["official_effects"] = effs
+        # 防御战（站点 planet_events；invasionLevel 由主站按 maxHealth/50000 计算）
+        for ev in doc.get("planet_events") or []:
+            if isinstance(ev, dict) and ev.get("planetIndex") == idx:
+                h, m = ev.get("health"), ev.get("maxHealth")
+                if h and m:
+                    info["defense_hp"] = (f"{int(h):,}", f"{int(m):,}")
+                race_cn = _ds.faction_cn(ev.get("race")) or ""
+                if race_cn:
+                    info["defense_desc"] = f"{race_cn}入侵战役" + (f"（失守 {(m-h)/m*100:.1f}%）" if h and m else "")
+        for c in doc.get("campaigns") or []:
+            if isinstance(c, dict) and (c.get("planet") or {}).get("index") == idx \
+                    and c.get("invasionLevel") is not None:
+                info["invasion_level"] = c["invasionLevel"]
+                info["invasion_level_found"] = True
+        # 区域
+        raw = None
+        for sp in _ds.planets_list(doc):
+            if isinstance(sp, dict) and sp.get("index") == idx:
+                raw = sp
+                break
+        if raw and raw.get("regions"):
+            info["regions"] = _site_region_rows(idx, raw)
+            info["planet_ctx"] = {
+                "index": idx,
+                "owner": owner,
+                "currentOwner": raw.get("currentOwner"),
+                "health": raw.get("health"),
+                "maxHealth": raw.get("maxHealth"),
+            }
+        info["owner"] = owner
+        return info
+    except Exception as e:
+        logger.debug(f"[HD2-PlanetInfo] 站点详情失败({idx}): {e}")
+        return None
+
+
 def _fetch_planet_official(idx: int) -> dict:
-    """官方源星球详情：抵抗度/防御战/行动变量/占领方 -> info dict"""
-    st = _fetch_official(f"/api/WarSeason/{OFFICIAL_WAR_ID}/Status")
-    wi = _fetch_official(f"/api/WarSeason/{OFFICIAL_WAR_ID}/WarInfo")
+    """星球详情：主站 data.json 优先（免 3 次官方 API 往返），官方 API 兜底"""
+    site = None
+    if _ds:
+        try:
+            site = _fetch_planet_site(idx)
+        except Exception:
+            site = None
+    try:
+        st = _fetch_official(f"/api/WarSeason/{OFFICIAL_WAR_ID}/Status")
+    except Exception as e:
+        logger.warning(f"[HD2-PlanetInfo] 官方 Status 失败({idx}): {e}")
+        return site or {}
+    try:
+        wi = _fetch_official(f"/api/WarSeason/{OFFICIAL_WAR_ID}/WarInfo")
+    except Exception:
+        wi = {}
     ps = {p.get("index"): p for p in st.get("planetStatus") or []}
     pi = {p.get("index"): p for p in wi.get("planetInfos") or []}
     p = ps.get(idx, {})
-    info = {}
+    info = dict(site or {})
 
     # 占领方/解放状态
-    owner = p.get("owner")
+    owner = p.get("owner", info.get("owner"))
     if owner == 1:
         info["secured"] = True
 
     # 跃迁航道封锁（Warp Link Blockade）：光能族占领 + 无战役 + 连接点有我方未被防御
     try:
-        wi2 = _fetch_official(f"/api/WarSeason/{OFFICIAL_WAR_ID}/WarInfo")
-        routes = {q.get("index"): (q.get("waypoints") or []) for q in wi2.get("planetInfos") or []}
+        routes = {q.get("index"): (q.get("waypoints") or []) for q in wi.get("planetInfos") or []}
         camp_idx = set(c.get("planetIndex") for c in st.get("campaigns") or [])
         defend_idx = set(ev.get("planetIndex") for ev in st.get("planetEvents") or [])
         if owner == 4 and idx not in camp_idx:
@@ -426,28 +592,16 @@ def _fetch_planet_official(idx: int) -> dict:
     except Exception:
         pass
 
-    # 抵抗度（官方 regenPerSecond / maxHealth）
-    mh = pi.get(idx, {}).get("maxHealth")
-    regen = p.get("regenPerSecond")
-    if mh and regen is not None and mh > 0 and regen > 0:
-        rpct = regen / mh * 100
-        info["resistance_pct"] = f"{rpct:.2f}%"
-        lvl = "NONE"
-        if rpct >= 5:
-            lvl = "UNBREAKABLE"
-        elif rpct >= 3:
-            lvl = "CRITICAL"
-        elif rpct >= 2:
-            lvl = "DIRE"
-        elif rpct >= 1:
-            lvl = "HIGH"
-        elif rpct >= 0.5:
-            lvl = "AVERAGE"
-        elif rpct > 0:
-            lvl = "LOW"
-        info["resistance_level"] = lvl
-    else:
-        info["resistance_level"] = "未知"
+    # 抵抗度（官方 regenPerSecond / maxHealth；站点已给则不覆盖）
+    if info.get("resistance_pct") is None:
+        mh = pi.get(idx, {}).get("maxHealth")
+        regen = p.get("regenPerSecond")
+        if mh and regen is not None and mh > 0 and regen > 0:
+            rpct = regen / mh * 100
+            info["resistance_pct"] = f"{rpct:.2f}%"
+            info["resistance_level"] = _resistance_level(rpct)
+        else:
+            info["resistance_level"] = "未知"
 
     # 防御战（planetEvents）
     for ev in st.get("planetEvents") or []:
@@ -455,20 +609,21 @@ def _fetch_planet_official(idx: int) -> dict:
             h, m = ev.get("health"), ev.get("maxHealth")
             if h and m:
                 info["defense_hp"] = (f"{h:,}", f"{m:,}")
-            race_cn = {2: "终结族", 3: "机器人", 4: "光能族"}.get(ev.get("race"), "")
+            race_cn = {2: "终结族", 3: "机器人", 4: "光能者"}.get(ev.get("race"), "")
             if race_cn:
                 info["defense_desc"] = f"{race_cn}入侵战役" + (f"（失守 {(m-h)/m*100:.1f}%）" if h and m else "")
 
-    # 行动变量（planetActiveEffects -> 中文词条）
-    eff_cn = _load_effect_id_cn()
-    effs = []
-    for pe in st.get("planetActiveEffects") or []:
-        if pe.get("index") == idx:
-            cn = eff_cn.get(pe.get("galacticEffectId"))
-            if cn and cn not in effs:
-                effs.append(cn)
-    if effs:
-        info["official_effects"] = effs
+    # 行动变量（planetActiveEffects -> 中文词条；站点已给则不覆盖）
+    if not info.get("official_effects"):
+        eff_cn = _load_effect_id_cn()
+        effs = []
+        for pe in st.get("planetActiveEffects") or []:
+            if pe.get("index") == idx:
+                cn = eff_cn.get(pe.get("galacticEffectId"))
+                if cn and cn not in effs:
+                    effs.append(cn)
+        if effs:
+            info["official_effects"] = effs
 
     # MO 目标（官方 Assignment）
     try:
@@ -701,6 +856,46 @@ def _translate_planet_info(info: dict) -> str:
         lines.append("📋 行动变量（官方数据）：")
         for e in info["official_effects"]:
             lines.append(f"• {e}")
+
+    # 区域（城市/超大型工厂）：开放状态、开放条件、解放贡献（主站 regions.js 口径）
+    if info.get("regions"):
+        ctx = info.get("planet_ctx") or {}
+        name_tbl = []
+        if _ds and isinstance(ctx.get("index"), int):
+            try:
+                name_tbl = _ds.region_names(ctx["index"])
+            except Exception:
+                name_tbl = []
+        lines.append("🏙️ 区域：")
+        for r in info["regions"][:6]:   # QQ 消息紧凑：最多 6 个区域
+            name = r.get("name_cn") or r.get("name_en") or f"区域{r.get('region_index')}"
+            m = None
+            if _ds:
+                try:
+                    ri = r.get("region_index")
+                    meta = name_tbl[ri] if isinstance(ri, int) and 0 <= ri < len(name_tbl) else {}
+                    m = _ds.region_model(ctx, r.get("_raw") or r, meta)
+                except Exception:
+                    m = None
+            status = (m or {}).get("status") or ("已开放" if r.get("is_available") else "未开放")
+            line = f"• {name}｜{status}"
+            cond = (m or {}).get("condition")
+            if cond:
+                line += f"（{cond}）"
+            players = r.get("players")
+            if isinstance(players, (int, float)) and players:
+                line += f"｜玩家 {int(players)}"
+            contrib = (m or {}).get("contribution")
+            if contrib is not None:
+                line += f"｜贡献 +{contrib:.2f}pt"
+            meas = r.get("measured") or {}
+            if isinstance(meas, dict) and meas.get("measured") and meas.get("net") is not None:
+                net = meas["net"]
+                net_s = f"{net:+.3f}".replace("-0.000", "+0.000")   # 负零按 0 展示
+                line += f"｜实测 {net_s}%/h"
+            elif isinstance(meas, dict) and meas.get("res") is not None:
+                line += f"｜抵抗 {meas['res']:.2f}%/h"
+            lines.append(line)
 
     # 重要指令目标
     if info.get("mo_target"):

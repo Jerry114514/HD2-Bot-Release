@@ -30,6 +30,7 @@ from astrbot_plugin_hd2_common.main import (
     load_effect_id_cn as _load_effect_id_cn,
     load_starmap_sectors as _load_starmap_sectors,
     load_planet_map as _load_planet_map,
+    load_planet_name_map as _load_planet_name_map,
     PLANET_NAME_CN,
     SECTOR_CN,
     OFFICIAL_API_URL,
@@ -40,6 +41,31 @@ from astrbot_plugin_hd2_common.main import (
     ASSIGNMENTS_URL,
     EXTENDED_API_URL,
 )
+
+# 统一数据源（hd2_datasource，项目根）：主站 data.json / 实测帧 / 翻译产物 / 预测口径
+_ROOT_DIR = _os.path.dirname(_MON_PARENT)
+if _ROOT_DIR not in _sys.path:
+    _sys.path.insert(0, _ROOT_DIR)
+try:
+    import hd2_datasource as _ds
+except Exception:  # pragma: no cover - 部署异常时退化为纯 API 模式
+    _ds = None
+
+
+# 星球译名合并映射（对照表优先 + 硬编码兜底），懒加载缓存
+_PLANET_CN_MERGED = None
+
+
+def _planet_cn(en: str) -> str:
+    """英文名 -> 中文名：星图对照表（随主站更新）优先，硬编码表兜底；查不到原样返回"""
+    global _PLANET_CN_MERGED
+    if _PLANET_CN_MERGED is None:
+        try:
+            _PLANET_CN_MERGED = _load_planet_name_map()
+        except Exception:
+            _PLANET_CN_MERGED = dict(PLANET_NAME_CN)
+    en = en or ""
+    return _PLANET_CN_MERGED.get(en.upper(), en)
 
 
 def _gid(event):
@@ -79,6 +105,9 @@ TRIGGER_KEYWORDS = [
     "战役",
     "战线",
     "分析",
+    "归属变化",
+    "星图变化",
+    "归属",
 ]
 
 # 阵营中文名
@@ -235,7 +264,7 @@ async def _translate_with_llm(
 
 def _fmt_planet_status(info: dict) -> str:
     """生成单个星球战况文本（中文星球名/星区，时间 UTC+8）"""
-    name = PLANET_NAME_CN.get(info.get("name", ""), info.get("name", "未知星球"))
+    name = _planet_cn(info.get("name", "")) or "未知星球"
     # 星系显示：查本地星图表（对照表 英文名->星区），sector 字段 Unknown/数字不可靠
     sector = (_load_starmap_sectors().get((info.get("name") or "").upper())) or SECTOR_CN.get(info.get("sector", ""), info.get("sector", ""))
     players = info.get("players", 0)
@@ -312,21 +341,253 @@ def _fetch_brief_text() -> str:
         logger.warning(f"[HD2] 获取简报原文失败: {e}")
         return ""
 
+def _mo_measured_rates(assignment: dict) -> dict:
+    """近 1 小时 MO 各任务实测完成速率（主站 data/recent/assignments.json 帧差分）。
+
+    口径与主站 rate-source.js moWindows(h1) 一致：同指令、同 startTime、窗口 ≥15 分钟；
+    type 11 的原始进度是占领标记，不计速率。拿不到帧返回 {}（绝不冒充 0）。
+    """
+    if not _ds:
+        return {}
+    try:
+        a_id = str(assignment.get("id") or assignment.get("id32") or "")
+        tasks = assignment.get("tasks") or []
+        tkey = json.dumps([[t.get("type"), t.get("values"), t.get("valueTypes")] for t in tasks])
+        now_ms = time.time() * 1000
+        rows = []
+        for f in _ds.recent_assignment_frames():
+            if not isinstance(f, dict):
+                continue
+            t = _ds.to_ms(f.get("timestampUtc"))
+            if t is None or t > now_ms:
+                continue
+            for a in f.get("assignments") or []:
+                if not isinstance(a, dict):
+                    continue
+                if a_id and str(a.get("id32") or a.get("id") or "") != a_id:
+                    continue
+                st = a.get("setting") or {}
+                tk = json.dumps([[x.get("type"), x.get("values"), x.get("valueTypes")]
+                                 for x in (st.get("tasks") or [])])
+                if tk != tkey:
+                    continue
+                rows.append((t, a.get("startTime"), a.get("progress") or []))
+                break
+        if len(rows) < 2:
+            return {}
+        rows.sort(key=lambda r: r[0])
+        last_t, last_start, last_prog = rows[-1]
+        if now_ms - last_t > 3600000:
+            return {}
+        same = [r for r in rows if r[1] is not None and r[1] == last_start]
+        base = next((r for r in same if r[0] >= last_t - 3600000), None)
+        if base is None or base[0] == last_t:
+            return {}
+        hours = (last_t - base[0]) / 3600000
+        if hours < 0.24:
+            return {}
+        rates = {}
+        for i, t in enumerate(tasks):
+            if _ds._num(t.get("type")) == 11:
+                continue
+            try:
+                va, vb = base[2][i], last_prog[i]
+            except Exception:
+                continue
+            fa, fb = _ds._num(va), _ds._num(vb)
+            if fa is None or fb is None or (fb < fa and _ds._num(t.get("type")) != 15):
+                continue
+            rates[i] = (fb - fa) / hours
+        return rates
+    except Exception as e:
+        logger.debug(f"[HD2] MO 实测速率不可用: {e}")
+        return {}
+
+
+def _mo_task_forecast_line(task: dict, cur, target, window, recent_rate) -> str:
+    """单任务预测行（主站 forecast.js 口径）；无窗口/无速率返回空串
+
+    type 11 的原始进度是"星球是否解放"的占领标记（0/1），真实进度已在
+    「目标星球战况」逐星展示，这里不再输出误导性的时间基准对比。
+    """
+    if not _ds:
+        return ""
+    try:
+        ttype = _ds._num(task.get("type"))
+        if ttype == 11:
+            return ""
+        st = _ds.task_state({"type": task.get("type"), "goal": target}, cur, window, recent_rate)
+        state = st.get("state")
+        if state == "hold":
+            return "驻守目标即可，保持进度到截止" if st.get("satisfied") else "需驻守到截止时间"
+        if state in ("complete", "unknown", "satisfied", "stateful"):
+            return ""
+        parts = []
+        d = st.get("delta")
+        if d is not None:
+            parts.append(f"{'领先' if d >= 0 else '落后'}时间基准 {abs(d):.1f}pt")
+        proj = st.get("projected")
+        if proj is not None:
+            parts.append(f"按均速预计 {proj:.0f}%")
+        if recent_rate is not None:
+            parts.append(f"近1h实测 {recent_rate:.0f}/h")
+        win = st.get("win")
+        tail = "✅ 预计按时完成" if win else ("⚠️ 恐难按时完成" if win is False else "")
+        s = " · ".join(parts)
+        if tail:
+            s = (s + " · " if s else "") + tail
+        return s
+    except Exception:
+        return ""
+
+
+def _mo_reward_amount() -> int | None:
+    """MO 奖励奖章数：主站 active_campaign.phases[].reward.amount；缺失返回 None"""
+    if not _ds:
+        return None
+    try:
+        ac = _ds.active_campaign()
+        for ph in ac.get("phases") or []:
+            if not isinstance(ph, dict):
+                continue
+            amt = (ph.get("reward") or {}).get("amount")
+            if amt:
+                return int(amt)
+    except Exception:
+        pass
+    return None
+
+
+def _format_mo_site(a: dict, planet_map: dict, brief_translated: str | None, brief_cn: str | None) -> str:
+    """用主站 data.json 的 assignments 组装 MO 报告（预测/实测可选，零 LLM）"""
+    brief = a.get("briefing") or ""
+    tasks = a.get("tasks") or []
+    progress_vals = a.get("progress") or []
+    translated = (brief_cn or "").strip() or brief_translated or (_site_zh().get("brief") or "").strip()
+    if not translated and brief:
+        translated = _translate_en_zh(brief)
+
+    window = _ds.order_window(a) if _ds else None
+    measured = _mo_measured_rates(a)
+
+    lines = ["🎖️ 重要指令"]
+    if translated:
+        lines.append(f"📋 {translated}")
+
+    task_lines = []
+    for i, t in enumerate(tasks):
+        values = t.get("values") or []
+        vtypes = t.get("valueTypes") or []
+        target = None
+        for j, vt in enumerate(vtypes):
+            if vt == 3 and j < len(values) and isinstance(values[j], (int, float)):
+                target = values[j]
+                break
+        if target is None:
+            continue
+        tname = MO_TASK_TYPE_CN.get(t.get("type"), f"任务{i+1}")
+        cur = progress_vals[i] if i < len(progress_vals) else None
+        if cur is None:
+            task_lines.append(f"• {tname}：进度暂缺（目标 {_fmt_big_num(target)}）")
+            continue
+        pct = (cur / target * 100) if target else 0
+        line = f"• {tname}：{pct:.1f}%（{_fmt_big_num(cur)}/{_fmt_big_num(target)}）"
+        extra = _mo_task_forecast_line(t, cur, target, window, measured.get(i))
+        if extra:
+            line += f"\n  {extra}"
+        task_lines.append(line)
+    if task_lines:
+        lines.append("")
+        lines.append("📊 任务进度")
+        lines.extend(task_lines)
+
+    # 目标星球（valueTypes 12 = 星球索引）
+    planet_idxs = []
+    for t in tasks:
+        values = t.get("values") or []
+        vtypes = t.get("valueTypes") or []
+        for i, vt in enumerate(vtypes):
+            if vt == 12 and i < len(values) and isinstance(values[i], int):
+                planet_idxs.append(str(values[i]))
+    if not planet_idxs:
+        for t in tasks:
+            for x in (t.get("values") or []):
+                if isinstance(x, int) and 10 <= x <= 274:
+                    planet_idxs.append(str(x))
+    planet_idxs = list(dict.fromkeys(planet_idxs))
+    if planet_idxs:
+        lines.append("")
+        lines.append("🎯 目标星球战况")
+        for idx in planet_idxs:
+            info = planet_map.get(idx)
+            if info:
+                lines.append(_fmt_planet_status(info))
+            else:
+                lines.append(f"• 星球#{idx}（数据暂缺）")
+        try:
+            st = _fetch_official(f"/api/WarSeason/{OFFICIAL_WAR_ID}/Status", timeout=20)
+            ps = {p.get("index"): p for p in st.get("planetStatus") or []}
+            camp_idx = set(c.get("planetIndex") for c in (st.get("campaigns") or []))
+            defend_idx = set(ev.get("planetIndex") for ev in (st.get("planetEvents") or []))
+            routes = _load_warp_routes()
+            if routes:
+                block = _compute_warp_blockades(routes, ps, camp_idx, defend_idx)
+                for idx in planet_idxs:
+                    if int(idx) in block:
+                        lines.append(f"🚀 {_fmt_warp_blockade(int(idx), block[int(idx)], planet_map)}")
+        except Exception:
+            pass
+
+    tail = []
+    reward_amt = _mo_reward_amount()
+    if reward_amt:
+        tail.append(f"🏆 {reward_amt} 奖章")
+    d_ms = _ds.to_ms(a.get("deadline")) if _ds else None
+    s_ms = _ds.to_ms(a.get("serverTime")) if _ds else None
+    remaining = None
+    if d_ms:
+        base_ms = s_ms if s_ms else time.time() * 1000
+        remaining = (d_ms - base_ms) / 1000
+    if remaining is not None and remaining > 0:
+        tail.append(f"⏳ 剩余 {_fmt_seconds(remaining)}")
+    if tail:
+        lines.append("")
+        lines.append("  ·  ".join(tail))
+    return "\n".join(lines)
+
+
 def _get_major_order(
     planet_map: dict,
     brief_translated: str | None = None,
     brief_cn: str | None = None,
 ) -> str | None:
-    """抓取最新 Major Order（翻译简报 + 星球战况）
+    """抓取最新 Major Order（主站 data.json 优先，官方 API 兜底）
 
     返回 None 表示"取不到数据（源故障）"；返回含"当前没有进行中的重要指令"的文案
     表示"源正常但确实没有 MO"（MO 间隙期属正常状态，不应报错）。
 
     Args:
         planet_map: 星球信息映射
-        brief_translated: 可选，外部传入的简报翻译（LLM 翻译）；为空则用本地/MyMemory
-        brief_cn: 可选，站点 data.json 里现成的 MO 简报中文（优先于以上两者，零 LLM）
+        brief_translated: 可选，外部传入的简报翻译；为空则用站点中文/本地修正表
+        brief_cn: 可选，站点 data.json 里现成的 MO 简报中文（最优先，零 LLM）
     """
+    if _ds:
+        try:
+            a = _ds.mo_assignment(_site_doc())
+            tasks = a.get("tasks") if isinstance(a, dict) else None
+            if isinstance(tasks, list) and tasks:
+                return _format_mo_site(a, planet_map, brief_translated, brief_cn)
+        except Exception as e:
+            logger.warning(f"[HD2] 站点 MO 组装失败，回退官方 API: {e}")
+    return _get_major_order_api(planet_map, brief_translated, brief_cn)
+
+
+def _get_major_order_api(
+    planet_map: dict,
+    brief_translated: str | None = None,
+    brief_cn: str | None = None,
+) -> str | None:
+    """官方 API 路径的 MO 报告（主站不可用时的兜底，逻辑与旧版一致）"""
     try:
         try:
             mos = _fetch_official(f"/api/v2/Assignment/War/{OFFICIAL_WAR_ID}")
@@ -444,15 +705,17 @@ MO_CACHE_FILE = _os.path.join(CACHE_DIR, "mo_cache.json")
 MO_CACHE_WINDOW = 5  # 检查最近 N 条新闻是否出现新 NMO
 
 # ============ 信息流数据源 ============
-# 主源：站点（HD2-Galatic_war-Map）每 5 分钟生成的 data.json —— 由 GitHub Pages / Actions
-#       持续抓取并提交，机器人只读现成 JSON，不再自己现抓；其中 news 段还带最新 10 条的中文译文。
-# 兜底：原来的实时 API（companion LIVE_API_URL → 官方 NewsFeed），JSON 不可用时自动回退。
-# 配置项见 hd2_config 的 data.news_json_url / data.news_source / data.news_cache_ttl。
-NEWS_FEED_JSON_URL = "https://jerry114514.github.io/HD2-Galatic_war-Map/data.json"
+# 主源：主站 data.json（由主仓库 Actions 每 5 分钟更新，news 段带翻译仓库的官方中文译文）。
+# 兜底：data/translated/TransNews.json（翻译仓库推送到 Pages 的副本）→ 实时 API → 本地缓存。
+# URL/TTL 全部集中在 hd2_datasource，可用 config 的 data.* 覆盖（见 docs/数据源对齐与映射表.md）。
+NEWS_FEED_JSON_URL = _ds.DATA_JSON_URL if _ds else "https://jerry114514.github.io/HD2-Galatic_war-Map/data.json"
 NEWS_FEED_SOURCE = "hd2map"      # hd2map=站点 JSON 优先(回退 API)；api=只用 API
 NEWS_FEED_CACHE_TTL = 120        # 站点 JSON 本地缓存秒数（站点每 5 分钟更新一次）
 NEWS_FEED_CACHE_FILE = _os.path.join(CACHE_DIR, "news_feed_cache.json")
 _NEWS_FEED_MEM = {"ts": 0.0, "items": None, "source": ""}
+
+if _ds:
+    _ds.set_cache_root(CACHE_DIR)
 
 try:
     import hd2_config as _hd2cfg
@@ -623,30 +886,31 @@ _REPORT_WARM = {"ts": 0.0, "text": "", "source": "", "building": False}
 _warm_task = None
 _planet_refresh_task = None
 
-# MO 任务类型 → 中文（type 语义：1=解放 2=采集样本 3=消灭敌人 9=完成行动）
+# MO 任务类型 → 中文（与官方 task type 语义对齐）
 MO_TASK_TYPE_CN = {
-    1: "解放星球",
-    2: "采集样本",
-    3: "消灭敌人",
+    2: "撤离",
+    3: "击杀",
+    7: "完成任务",
     9: "完成行动",
+    11: "解放",
+    12: "防守",
+    13: "坚守",
+    15: "扩张",
 }
 
 
 def _fmt_big_num(n: int) -> str:
-    """大数格式化：1,000,000 → 100万；1,250,000,000 → 12.5亿"""
+    """大数格式化：委托 hd2_datasource（修正了旧实现"亿"位 10 倍缩小的错误）"""
+    if _ds:
+        return _ds.fmt_big_num(n)
     try:
         n = int(n)
     except Exception:
         return str(n)
-    if n >= 1_000_000_000:
-        v = n / 1_000_000_000
-        return (f"{v:.2f}".rstrip("0").rstrip(".")) + "亿"
-    if n >= 1_000_000:
-        v = n / 1_000_000
-        return (f"{v:.1f}".rstrip("0").rstrip(".")) + "万"
+    if n >= 100_000_000:
+        return (f"{n / 100_000_000:.2f}".rstrip("0").rstrip(".")) + "亿"
     if n >= 10_000:
-        v = n / 10_000
-        return (f"{v:.1f}".rstrip("0").rstrip(".")) + "万"
+        return (f"{n / 10_000:.1f}".rstrip("0").rstrip(".")) + "万"
     return str(n)
 
 
@@ -758,11 +1022,39 @@ def _api_feed_items(limit: int) -> list[dict]:
     return news[:limit]
 
 
+def _transnews_feed_items(limit: int) -> list[dict]:
+    """翻译回退层：主站 data/translated/TransNews.json（翻译仓库推送到 Pages 的副本）
+
+    结构：{items: [{id, original, translated, published_at, translated_at, text_source, mt}]}，
+    转成与站点信息流相同的内部格式（带 _zh，免 LLM）。
+    """
+    if not _ds:
+        return []
+    try:
+        t = _ds.transnews()
+        items_out = []
+        for n in t.get("items") or []:
+            if not isinstance(n, dict) or n.get("id") is None:
+                continue
+            items_out.append({
+                "id": n.get("id"),
+                "message": n.get("original") or "",
+                "published": n.get("published_at") or "",
+                "type": None,
+                "_zh": (n.get("translated") or "").strip() or None,
+            })
+        return items_out[:limit]
+    except Exception as e:
+        logger.debug(f"[HD2] TransNews 回退层不可用: {e}")
+        return []
+
+
 def _get_news_items(limit: int = 1) -> list[dict]:
     """取最新新闻（信息流）。
 
-    默认走站点 data.json（每 5 分钟由站点 Actions 更新，只读现成 JSON）；
-    站点不可用时回退实时 API；两者都失败时用本地缓存。
+    优先级：站点 data.json（每 5 分钟更新，news[] 带官方中文）
+          → data/translated/TransNews.json（站点合并滞后时的译文回退）
+          → 实时 API（最后兜底）；全部失败时用本地缓存。
     返回条目含 `_zh`（站点已翻译的中文）时，后续无需再走 LLM 翻译。
     """
     if NEWS_FEED_SOURCE != "api":
@@ -772,10 +1064,14 @@ def _get_news_items(limit: int = 1) -> list[dict]:
                 logger.info(f"[HD2] 信息流来源：站点 data.json（{len(items)} 条）")
                 return items[:limit]
         except Exception as e:
-            logger.warning(f"[HD2] 站点信息流失败，回退实时 API: {e}")
+            logger.warning(f"[HD2] 站点信息流失败，回退 TransNews/实时 API: {e}")
             cached = _load_site_feed_cache()
             if cached:
                 return cached[:limit]
+        items = _transnews_feed_items(limit)
+        if items:
+            logger.info(f"[HD2] 信息流来源：TransNews 回退层（{len(items)} 条）")
+            return items
     try:
         items = _api_feed_items(limit)
         if items:
@@ -797,7 +1093,9 @@ _SITE_DOC = {"ts": 0.0, "doc": None}
 
 
 def _site_doc(force: bool = False) -> dict:
-    """取站点 data.json（内存缓存 TTL=NEWS_FEED_CACHE_TTL）；失败返回 {}"""
+    """取主站 data.json（hd2_datasource 统一缓存：内存 + 磁盘，ver=fetchedAt）；失败返回 {}"""
+    if _ds:
+        return _ds.site_doc(force=force)
     now = time.time()
     if not force and _SITE_DOC["doc"] and now - _SITE_DOC["ts"] < NEWS_FEED_CACHE_TTL:
         return _SITE_DOC["doc"]
@@ -814,9 +1112,23 @@ def _site_doc(force: bool = False) -> dict:
 def _site_zh(force: bool = False) -> dict:
     """取站点 data.json 里的现成中文：MO 简报译文 + 各条新闻译文（按 id）。
 
-    站点（HD2-Galatic_war-Map）已用 DeepSeek 翻好 mo_brief.translated 与 news[].translated，
+    主站已合并翻译仓库的官方中文（major_order.translated_brief 与 news[].translated），
     直接复用可让 /战报 完全不调 LLM。站点不可用时保留上一次取值，调用方按需回退。
     """
+    if _ds:
+        doc = _site_doc(force=force)
+        if doc:
+            brief = _ds.mo_brief_zh(doc)
+            if brief:
+                _SITE_ZH["brief"] = brief
+            mo = doc.get("major_order") or {}
+            if isinstance(mo, dict):
+                _SITE_ZH["brief_title"] = (mo.get("title") or "").strip()
+            news = _ds.news_zh_map(doc)
+            if news:
+                _SITE_ZH["news"] = news
+            _SITE_ZH["ts"] = time.time()
+        return _SITE_ZH
     doc = _site_doc(force=force)
     if isinstance(doc, dict) and doc:
         mo = doc.get("major_order") or {}
@@ -933,9 +1245,34 @@ def _build_report_parts(planet_map: dict, brief_cn: str | None, news_text: str) 
     return "\n\n\n".join(parts), quality
 
 def _get_warzone_distribution() -> str:
-    """抓取战区玩家分布（超级地球/终结族/机器人/光能族）带仰齐浜时间"""
+    """战区玩家分布（超级地球/终结族/机器人/光能者）带仰齐浜时间
+
+    主源：主站 data.json 的 player_distribution（与主站首页同口径）；
+    兜底：companion extendedApiInformation（旧实现）。
+    """
     import datetime
 
+    if _ds:
+        try:
+            pd = _ds.player_distribution()
+            total = pd.get("total")
+            if total is not None:
+                now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))
+                time_str = now.strftime("%H:%M:%S")
+                factions = [
+                    ("🌏 超级地球", pd.get("humans") or 0),
+                    ("🕷 终结族", pd.get("terminids") or 0),
+                    ("🤖 机器人", pd.get("automatons") or 0),
+                    ("👽 光能者", pd.get("illuminate") or 0),
+                ]
+                lines = [f"🌍 战区玩家分布（仰齐浜时间 {time_str}）"]
+                for name, cnt in factions:
+                    pct = (cnt / total * 100) if total else 0
+                    lines.append(f"• {name}：{cnt:,} 人（{pct:.1f}%）")
+                lines.append(f"总计：{total:,} 名玩家在线")
+                return "\n".join(lines)
+        except Exception as e:
+            logger.warning(f"[HD2] 站点玩家分布失败，回退 companion: {e}")
     try:
         obj = _fetch_json(EXTENDED_API_URL, timeout=20)
         data = obj.get("data") or []
@@ -945,7 +1282,7 @@ def _get_warzone_distribution() -> str:
             ("🌏 超级地球", latest.get("playerCountHumans") or 0),
             ("🕷 终结族", latest.get("playerCountTerminids") or 0),
             ("🤖 机器人", latest.get("playerCountAutomatons") or 0),
-            ("👽 光能族", latest.get("playerCountIlluminate") or 0),
+            ("👽 光能者", latest.get("playerCountIlluminate") or 0),
         ]
         now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))
         time_str = now.strftime("%H:%M:%S")
@@ -1091,110 +1428,143 @@ def _campaign_race_cn(c: dict, p: dict) -> str:
     return OWNER_ID_CN.get(owner, f"阵营{owner}")
 
 
-async def _fetch_planet_page_text(slug: str) -> str:
-    """用 Playwright 无头浏览器抓取星球页面渲染文本（采样最长+重试，供 DSS 行动识别用）"""
-    from playwright.async_api import async_playwright
-
-    url = f"https://helldiverscompanion.com/#hellpad/planets/{slug}"
-    best = ""
-    for attempt in range(3):
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            try:
-                page = await browser.new_page()
-                await page.goto(url, wait_until="domcontentloaded", timeout=60000)
-                try:
-                    await page.wait_for_function(
-                        "() => document.body.innerText.length > 1500",
-                        timeout=30000,
-                    )
-                except Exception:
-                    pass
-                samples = []
-                for _ in range(5):
-                    await page.wait_for_timeout(1000)
-                    body_now = await page.evaluate("() => document.body.innerText")
-                    samples.append(body_now)
-                body = max(samples, key=len)
-                if len(body) > len(best):
-                    best = body
-                if len(best) > 3000 and "OPERATIONAL PARAMETERS" in best.upper():
-                    return best
-            except Exception:
-                pass
-            finally:
-                await browser.close()
-    return best
+def _dss_tac_name_cn(name_en: str) -> str:
+    """战术行动英文名 -> 中文（兼容站点 ORBITAL BLOCKADE 与旧表 ORBITAL BLOCK 两种拼写）"""
+    key = (name_en or "").upper()
+    key = key.replace(" BLOCKADE", " BLOCK")
+    if key in DSS_ACTION_CN:
+        return DSS_ACTION_CN[key][0]
+    return name_en or ""
 
 
-def _find_dss_actions(body: str) -> list:
-    """从星球页面文本识别实际生效的 DSS 战略行动：优先 OP 区，OP 区无命中时全文兜底匹配"""
-    up = body.upper()
-    op_start = up.find("OPERATIONAL PARAMETERS")
-    poi_start = up.find("POINTS OF INTEREST", op_start if op_start >= 0 else 0)
-    zone = up[op_start:(poi_start if poi_start > op_start else op_start + 4000)] if op_start >= 0 else up[:4000]
-    hits = []
-    for key in DSS_ACTION_CN:
-        if key in zone or key.replace(" BLOCK", " BLOCKADE") in zone:
-            hits.append(key)
-    # OP 区未命中：全文兜底（排除明显的非行动区误匹配风险，行动名较独特）
-    if not hits:
-        for key in DSS_ACTION_CN:
-            if key in up or key.replace(" BLOCK", " BLOCKADE") in up:
-                hits.append(key)
-    return hits
+def _dss_tac_desc_cn(name_en: str) -> str:
+    key = (name_en or "").upper().replace(" BLOCKADE", " BLOCK")
+    if key in DSS_ACTION_CN:
+        return DSS_ACTION_CN[key][1]
+    return ""
 
 
-# DSS 页面抓取缓存（600 秒），避免每次查询都开 Playwright 抓停靠星球页面
-_DSS_CACHE = {"ts": 0, "body": ""}
-
-
-async def _fetch_page_quick(slug: str, timeout: int = 20) -> str:
-    """DSS 用轻量单次页面抓取：不等全文渲染，够识别行动变量即可（替代多采样重试慢路径）
-    注意：必须在事件循环内 await 调用（不能内部 asyncio.run，否则运行中事件循环报错）"""
+def _strategic_line() -> str:
+    """战略机遇（STRATEGIC IMPERATIVE）状态行（主站 strategic，含官方中文）"""
+    if not _ds:
+        return ""
     try:
-        from playwright.async_api import async_playwright
-
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            try:
-                page = await browser.new_page()
-                await page.goto(
-                    f"https://helldiverscompanion.com/#hellpad/planets/{slug}",
-                    wait_until="domcontentloaded", timeout=timeout * 1000,
-                )
-                try:
-                    # 等待页面完整渲染：OP 区标签出现（或 8000 字符兜底），比固定字符数更可靠
-                    await page.wait_for_function(
-                        "() => document.body.innerText.toUpperCase().includes('OPERATIONAL PARAMETERS') || document.body.innerText.length > 8000",
-                        timeout=20000,
-                    )
-                except Exception:
-                    pass
-                await page.wait_for_timeout(800)
-                return await page.evaluate("() => document.body.innerText")
-            finally:
-                await browser.close()
-    except Exception as e:
-        logger.warning(f"[HD2-DSS] 页面抓取失败({slug}): {type(e).__name__}: {e}")
+        s = _ds.strategic()
+        if not s:
+            return ""
+        status_cn = (s.get("status_cn") or "").strip()
+        active = bool(s.get("active"))
+        if not status_cn and not active:
+            return ""
+        planet = ""
+        pi = s.get("planet_index")
+        if pi is not None:
+            info = _load_planet_table()[0].get(str(pi)) or {}
+            en = info.get("name", "")
+            planet = _planet_cn(en)
+        head = "🎯 战略机遇：" + ("进行中" if active and not status_cn else status_cn)
+        if planet:
+            head += f"（{planet}）"
+        return head
+    except Exception:
         return ""
 
 
 async def _get_dss_status(planet_map: dict, context: Context | None = None) -> str:
-    """查询 DSS：停靠星球 + 生效效果 + 投票剩余
-    主源：官方 API（spaceStations.activeEffectIds + EFFECT_ID_CN 映射）
-    备选：社区 companion（tacticalActions[].status）
-    context: 可选，提供时对 DSS 资讯缓存走 LLM 翻译写回（已译条目复用）"""
-    try:
+    """查询 DSS：停靠星球 + 生效效果 + 战术行动捐献 + 投票剩余
+
+    主源：主站 data.json 的 dss（含 tacticalActions 捐献进度与资源限额，与主站 dss-donations.js 同口径）；
+    备选：官方 API（spaceStations.activeEffectIds）；最后 community companion。
+    context 参数保留兼容（站点已提供官方中文，不再对 DSS 资讯做 LLM 翻译）。
+    """
+    if _ds:
         try:
-            _cache_dss_news()
-            if context is not None:
-                try:
-                    await _translate_dss_news_cache(context)
-                except Exception as e:
-                    logger.warning(f"[HD2] DSS 资讯 LLM 翻译失败: {e}")
-        except Exception:
-            pass
+            d = _ds.dss(_site_doc())
+            if d and d.get("planetIndex") is not None:
+                return _format_dss_site(d, planet_map)
+        except Exception as e:
+            logger.warning(f"[HD2] 站点 DSS 失败，回退官方 API: {e}")
+    return await _get_dss_status_official(planet_map)
+
+
+def _format_dss_site(d: dict, planet_map: dict) -> str:
+    """主站 dss 结构 -> 文本（dss-donations.js 口径）"""
+    idx = str(d.get("planetIndex", ""))
+    info = planet_map.get(idx, {})
+    en_name = info.get("name", "")
+    name = _planet_cn(en_name) or f"星球#{idx}"
+    sector = info.get("sector", "")
+    sector_cn = (_load_starmap_sectors().get(en_name.upper())) or SECTOR_CN.get(sector, sector)
+    lines = ["🛰️ DSS 民主空间站"]
+    lines.append(f"📍 当前停靠：{name}" + (f"（{sector_cn}）" if sector_cn else ""))
+    strat = _strategic_line()
+    if strat:
+        lines.append(strat)
+
+    eff_ids = d.get("activeEffectIds") or []
+    tac = _ds.dss_tactical_actions(d) if _ds else (d.get("tacticalActions") or [])
+    # 战术行动已覆盖的效果 ID 不再单独列原始效果（避免"效果1237"与"重型军械分发"重复）
+    covered = set()
+    for t in tac if isinstance(tac, list) else []:
+        if isinstance(t, dict):
+            for eid in (t.get("effectIds") or []) + (t.get("activeEffectIds") or []):
+                covered.add(eid)
+    shown = []
+    for eid in eff_ids if isinstance(eff_ids, list) else []:
+        if eid in DSS_EXOSUIT_IDS or eid in covered:
+            continue
+        if eid not in shown:
+            shown.append(eid)
+    if shown:
+        lines.append("⚡ 生效效果（官方数据）：")
+        eff_cn = _load_dss_effect_cn()
+        eff_desc = _load_dss_effect_desc()
+        for eid in shown:
+            line = f"• {eff_cn.get(eid, f'效果{eid}')}"
+            desc = eff_desc.get(eid, "")
+            if desc:
+                line += f"\n  {desc}"
+            lines.append(line)
+
+    if tac:
+        lines.append("🗳️ 战术行动：")
+        for t in tac:
+            if not isinstance(t, dict):
+                continue
+            name_en = (t.get("name") or "").upper()
+            cn_t = _dss_tac_name_cn(name_en) or name_en
+            status_v = _ds.TACTICAL_STATUS_CN.get(t.get("status"), f"状态{t.get('status')}") if _ds \
+                else {0: "离线", 1: "投票中", 2: "已激活", 3: "恢复中"}.get(t.get("status"), f"状态{t.get('status')}")
+            icon = {2: "🟢", 3: "❄"}.get(t.get("status"), "⏳")
+            # 捐献进度只在筹集期（投票中）展示；已激活行动的 cost 归零不代表"筹集 0%"
+            pct = _ds.dss_donation_pct(t) if (_ds and t.get("status") == 1) else None
+            line = f"{icon} {status_v}：{cn_t}（{name_en}）"
+            if pct is not None:
+                line += f" · 已筹集 {pct:.1f}%"
+            lines.append(line)
+            desc = _dss_tac_desc_cn(name_en)
+            if t.get("status") == 2 and desc:
+                lines.append(f"  {desc}")
+            for rl in (_ds.dss_resource_lines(t) if _ds else []):
+                lines.append(f"  · {rl}")
+    snap = _ds.dss_snapshot_label(d) if _ds else ""
+    if snap and "未知" not in snap:
+        lines.append(f"🎁 {snap}")
+
+    end = d.get("electionEndWarTime")
+    now = d.get("currentWarTime")
+    if isinstance(end, (int, float)) and isinstance(now, (int, float)):
+        lines.append(f"🗳️ 下一轮投票剩余 {_fmt_seconds(end - now)}")
+    supp = _dss_news_supplement()
+    if supp:
+        lines.extend(supp)
+    return "\n".join(lines)
+
+
+async def _get_dss_status_official(planet_map: dict) -> str:
+    """官方/社区 API 路径的 DSS 查询（主站不可用时的兜底，逻辑与旧版一致）"""
+    try:
+        _cache_dss_news()
         st = _fetch_official(f"/api/WarSeason/{OFFICIAL_WAR_ID}/Status", timeout=20)
         ss_list = st.get("spaceStations") or []
         if not ss_list:
@@ -1203,12 +1573,15 @@ async def _get_dss_status(planet_map: dict, context: Context | None = None) -> s
         idx = str(ss.get("planetIndex", ""))
         info = planet_map.get(idx, {})
         en_name = info.get("name", "")
-        name = PLANET_NAME_CN.get(en_name, en_name) or f"星球#{idx}"
+        name = _planet_cn(en_name) or f"星球#{idx}"
         sector = info.get("sector", "")
         # 星系显示：查本地星图表（对照表 星球英文名 -> 星区），官方 sector 为数字/Unknown 不可靠
         sector_cn = (_load_starmap_sectors().get(en_name.upper())) or SECTOR_CN.get(sector, sector)
         lines = ["🛰️ DSS 民主空间站"]
         lines.append(f"📍 当前停靠：{name}" + (f"（{sector_cn}）" if sector_cn else ""))
+        strat = _strategic_line()
+        if strat:
+            lines.append(strat)
 
         # 生效效果：按战术行动归并 activeEffectIds，避免同一行动的多个子效果重复输出
         effects = _collect_active_dss_effects(ss, _load_dss_effect_cn(), _load_dss_effect_desc())
@@ -1236,12 +1609,15 @@ async def _get_dss_status(planet_map: dict, context: Context | None = None) -> s
         idx = str(ss.get("planetIndex", ""))
         info = planet_map.get(idx, {})
         en_name = info.get("name", "")
-        name = PLANET_NAME_CN.get(en_name, en_name) or f"星球#{idx}"
+        name = _planet_cn(en_name) or f"星球#{idx}"
         sector = info.get("sector", "")
         # 星系显示：查本地星图表（对照表 星球英文名 -> 星区），官方 sector 为数字/Unknown 不可靠
         sector_cn = (_load_starmap_sectors().get(en_name.upper())) or SECTOR_CN.get(sector, sector)
         lines = ["🛰️ DSS 民主空间站"]
         lines.append(f"📍 当前停靠：{name}" + (f"（{sector_cn}）" if sector_cn else ""))
+        strat = _strategic_line()
+        if strat:
+            lines.append(strat)
 
         # 社区源也混有“候选/恢复中”行动，只渲染已生效项，不展示整张战术行动表
         effects = _collect_active_dss_effects(ss, _load_dss_effect_cn(), _load_dss_effect_desc())
@@ -1260,6 +1636,50 @@ async def _get_dss_status(planet_map: dict, context: Context | None = None) -> s
         if supp:
             return f"⚠️ DSS 数据不可用（{e2}）\n" + "\n".join(supp[1:])
         return f"⚠️ DSS 查询失败：{e2}"
+
+
+def _get_ownership_changes(hours: int = 24) -> str:
+    """近 N 小时星图归属变化（主站 ownership_history，含防守成功，官方事件观测口径）"""
+    if not _ds:
+        return "⚠️ 星图变化数据源不可用（hd2_datasource 未加载）。"
+    try:
+        view = _ds.ownership_changes(hours=hours)
+    except Exception as e:
+        logger.warning(f"[HD2] 归属变化计算失败: {e}")
+        view = None
+    if view is None:
+        return "📊 星图归属变化\n暂无归属历史记录（主站数据缺失）。"
+    planet_map = _load_planet_map()
+    lines = [f"📊 近 {hours} 小时星图归属变化"]
+    meta = [f"{len(view['rows'])} 颗星球", f"{view['changes']} 次易主", f"{view['defenses']} 次防守成功"]
+    if view.get("coverage_hours") and view["coverage_hours"] < hours - 0.1:
+        meta.append(f"记录覆盖约 {view['coverage_hours']:.1f} 小时")
+    if view.get("stale"):
+        meta.append("数据更新延迟")
+    lines.append(" · ".join(meta))
+    if not view["rows"]:
+        lines.append("已记录时段内无阵营变化或防守成功。")
+        return "\n".join(lines)
+    for row in view["rows"][:12]:   # QQ 消息紧凑：最多列 12 颗
+        pi = row["planet_index"]
+        info = planet_map.get(str(pi)) or {}
+        en = info.get("name", "")
+        name = _planet_cn(en) or f"星球#{pi}"
+        segs = []
+        for path in row["paths"]:
+            names = [_ds.faction_cn(f) or str(f) for f in path]
+            segs.append("→".join(names))
+        for ev in row["victories"]:
+            attacker = _ds.faction_cn(ev.get("attacker")) or ""
+            segs.append("🛡 防守成功" + (f" · 抵御{attacker}" if attacker else ""))
+        line = f"• {name}：{'；'.join(segs)}"
+        if row.get("uncertain"):
+            line += "（范围待确认）"
+        lines.append(line)
+    if len(view["rows"]) > 12:
+        lines.append(f"…另有 {len(view['rows']) - 12} 颗星球变化未列出")
+    return "\n".join(lines)
+
 
 def _load_sector_cn_map(planet_map: dict) -> dict:
     """构建 sector id -> 星区显示名（通过星球英文名关联 planet_map 的 sector 字段）"""
@@ -1316,7 +1736,7 @@ def _fmt_warp_blockade(idx: int, links: list, planet_map: dict) -> str:
     for w in links:
         info = planet_map.get(str(w), {})
         en = info.get("name", "")
-        names.append(PLANET_NAME_CN.get(en, en) or f"星球#{w}")
+        names.append(_planet_cn(en) or f"星球#{w}")
     nm = "、".join(names)
     return f"由于此地通往[{nm}]的跃迁航道为单向航道，目前无法对该地的光能族发动解放战争。"
 
@@ -1351,7 +1771,7 @@ def _warp_blockade_lines(planet_map: dict) -> list:
             links = block[idx]
             info = planet_map.get(str(idx), {})
             en = info.get("name", "")
-            pname = PLANET_NAME_CN.get(en, en) or f"星球#{idx}"
+            pname = _planet_cn(en) or f"星球#{idx}"
             lines.append(f"• {pname}：{_fmt_warp_blockade(idx, links, planet_map)}")
         return lines
     except Exception as e:
@@ -1428,13 +1848,6 @@ DSS_EXOSUIT_IDS = {1260, 1261, 1262, 1384, 1385}
 DSS_NEWS_CACHE = _os.path.join(CACHE_DIR, "dss_news_cache.json")
 _DSS_NEWS_KEYWORDS = ("dss", "democracy space station", "space station", "station", "convocation bay")
 
-# DSS 资讯 LLM 翻译提示词（新闻/公告类，非 MO 简报）
-_DSS_NEWS_LLM_PROMPT = (
-    "你是专业的游戏本地化翻译。把用户给出的英文《绝地潜兵2》游戏新闻/公告翻译成简体中文。"
-    "要求：1) 准确传达内容；2) 专有名词（星球名、DSS、阵营等）按术语表翻译；3) 只输出译文，不要任何解释。\n\n"
-    + LLM_GLOSSARY
-)
-
 
 def _cache_dss_news() -> list:
     """抓最新资讯，缓存涉及 DSS 的条目到本地文件（纯原文，供异步翻译前落盘）
@@ -1462,29 +1875,6 @@ def _cache_dss_news() -> list:
         return []
 
 
-async def _translate_dss_news_cache(context: Context) -> None:
-    """对 DSS 资讯缓存逐条走 LLM 翻译，写回缓存文件（中英双语；翻译失败保留原文）"""
-    try:
-        items = _load_dss_news_cache()
-        if not items:
-            return
-        translated = []
-        for it in items:
-            msg = it.get("message", "")
-            if it.get("cn"):
-                translated.append(it)  # 已有译文，复用
-                continue
-            cn = await _translate_with_llm(context, msg, system_prompt=_DSS_NEWS_LLM_PROMPT)
-            if cn:
-                it["cn"] = cn
-            translated.append(it)
-        data = {"ts": int(time.time()), "items": translated}
-        with open(DSS_NEWS_CACHE, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False)
-    except Exception as e:
-        logger.warning(f"[HD2] DSS 资讯 LLM 翻译缓存失败: {e}")
-
-
 def _load_dss_news_cache() -> list:
     """读取 DSS 资讯缓存文件（返回条目列表）"""
     try:
@@ -1498,13 +1888,23 @@ def _load_dss_news_cache() -> list:
 
 
 def _dss_news_supplement() -> list:
-    """DSS 离线/不可用时：从本地缓存读取 DSS 相关资讯作补充说明（优先中文译文）"""
+    """DSS 离线/不可用时：从缓存读取 DSS 相关资讯作补充说明。
+
+    译文优先级：主站 data.json 官方中文（news_zh_map）> 本地缓存已译 > 英文原文。
+    不再调用 LLM 翻译（站点中文已覆盖 DSS 相关资讯）。
+    """
     items = _load_dss_news_cache()
     if not items:
         return []
+    site_news = _ds.news_zh_map(_site_doc()) if _ds else {}
     lines = ["", "📰 DSS 相关资讯（缓存）："]
     for it in items[:1]:  # 与战报 MO 缓存同理：只显示最近一条
-        msg = it.get("cn") or it.get("message", "")
+        nid = str(it.get("id"))
+        msg = ""
+        if nid in site_news:
+            msg = site_news[nid].get("text") or ""
+        if not msg:
+            msg = it.get("cn") or it.get("message", "")
         lines.append(f"• [{it.get('id')}] {msg[:120]}")
     return lines
 
@@ -1572,8 +1972,89 @@ def _load_maxhealth_map() -> dict:
         return {}
 
 
+def _camp_display_name(camp: dict, planet_map: dict) -> str:
+    p = camp.get("planet") or {}
+    idx = str(p.get("index", ""))
+    en = p.get("name") or (planet_map.get(idx) or {}).get("name", "")
+    name = _planet_cn(en) if en else ""
+    return name or f"星球#{idx}"
+
+
+def _camp_line_site(camp: dict, planet_map: dict, doc: dict) -> str | None:
+    """单条战线（主站口径）：解放战百分比 / 防御战赛跑预测 / 侦察战"""
+    if not _ds:
+        return None
+    try:
+        name = _camp_display_name(camp, planet_map)
+        ctype = str(camp.get("campaignType") or ("defense" if _ds.is_defense(camp) else "liberation")).lower()
+        if ctype == "recon":
+            return f"• {name}｜🔍 侦察战"
+        if ctype == "defense" or _ds.is_defense(camp):
+            f = _ds.defense_model(camp)
+            inv = camp.get("invasionLevel")
+            inv_s = f" · 入侵等级{int(inv)}" if isinstance(inv, (int, float)) else ""
+            if f["def"] is None:
+                return f"• {name}｜🛡 防御战（进度未知）{inv_s}"
+            race_cn = _ds.faction_cn(camp.get("faction")) or "敌方"
+            remain = f["remaining_h"]
+            remain_s = _ds.fmt_seconds(remain * 3600) if remain is not None else "?"
+            result = "预计守住" if f["win"] else ("预计失守" if f["win"] is False else "数据不足")
+            rate_s = f" · 防守{f['rate']:.2f}%/h" if f["rate"] is not None else ""
+            src_s = "实测" if f["source"] == "实测防守速率" else "推演"
+            return (f"• {name}｜🛡 防御战 vs {race_cn}｜我方 {f['def']:.1f}%"
+                    + (f"（敌方 {f['atk']:.1f}%）" if f["atk"] is not None else "")
+                    + f"｜截止 {remain_s}{inv_s}\n  预测：{result}{rate_s}（{src_s}）")
+        # 解放战：星球血量即进度（主站 planets[]，camp.planet 不带血量）
+        idx = str((camp.get("planet") or {}).get("index", ""))
+        info = planet_map.get(idx) or {}
+        hp, maxh = info.get("health"), info.get("maxHealth")
+        if isinstance(hp, (int, float)) and isinstance(maxh, (int, float)) and maxh > 0:
+            pct = (maxh - hp) / maxh * 100
+            race_cn = _ds.faction_cn(camp.get("faction")) or _ds.faction_cn(info.get("owner")) or "敌方"
+            meas = None
+            try:
+                meas = _ds.planet_measured({"index": int(idx) if str(idx).isdigit() else idx,
+                                            "maxHealth": maxh, "resistance": info.get("resistance")})
+            except Exception:
+                meas = None
+            rate_s = f"｜实测 {meas['net']:+.3f}%/h" if meas else ""
+            return f"• {name}｜⚔️ vs {race_cn}｜解放 {pct:.2f}%{rate_s}"
+        return f"• {name}｜⚔️ vs {_ds.faction_cn(camp.get('faction')) or '敌方'}"
+    except Exception as e:
+        logger.debug(f"[HD2] 站点战线条目失败: {e}")
+        return None
+
+
 def _get_campaigns(planet_map: dict) -> str:
-    """当前全部入侵/防御战役列表"""
+    """当前全部入侵/防御战役列表：主站 data.json 优先（含防御赛跑预测），官方 API 兜底"""
+    if _ds:
+        try:
+            doc = _site_doc()
+            camps = _ds.campaigns(doc)
+            if camps:
+                lines = [f"⚔️ 当前战线（{len(camps)} 个）："]
+                skipped = 0
+                for c in camps:
+                    line = _camp_line_site(c, planet_map, doc)
+                    if line:
+                        lines.append(line)
+                    else:
+                        skipped += 1
+                if skipped:
+                    lines.append(f"（另有 {skipped} 条战线数据不完整）")
+                blines = _warp_blockade_lines(planet_map)
+                if blines:
+                    lines.append("")
+                    lines.append("🚀 跃迁航道封锁（无法发动解放）：")
+                    lines.extend(blines)
+                return "\n".join(lines)
+        except Exception as e:
+            logger.warning(f"[HD2] 站点战线失败，回退官方 API: {e}")
+    return _get_campaigns_official(planet_map)
+
+
+def _get_campaigns_official(planet_map: dict) -> str:
+    """官方 API 路径的战线列表（主站不可用时的兜底，逻辑与旧版一致）"""
     try:
         try:
             ws = _fetch_official(f"/api/WarSeason/{OFFICIAL_WAR_ID}/Status", timeout=20)
@@ -1593,7 +2074,7 @@ def _get_campaigns(planet_map: dict) -> str:
             p = ps.get(idx, {})
             info = planet_map.get(idx, {})
             en_name = info.get("name", "")
-            name = PLANET_NAME_CN.get(en_name, en_name) or f"星球#{idx}"
+            name = _planet_cn(en_name) or f"星球#{idx}"
             race_cn = _campaign_race_cn(c, p)
             ctype = "解放战" if c.get("type") == 0 else "防御战"
             # 解放百分比 = (总血量 - 现有血量) / 总血量；maxHealth 优先取缓存，其次 planet_map，HP 取 planetStatus 实时值
@@ -1831,6 +2312,11 @@ class Hd2WarReportPlugin(Star):
             self._ensure_planet_map()
             if "dss" in text:
                 report = await _get_dss_status(self.planet_map, self.context)
+            elif "变化" in text or "归属" in text:
+                # 支持自定义窗口：/归属变化48
+                m_h = re.search(r"(?:变化|归属)\s*(\d{1,3})", text)
+                hours = min(max(int(m_h.group(1)), 1), 168) if m_h else 24
+                report = _get_ownership_changes(hours)
             elif "战线" in text:
                 report = _get_campaigns(self.planet_map)
             elif "战役" in text:
@@ -1844,7 +2330,66 @@ class Hd2WarReportPlugin(Star):
             event.stop_event()
 
     async def _get_campaign_brief(self) -> str:
-        """战役简报：当前 Campaign（episodes 最新进行中）+ LLM 翻译 + 术语表"""
+        """战役简报：主站 active_campaign（官方中文，零 LLM）优先，官方 Episode API 兜底"""
+        if _ds:
+            try:
+                ac = _ds.active_campaign(_site_doc())
+                if ac and ac.get("available") and (ac.get("title") or ac.get("description_cn")):
+                    return self._format_campaign_site(ac)
+            except Exception as e:
+                logger.warning(f"[HD2] 站点战役简报失败，回退官方 API: {e}")
+        return await self._get_campaign_brief_official()
+
+    def _format_campaign_site(self, ac: dict) -> str:
+        """主站 active_campaign -> 战役简报文本（全部用站点现成中文）"""
+        title = ac.get("title_cn") or ac.get("title") or "当前战役"
+        status_cn = ac.get("status_cn") or ("进行中" if ac.get("status") == 0 else "")
+        race_cn = ac.get("race_cn") or ""
+        head = f"🎬 战役：{title}"
+        if status_cn or race_cn:
+            head += f"（{status_cn}" + (f" · {race_cn}" if race_cn else "") + "）"
+        label = ac.get("label_cn") or ""
+        lines = [head]
+        if label and label != status_cn:
+            pass  # label_cn 与 status_cn 语义重复，不重复输出
+        desc = (ac.get("description_cn") or ac.get("description") or "").strip()
+        if desc:
+            lines.append(desc)
+        # 当前阶段（phases[].status==0 进行中，取最后一个；结构与 forecast 同源）
+        phase = None
+        for ph in ac.get("phases") or []:
+            if isinstance(ph, dict) and (ph.get("status") == 0 or not ph.get("status")):
+                phase = ph
+        if phase is None and ac.get("phases"):
+            phase = ac["phases"][-1] if isinstance(ac["phases"][-1], dict) else None
+        if phase:
+            p_title = phase.get("title_cn") or phase.get("title") or ""
+            p_brief = (phase.get("briefing_cn") or phase.get("briefing") or "").strip()
+            p_status = phase.get("status_cn") or ""
+            if p_title:
+                lines.append("")
+                lines.append(f"📌 当前阶段：{p_title}" + (f"（{p_status}）" if p_status else ""))
+            if p_brief:
+                lines.append(p_brief)
+        reward = (phase or {}).get("reward") or {}
+        amt = reward.get("amount")
+        rname = reward.get("name_cn") or reward.get("name") or "奖章"
+        if amt:
+            lines.append("")
+            lines.append(f"🏅 奖励：{amt} {rname}")
+        ep_r, ep_t = ac.get("episodes_running"), ac.get("episodes_total")
+        if ep_r is not None and ep_t:
+            lines.append(f"📺 章节进度：{ep_r}/{ep_t}")
+        # 跃迁航道封锁（被封锁的光能族星球）
+        blines = _warp_blockade_lines(getattr(self, "planet_map", None) or {})
+        if blines:
+            lines.append("")
+            lines.append("🚀 跃迁航道封锁：")
+            lines.extend(blines)
+        return "\n".join(lines)
+
+    async def _get_campaign_brief_official(self) -> str:
+        """官方 Episode API 路径的战役简报（主站不可用时的兜底，逻辑与旧版一致）"""
         try:
             try:
                 obj = _fetch_official(f"/api/Episode/{OFFICIAL_WAR_ID}/", timeout=20)
@@ -1863,7 +2408,7 @@ class Hd2WarReportPlugin(Star):
                     phase = ph
             title_en = (ep.get("title") or "").strip()
             status_cn = "进行中" if ep.get("status") == 0 else "已完成"
-            race_cn = {1: "终结族", 2: "机器人", 4: "光能族"}.get(ep.get("race"), "")
+            race_cn = {1: "终结族", 2: "机器人", 4: "光能者"}.get(ep.get("race"), "")
             desc_en = (ep.get("description") or "").strip()
             msg_en = ((phase or {}).get("introMessage") or desc_en).strip()
             lines = [f"🎬 战役：{title_en}（{status_cn}" + (f" · {race_cn}" if race_cn else "") + "）"]
@@ -1923,7 +2468,7 @@ class Hd2WarReportPlugin(Star):
                 idx = str(c.get("planetIndex", ""))
                 info = self.planet_map.get(idx, {})
                 en_name = info.get("name", "")
-                name = PLANET_NAME_CN.get(en_name, en_name) or f"星球#{idx}"
+                name = _planet_cn(en_name) or f"星球#{idx}"
                 race_cn = _campaign_race_cn(c, ps.get(idx, {}))
                 ctype = "解放" if c.get("type") == 0 else "防御"
                 hp = (ps.get(idx) or {}).get("health")

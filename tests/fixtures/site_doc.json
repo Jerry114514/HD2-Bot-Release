@@ -1,0 +1,514 @@
+{
+ "fetchedAt": "2026-10-24T00:01:11+08:00",
+ "source": "official",
+ "impactMultiplier": 0.0080132,
+ "player_distribution": {
+  "total": 81875,
+  "humans": 1042,
+  "terminids": 49134,
+  "automatons": 28099,
+  "illuminate": 3600,
+  "updatedAt": "2026-10-23T15:45:55.8848433Z"
+ },
+ "planet_events": [],
+ "planet_attacks": [
+  {
+   "source": 212,
+   "target": 259
+  },
+  {
+   "source": 137,
+   "target": 180
+  },
+  {
+   "source": 136,
+   "target": 7
+  }
+ ],
+ "war": {
+  "time": 84831050
+ },
+ "planets": [
+  {
+   "index": 0,
+   "name": "SUPER EARTH",
+   "sector": "Sol",
+   "currentOwner": "Humans",
+   "health": 1000000,
+   "maxHealth": 1000000,
+   "players": 158,
+   "attacking": false,
+   "resistance": 1.5,
+   "activeEffects": [],
+   "position": {
+    "x": 0,
+    "y": 0
+   },
+   "biome": "Super Earth"
+  },
+  {
+   "index": 75,
+   "name": "ESKER",
+   "sector": "Falstaff",
+   "currentOwner": "Terminids",
+   "health": 872550,
+   "maxHealth": 1000000,
+   "players": 30461,
+   "attacking": false,
+   "resistance": 2.5,
+   "activeEffects": [
+    1188,
+    1193,
+    1315,
+    1316,
+    1317,
+    1244,
+    1386,
+    1306,
+    1309,
+    1400,
+    1401
+   ],
+   "position": {
+    "x": 0.372748,
+    "y": 0.5082812
+   },
+   "biome": "Acidic Badlands"
+  },
+  {
+   "index": 229,
+   "name": "SETIA",
+   "sector": "Omega",
+   "currentOwner": "Illuminate",
+   "health": 1000000,
+   "maxHealth": 1000000,
+   "players": 13,
+   "attacking": false,
+   "resistance": 1.0,
+   "activeEffects": [],
+   "position": {
+    "x": -0.16047508,
+    "y": -0.85416216
+   },
+   "biome": "Haunted Swamp"
+  },
+  {
+   "index": 7,
+   "name": "ZEA RUGOSIA",
+   "sector": "Ferris",
+   "currentOwner": "Illuminate",
+   "health": 1700000,
+   "maxHealth": 1700000,
+   "players": 1950,
+   "attacking": false,
+   "resistance": 2.94,
+   "activeEffects": [
+    1402,
+    1403,
+    1413,
+    1414
+   ],
+   "position": {
+    "x": 0.36159223,
+    "y": -0.52270126
+   },
+   "regions": [
+    {
+     "regionIndex": 0,
+     "owner": "Illuminate",
+     "health": 200000,
+     "players": 3,
+     "isAvailable": false,
+     "availabilityFactor": 0.62089,
+     "maxHealth": 200000,
+     "damageMultiplier": 1.5,
+     "flags": 0,
+     "regionSize": 1
+    },
+    {
+     "regionIndex": 1,
+     "owner": "Illuminate",
+     "health": 100000,
+     "players": 0,
+     "isAvailable": false,
+     "availabilityFactor": 0.31683,
+     "maxHealth": 100000,
+     "damageMultiplier": 1.5,
+     "flags": 0,
+     "regionSize": 0
+    },
+    {
+     "regionIndex": 2,
+     "owner": "Illuminate",
+     "health": 400000,
+     "players": 721,
+     "isAvailable": true,
+     "availabilityFactor": 1,
+     "maxHealth": 400000,
+     "damageMultiplier": 1.5,
+     "flags": 0,
+     "regionSize": 2
+    }
+   ],
+   "biome": "Desert Cliffs"
+  }
+ ],
+ "campaigns": [
+  {
+   "id": 51413,
+   "faction": "Illuminate",
+   "type": 0,
+   "campaignType": "liberation",
+   "count": null,
+   "planet": {
+    "index": 7,
+    "name": "ZEA RUGOSIA",
+    "sector": "Ferris",
+    "currentOwner": "Illuminate"
+   }
+  },
+  {
+   "id": 999001,
+   "faction": "Illuminate",
+   "type": "defense",
+   "eventType": 1,
+   "campaignType": "defense",
+   "attackersProgress": 55.5,
+   "defendersProgress": 30.25,
+   "attackersRate": 2.083,
+   "defendersRate": 0.85,
+   "startTime": 84547200,
+   "remainingTime": 43200,
+   "invasionLevel": 6,
+   "count": 0,
+   "planet": {
+    "index": 229,
+    "name": "FORT UNION",
+    "sector": "Orion",
+    "currentOwner": "Humans"
+   }
+  }
+ ],
+ "assignments": {
+  "id": 3875819082,
+  "briefing": "Liberate the designated planets to secure the raw materials needed to properly honor our fallen heroes.",
+  "title": "MAJOR ORDER",
+  "tasks": [
+   {
+    "type": 11,
+    "values": [
+     1,
+     1,
+     261
+    ],
+    "valueTypes": [
+     3,
+     11,
+     12
+    ]
+   },
+   {
+    "type": 11,
+    "values": [
+     1,
+     1,
+     75
+    ],
+    "valueTypes": [
+     3,
+     11,
+     12
+    ]
+   },
+   {
+    "type": 11,
+    "values": [
+     1,
+     1,
+     7
+    ],
+    "valueTypes": [
+     3,
+     11,
+     12
+    ]
+   }
+  ],
+  "progress": [
+   0,
+   0,
+   0
+  ],
+  "expiration": "",
+  "startedAt": "2026-10-20T09:10:02Z",
+  "deadline": "2026-10-24T09:10:00.3158398Z",
+  "serverTime": "2026-10-23T16:01:10Z"
+ },
+ "dispatches": [
+  {
+   "id": 3960,
+   "published": "2026-10-20T09:10:11Z",
+   "type": 0,
+   "message": "<i=3>NEW MAJOR ORDER</i>\n\nTo honor the fallen, the government has authorized the construction of <i=1>The Malevelon Creek Memorial & Interrogation Center for Human Rights</i>. However, enemy aggression threatens this project. \n\nTheir occupation of Super Earth territories rich in rare metals, crude oil, and radioactive isotopes, among others, steals from the prosperity of all. This is an insult to the memory of our heroes. The Helldivers are ordered to liberate <i=1>FURY, ESKER, and ZEA RUGOSIA</i>."
+  },
+  {
+   "id": 3959,
+   "published": "2026-10-19T17:49:39Z",
+   "type": 0,
+   "message": "<i=3>STRATEGIC ALERT</i>\n\nThe Automaton <i=1>Incineration Corps</i> has been reported on <i=1>VINDEMITARIX PRIME.</i>"
+  },
+  {
+   "id": 3958,
+   "published": "2026-10-19T15:51:51Z",
+   "type": 0,
+   "message": "<i=3>MAJOR ORDER WON</i>\n\nThanks to the Helldivers’ philanthropic bravery and altruistic lethality, the AIR (Anti-Illuminate Restitution) initiative has been funded to its maximum level. Every revered Class A orbital retirement facility affected by recent Illuminate interference has now received a heavily subsidised upgrade to their respiratory fortification package.\n\nWith regional real estate futures fully stabilized and all corporate liabilities mitigated, the Helldivers stand triumphant."
+  }
+ ],
+ "dss": {
+  "id32": 749875195,
+  "planetIndex": 75,
+  "activeEffectIds": [
+   1237,
+   1214,
+   1238,
+   1261,
+   1262,
+   1384,
+   1385
+  ],
+  "electionEnd": "1972-09-08T20:39:50Z",
+  "electionEndWarTime": 84832790,
+  "clientTimeMs": 1792771268974,
+  "currentWarTime": 84831050,
+  "tacticalActions": [
+   {
+    "id32": 4091660627,
+    "name": "EAGLE STORM",
+    "strategicDescription": "Deploys periodic <i=1>Eagle Gas Strikes</i> during missions. Slows enemy progress in <i=1>Defense Campaigns</i>.",
+    "status": 1,
+    "expireAtWarTime": 85039210,
+    "effectIds": [
+     1425,
+     1212,
+     1216
+    ],
+    "activeEffectIds": [],
+    "cost": [
+     {
+      "itemMixId": 3992382197,
+      "target": 86400,
+      "current": 30845.562,
+      "deltaPerSec": 0.101486206,
+      "maxDonation": 75,
+      "maxDonationPeriodSec": 86400
+     }
+    ]
+   },
+   {
+    "id32": 3248573007,
+    "name": "ORBITAL BLOCKADE",
+    "strategicDescription": "<i=1>Defense Campaigns</i> cannot originate from this planet. The <i=1>Hellpod Space Optimization</i> Booster is automatically active for all missions.",
+    "status": 1,
+    "expireAtWarTime": 84507780,
+    "effectIds": [
+     1210,
+     1213,
+     1215
+    ],
+    "activeEffectIds": [],
+    "cost": [
+     {
+      "itemMixId": 3608481516,
+      "target": 86400,
+      "current": 63002.46,
+      "deltaPerSec": 0.043112136,
+      "maxDonation": 50000,
+      "maxDonationPeriodSec": 86400
+     }
+    ]
+   },
+   {
+    "id32": 3578080409,
+    "name": "HEAVY ORDNANCE DISTRIBUTION",
+    "strategicDescription": "Gives access to the <i=1>Orbital 380mm HE Barrage</i> stratagem during missions. Accelerates progress in <i=1>Liberation Campaigns.</i>",
+    "status": 2,
+    "expireAtWarTime": 84891380,
+    "effectIds": [
+     1237,
+     1214
+    ],
+    "activeEffectIds": [
+     1237,
+     1214
+    ],
+    "cost": [
+     {
+      "itemMixId": 2985106497,
+      "target": 86400,
+      "current": 0,
+      "deltaPerSec": 1,
+      "maxDonation": 50,
+      "maxDonationPeriodSec": 86400
+     }
+    ]
+   }
+  ],
+  "flags": 1,
+  "donationUpdatedAtMs": 1792771268974,
+  "donationSource": "official"
+ },
+ "active_campaign": {
+  "available": true,
+  "id": 883922421,
+  "id_missing": false,
+  "title": "MEMORIAM ETERNAL",
+  "title_cn": "永恒纪念",
+  "label": "ACTIVE CAMPAIGN",
+  "label_cn": "进行中的战役",
+  "description": "With the approach of Liberty Day, the Super Earth Government has authorized the construction of the Malevelon Creek Memorial & Interrogation Center for Human Rights. The Helldivers are needed to bravely acquire the material resources needed to honor the fallen heroes of the Second Galactic War.",
+  "description_cn": "随着自由日的临近，超级地球政府已批准建造麦拉芬蒙河人权纪念与审讯中心。需要绝地潜兵勇敢地获取所需物资资源，以纪念第二次银河战争的阵亡英雄。",
+  "race": 1,
+  "race_name": "Humans",
+  "race_cn": "超级地球",
+  "status": 0,
+  "episodes_running": 1,
+  "episodes_total": 10,
+  "phase_count": 1,
+  "current_phase_index": 0,
+  "current_phase_id": 2811574054,
+  "phases": [
+   {
+    "id": 2811574054,
+    "title": "HONOR THE FALLEN",
+    "title_cn": "缅怀阵亡者",
+    "briefing": "Liberty Day approaches, and with it, the responsibility to honor the memories of fallen heroes. The Super Earth Government has passed a bill authorizing the construction of a memorial worthy of their sacrifices: the Malevelon Creek Memorial & Interrogation Center for Human Rights.\n\nAs the name implies, the Memorial would honor the fallen not just in thought, but in action: through enhanced interrogation of dissidents and enemies of Freedom.\n\nHowever, wanton aggression from all 3 enemy factions threatens this project. Their occupation of Super Earth territories rich in rare metals, crude oil, and radioactive isotopes, among others, steals from the prosperity of all. This is an insult to the memory of our heroes. The Helldivers are ordered to liberate FURY, ESKER, and ZEA RUGOSIA.",
+    "briefing_cn": "自由日临近，随之而来的是缅怀阵亡英雄记忆的责任。超级地球政府已通过一项法案，批准建造一座配得上他们牺牲的纪念碑：麦拉芬蒙河人权纪念与审讯中心。\n\n顾名思义，这座纪念中心不仅要在思想上缅怀阵亡者，更要在行动上缅怀：通过对异见者和自由之敌进行强化审讯。\n\n然而，全部3个敌方阵营的肆意侵略威胁着这一项目。他们占领了富含稀有金属、原油和放射性同位素等资源的超级地球领土，窃取了本属于全体人民的繁荣。这是对我们英雄记忆的侮辱。绝地潜兵奉命解放费里、艾斯科尔和泽亚鲁戈西亚。",
+    "outcome": "",
+    "status": 0,
+    "status_key": "in_progress",
+    "status_cn": "进行中",
+    "reward": {
+     "mix_id": 897894480,
+     "amount": 40,
+     "name": "WARBOND MEDAL",
+     "name_cn": "战争债券勋章",
+     "icon": "medal",
+     "icon_img": "./assets/campaign/reward_medal.svg",
+     "detail": ""
+    },
+    "intro_image_id": 902643576,
+    "intro_image": "https://helldiverscompanion.com/news/dss_preserve1.webp"
+   }
+  ],
+  "briefing": "Liberty Day approaches, and with it, the responsibility to honor the memories of fallen heroes. The Super Earth Government has passed a bill authorizing the construction of a memorial worthy of their sacrifices: the Malevelon Creek Memorial & Interrogation Center for Human Rights.\n\nAs the name implies, the Memorial would honor the fallen not just in thought, but in action: through enhanced interrogation of dissidents and enemies of Freedom.\n\nHowever, wanton aggression from all 3 enemy factions threatens this project. Their occupation of Super Earth territories rich in rare metals, crude oil, and radioactive isotopes, among others, steals from the prosperity of all. This is an insult to the memory of our heroes. The Helldivers are ordered to liberate FURY, ESKER, and ZEA RUGOSIA.",
+  "briefing_cn": "自由日临近，随之而来的是缅怀阵亡英雄记忆的责任。超级地球政府已通过一项法案，批准建造一座配得上他们牺牲的纪念碑：麦拉芬蒙河人权纪念与审讯中心。\n\n顾名思义，这座纪念中心不仅要在思想上缅怀阵亡者，更要在行动上缅怀：通过对异见者和自由之敌进行强化审讯。\n\n然而，全部3个敌方阵营的肆意侵略威胁着这一项目。他们占领了富含稀有金属、原油和放射性同位素等资源的超级地球领土，窃取了本属于全体人民的繁荣。这是对我们英雄记忆的侮辱。绝地潜兵奉命解放费里、艾斯科尔和泽亚鲁戈西亚。",
+  "reward": {
+   "mix_id": 2659326411,
+   "amount": 1,
+   "name": "Stratagem",
+   "name_cn": "战略配备",
+   "icon": "stratagem",
+   "icon_img": "./assets/campaign/reward_stratagem.svg",
+   "detail": ""
+  },
+  "banner_image_id": 902643576,
+  "banner_image": "https://helldiverscompanion.com/news/dss_preserve1.webp",
+  "banner_image_path": "/news/dss_preserve1.webp",
+  "banner_image_local": "./assets/campaign/banner_dss_preserve1.webp",
+  "source": "helldiverscompanion.com live API · episodes",
+  "computed_at": "2026-10-23T16:01:11Z"
+ },
+ "news": [
+  {
+   "id": 3960,
+   "original": "NEW MAJOR ORDER\n\nTo honor the fallen, the government has authorized the construction of The Malevelon Creek Memorial & Interrogation Center for Human Rights. However, enemy aggression threatens this project. \n\nTheir occupation of Super Earth territories rich in rare metals, crude oil, and radioactive isotopes, among others, steals from the prosperity of all. This is an insult to the memory of our heroes. The Helldivers are ordered to liberate FURY, ESKER, and ZEA RUGOSIA.",
+   "translated": "新重要指令\n\n为了缅怀阵亡将士，政府已批准建造麦拉芬蒙河纪念碑与人权审讯中心。然而，敌人的侵略正威胁着该项目。\n\n他们占领了超级地球的领土，那里富含稀有金属、原油和放射性同位素等资源，无异于窃取全人类的繁荣。简直是对我们逝去英雄的侮辱。绝地潜兵奉命解放费里、艾斯克尔和泽亚鲁戈西亚。",
+   "published_at": "2026-10-20T09:09:25Z",
+   "translated_at": "2026-10-21T10:41:35Z",
+   "source": "dispatch",
+   "engine": "arrowhead-official",
+   "text_source": "official_zh",
+   "mt": false,
+   "published_war_seconds": 84547199,
+   "official_message": "<i=3>新重要指令</i>\n\n为了缅怀阵亡将士，政府已批准建造<i=1>麦拉芬蒙河纪念碑与人权审讯中心</i>。然而，敌人的侵略正威胁着该项目。\n\n他们占领了超级地球的领土，那里富含稀有金属、原油和放射性同位素等资源，无异于窃取全人类的繁荣。简直是对我们逝去英雄的侮辱。绝地潜兵奉命解放<i=1>费里、艾斯克尔和泽亚鲁戈西亚</i>。"
+  },
+  {
+   "id": 3959,
+   "original": "STRATEGIC ALERT\n\nThe Automaton Incineration Corps has been reported on VINDEMITARIX PRIME.",
+   "translated": "战略警告\n\n据报告，文德米塔里克斯主星上出现了机器人炽灼部队。",
+   "published_at": "2026-10-19T17:48:39Z",
+   "translated_at": "2026-10-21T10:41:35Z",
+   "source": "dispatch",
+   "engine": "arrowhead-official",
+   "text_source": "official_zh",
+   "mt": false,
+   "published_war_seconds": 84491967,
+   "official_message": "<i=3>战略警告</i>\n\n据报告，<i=1>文德米塔里克斯主星</i>上出现了机器人<i=1>炽灼部队</i>。"
+  }
+ ],
+ "major_order": {
+  "title": "MAJOR ORDER",
+  "brief": "Liberate the designated planets to secure the raw materials needed to properly honor our fallen heroes.",
+  "translated_brief": "解放指定行星，确保获取用以妥善缅怀阵亡英雄所需的原材料。",
+  "translated_at": "2026-10-20T09:14:56Z"
+ },
+ "strategic": {
+  "active": false,
+  "status": "failed",
+  "status_cn": "已失败",
+  "dispatch_id": 3906,
+  "planet_en": null,
+  "published": null,
+  "computed_at": "2026-10-23T14:43:00Z",
+  "planet_index": null
+ },
+ "ownership_history": {
+  "startedAt": "2026-10-23T00:00:00+08:00",
+  "updatedAt": "2026-10-24T00:00:00+08:00",
+  "events": [
+   {
+    "detectedAt": "2026-10-23T10:00:00+08:00",
+    "planetIndex": 7,
+    "fromOwner": "Humans",
+    "toOwner": "Illuminate",
+    "previousSeenAt": "2026-10-23T08:00:00+08:00"
+   },
+   {
+    "detectedAt": "2026-10-23T12:00:00+08:00",
+    "planetIndex": 7,
+    "fromOwner": "Illuminate",
+    "toOwner": "Humans",
+    "previousSeenAt": "2026-10-23T10:30:00+08:00"
+   },
+   {
+    "detectedAt": "2026-10-23T13:00:00+08:00",
+    "planetIndex": 99,
+    "fromOwner": "Terminids",
+    "toOwner": "Humans",
+    "previousSeenAt": "2026-10-22T01:00:00+08:00"
+   },
+   {
+    "detectedAt": "2026-10-20T13:00:00+08:00",
+    "planetIndex": 1,
+    "fromOwner": "Humans",
+    "toOwner": "Illuminate",
+    "previousSeenAt": "2026-10-19T00:00:00+08:00"
+   }
+  ],
+  "lastSnapshot": {
+   "owners": {}
+  },
+  "defenseStartedAt": "2026-10-23T00:00:00+08:00",
+  "defenseUpdatedAt": "2026-10-24T00:00:00+08:00",
+  "defenseEvents": [
+   {
+    "detectedAt": "2026-10-23T15:00:00+08:00",
+    "planetIndex": 229,
+    "attacker": "Illuminate"
+   }
+  ],
+  "defenseSnapshot": {
+   "owners": {}
+  }
+ }
+}

@@ -113,6 +113,52 @@ def load_starmap_sectors() -> dict:
         return {}
 
 
+def load_starmap_planets() -> dict:
+    """读星图对照表：星球英文名(大写) -> 中文名（与主站 tables/星图对照表_修正版.md 同源，
+    覆盖硬编码 PLANET_NAME_CN 缺失的新星球）。格式：| 星区 | 英文 | 中文 |"""
+    try:
+        cands = []
+        root = _os.environ.get("HD2_PROJECT_DIR", "")
+        if root:
+            cands.append(_os.path.join(root, "tables", "星图对照表_修正版.md"))
+            cands.append(_os.path.join(root, "tables", "星图对照表.md"))
+        here = _os.path.dirname(_os.path.abspath(__file__))
+        proj_root = _os.path.dirname(_os.path.dirname(here))
+        cands.append(_os.path.join(proj_root, "tables", "星图对照表_修正版.md"))
+        cands.append(_os.path.join(proj_root, "tables", "星图对照表.md"))
+        path = next((c for c in cands if _os.path.exists(c)), "")
+        if not path:
+            return {}
+        m = {}
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line.startswith("|"):
+                    continue
+                cells = [c.strip() for c in line.strip("|").split("|")]
+                if len(cells) < 3:
+                    continue
+                en, cn = cells[1], cells[2]
+                if en in ("英文", "---", "") or not cn:
+                    continue
+                m[en.upper()] = cn
+        return m
+    except Exception:
+        return {}
+
+
+def load_planet_name_map() -> dict:
+    """合并星球译名：对照表优先（随主站更新），硬编码 PLANET_NAME_CN 兜底"""
+    merged = dict(PLANET_NAME_CN)
+    try:
+        for en, cn in load_starmap_planets().items():
+            if cn:
+                merged[en] = cn
+    except Exception:
+        pass
+    return merged
+
+
 def load_planet_map() -> dict:
     """index -> 星球信息 dict：name/sector/owner/health/maxHealth/event/players（helldivers2.dev）"""
     try:

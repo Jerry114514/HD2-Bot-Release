@@ -78,7 +78,23 @@
 - **对照表**（`tables/`）：行动变量对照表、星图对照表、DSS 效果关联表、效果中文映射表（可自行维护，动态读取）
 - **缓存**（`plugins/astrbot_plugin_hd2_war_report/cache/`）：重要指令缓存（最近 5 条新闻无 NMO 时复用）、DSS 资讯缓存（LLM 翻译）、新闻缓存（LLM 翻译固定输出）
 
-### 数据源说明（2026-08 升级）
+### 数据源说明（2026-10-24 对齐主站版）
+
+**全部外部 URL 已收拢到 `hd2_datasource.py`**（项目根，纯标准库、可离线单测），插件不再散落硬编码。优先级：
+
+1. **主站 data.json**（`HD2-Galatic_war-Map/data.json`，站点 Actions 每 5 分钟更新，已合并翻译仓库的官方中文）——战况总览 / 星球表（含 resistance/attacking/regions）/ 战役（含防御战双进度与实测防守速率）/ 重要指令 / DSS（含战术行动捐献进度与资源限额）/ 玩家分布 / 星图归属历史 / 战略机遇
+2. **主站实测帧**（`data/recent/`，15 分钟粒度）——星球/区域/MO 的实测速率差分；清单生成时间超 3 小时视为断更，整块停用实测并自动回退推演（与主站 `rate-source.js` 同口径），**绝不把旧帧冒充实测、也不把"数据缺失"当 0**
+3. **主站翻译产物**（`data/translated/TransNews.json`、`data/campaign_zh.json`，即翻译仓库 HD2Web-Trans 推送到 Pages 的副本）——data.json 合并滞后时的译文回退层
+4. **本地磁盘缓存**（`plugins/*/cache/`，带版本号 ver + 时间戳，按 TTL 自然过期，不做永久钉死）
+5. **官方 API / companion / helldivers2.dev**（最后兜底，口径可能与主站不一致）
+
+- MO 预测、防御战胜负预测、增援占比推演均移植自主站 `forecast.js`；DSS 捐献展示移植自 `dss-donations.js`；归属变化移植自 `ownership-changes.js`；区域开放状态移植自 `regions.js`——口径与主站一致
+- 新增指令：`/归属变化`（星图归属变化，支持 `/归属变化48` 自定义小时窗口）
+- 日常路径（站点可达）**零 LLM、零机翻**：MO 简报、新闻、战役简报、战略机遇状态全部用主站已合并的官方中文
+- 缓存周期 / 回退顺序 / 字段级映射 / 旧配置迁移说明见 **[docs/数据源对齐与映射表.md](docs/数据源对齐与映射表.md)**
+- 离线验证：`python scripts/smoke_check.py`（编译 + 全套离线单测）；带外网可加 `--live` 跑真实链路冒烟
+
+### 数据源说明（2026-08 升级，历史）
 
 1. **官方 API 主源**：`https://api.live.prod.thehelldiversgame.com`（Arrowhead 官方后端，2026-08 从游戏流量抓包发现）。公开可访问（仅需 `X-Super-Client` 头），提供最权威的 MO/战役/星球状态/DSS/历史战役数据
 2. **社区备选**：官方故障（如 500）时自动回退 Helldivers Companion 聚合端点，保证服务不中断
@@ -175,6 +191,7 @@ python scripts/hd2_webui.py
 
 | 文档 | 说明 |
 | --- | --- |
+| [数据源对齐与映射表.md](docs/数据源对齐与映射表.md) | **数据源优先级 / 字段级映射 / 缓存与失效 / 旧配置迁移说明（2026-10 对齐主站）** |
 | [功能详解.md](docs/功能详解.md) | 每个功能的**描述 + 实现细节**（数据源/逻辑/缓存/容错） |
 | [部署指南.md](docs/部署指南.md) | 环境准备 / 插件部署 / 配置填写 |
 | [使用说明.md](docs/使用说明.md) | 群内指令与玩法说明 |

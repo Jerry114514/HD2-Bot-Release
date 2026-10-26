@@ -23,3 +23,6 @@ napcat/
 .idea/
 Thumbs.db
 .DS_Store
+
+# 根目录运行时缓存（hd2_datasource 默认缓存根）
+cache/

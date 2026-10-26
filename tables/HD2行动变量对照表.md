@@ -2,7 +2,7 @@
 
 > 数据来源：helldiverscompanion 前端源码 + 多星球页面抓取
 > 用途：星球信息模块识别行动变量，命中输出译文+描述
-> 分组：终结族→TERMINID BROOD/EXOTIC LIFEFORM；机器人→AUTOMATON ASSEMBLAGE/SPECIAL UNIT/AUXILIARY ASSEMBLAGE；光能族→ILLUMINATE SECT/COSMIC HORROR
+> 分组：终结族→TERMINID BROOD/EXOTIC LIFEFORM；机器人→AUTOMATON ASSEMBLAGE/SPECIAL UNIT/AUXILIARY ASSEMBLAGE；光能者→ILLUMINATE SECT/COSMIC HORROR
 
 ## 🧬 终结族变种（TERMINID BROOD）
 | 原文/参数 | 译文 | 描述 |
@@ -43,20 +43,20 @@
 | SEAF Garrison [effect 1400/1401] | SEAF武装部队驻守 | 战场上会周期性投放多种装备的SEAF重装部队。|
 | SEAF Forces in Region [effect 1400/1401] | 区域内有SEAF部队 | 游戏区域内存在SEAF士兵。（2026-08 新词条，英文名待确认） |
 
-## 👽 光能族宗派（ILLUMINATE SECT）
+## 👽 光能者宗派（ILLUMINATE SECT）
 | 原文/参数 | 译文 | 描述 |
 | --- | --- | --- |
-| Mindless Masses | 无脑群氓 | 可恶的光能族，不仅剥夺了这颗星球上的公民投票权，还要把他们变成丧尸来攻击我们。做好准备，应对堪比终结族的丧尸大军——不要有心理负担。 |
-| Appropriators | 占领者 | 这颗星球上的光能族只有他们的同类，这或许表现出光能族的极端排外，也可能表明他们的用心极其险恶。做好准备，应对可能出现的异形构造体。 |
-| Spearhead [effect 1413] | 教团先锋 | 光能族的先遣武装（游戏内已确认存在，效果 ID 1413 = game_IllSpearheadArm）。 |
-| Voteless Variant [effect 1402/1403] | 窃票者 | 这是比无票者更加暴力的，被光能族奴役的选民，既然如此，我们也以暴力镇压他们。 |
+| Mindless Masses | 无脑群氓 | 可恶的光能者，不仅剥夺了这颗星球上的公民投票权，还要把他们变成丧尸来攻击我们。做好准备，应对堪比终结族的丧尸大军——不要有心理负担。 |
+| Appropriators | 占领者 | 这颗星球上的光能者只有他们的同类，这或许表现出光能者的极端排外，也可能表明他们的用心极其险恶。做好准备，应对可能出现的异形构造体。 |
+| Spearhead [effect 1413] | 教团先锋 | 光能者的先遣武装（游戏内已确认存在，效果 ID 1413 = game_IllSpearheadArm）。 |
+| Voteless Variant [effect 1402/1403] | 窃票者 | 这是比无票者更加暴力的，被光能者奴役的选民，既然如此，我们也以暴力镇压他们。 |
 
-| Invasion Fleet | 入侵舰队 | 光能族的主要入侵舰队已抵达这颗星球，从傲慢的监督者到成群被洗脑的超级地球平民。见到即消灭，否则将面临暴力抵抗，甚至更糟——叛国宣传。 |
+| Invasion Fleet | 入侵舰队 | 光能者的主要入侵舰队已抵达这颗星球，从傲慢的监督者到成群被洗脑的超级地球平民。见到即消灭，否则将面临暴力抵抗，甚至更糟——叛国宣传。 |
 
 ## 🌌 深域惧像（COSMIC HORROR）
 | 原文/参数 | 译文 | 描述 |
 | --- | --- | --- |
-| The Great Host | 大军 | 在默里迪亚虫洞帷幕后秘密建造的光能族入侵舰队，正全速驶向超级地球。 |
+| The Great Host | 大军 | 在默里迪亚虫洞帷幕后秘密建造的光能者入侵舰队，正全速驶向超级地球。 |
 | Exostorm Level 1 | 异界风暴 1 级 | 由异界尖塔引发的非自然气候现象。概率引发局部地区的沙尘暴。 |
 | Exostorm Level 2 | 异界风暴 2 级 | 这是第二级的异界风暴。会生成出扭曲现实场的闪电。 |
 | Exostorm Level 3 | 异界风暴 3 级 | 最高级别的异界风暴。会生成出扭曲现实场的闪电的同时，会不断刮起龙卷风，撕裂被吸入其中的一切。星球表面的颜色，也昭示出不祥之兆。 |
@@ -86,7 +86,7 @@
 ## 🚀 跃迁航道（WARP LINK）
 | 原文/参数 | 译文 | 描述 |
 | --- | --- | --- |
-| Warp Link Blockade | 跃迁航道封锁 | 由于此地通往{连接星球}的跃迁航道为单向航道，目前无法对该地的光能族发动解放战争。（{连接星球}随星球动态变化，如西斯→里尔加湾、桑吉斯→卡利亚） |
+| Warp Link Blockade | 跃迁航道封锁 | 由于此地通往{连接星球}的跃迁航道为单向航道，目前无法对该地的光能者发动解放战争。（{连接星球}随星球动态变化，如西斯→里尔加湾、桑吉斯→卡利亚） |
 
 ## 🌍 环境条件（ENVIRONMENTAL CONDITION · 已收集）
 | 原文/参数 | 译文 | 描述 |
