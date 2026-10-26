@@ -485,9 +485,12 @@ def _format_mo_site(a: dict, planet_map: dict, brief_translated: str | None, bri
                 break
         if target is None:
             continue
-        cur = progress_vals[i] if i < len(progress_vals) else 0
-        pct = (cur / target * 100) if target else 0
         tname = MO_TASK_TYPE_CN.get(t.get("type"), f"任务{i+1}")
+        cur = progress_vals[i] if i < len(progress_vals) else None
+        if cur is None:
+            task_lines.append(f"• {tname}：进度暂缺（目标 {_fmt_big_num(target)}）")
+            continue
+        pct = (cur / target * 100) if target else 0
         line = f"• {tname}：{pct:.1f}%（{_fmt_big_num(cur)}/{_fmt_big_num(target)}）"
         extra = _mo_task_forecast_line(t, cur, target, window, measured.get(i))
         if extra:

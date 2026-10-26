@@ -77,6 +77,14 @@ class TestWarReportFormatting(unittest.TestCase):
         self.assertIn("🎖️ 重要指令", out)
         self.assertNotIn("None", out)
 
+    def test_format_mo_site_missing_progress_is_not_zero(self):
+        with _NetGuard():
+            a = dict(ds.mo_assignment(self.wr._site_doc()))
+            a["progress"] = []
+            out = self.wr._format_mo_site(a, {}, None, None)
+        self.assertIn("进度暂缺", out)
+        self.assertNotIn("0.0%", out)
+
     def test_mo_task_types_and_zero_measured_rate(self):
         expected = {2: "撤离", 3: "击杀", 7: "完成任务", 9: "完成行动",
                     11: "解放", 12: "防守", 13: "坚守", 15: "扩张"}
