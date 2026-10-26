@@ -429,7 +429,7 @@ def _mo_task_forecast_line(task: dict, cur, target, window, recent_rate) -> str:
         proj = st.get("projected")
         if proj is not None:
             parts.append(f"按均速预计 {proj:.0f}%")
-        if recent_rate:
+        if recent_rate is not None:
             parts.append(f"近1h实测 {recent_rate:.0f}/h")
         win = st.get("win")
         tail = "✅ 预计按时完成" if win else ("⚠️ 恐难按时完成" if win is False else "")
@@ -883,12 +883,16 @@ _REPORT_WARM = {"ts": 0.0, "text": "", "source": "", "building": False}
 _warm_task = None
 _planet_refresh_task = None
 
-# MO 任务类型 → 中文（type 语义：1=解放 2=采集样本 3=消灭敌人 9=完成行动）
+# MO 任务类型 → 中文（与官方 task type 语义对齐）
 MO_TASK_TYPE_CN = {
-    1: "解放星球",
-    2: "采集样本",
-    3: "消灭敌人",
+    2: "撤离",
+    3: "击杀",
+    7: "完成任务",
     9: "完成行动",
+    11: "解放",
+    12: "防守",
+    13: "坚守",
+    15: "扩张",
 }
 
 

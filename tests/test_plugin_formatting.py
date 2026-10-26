@@ -77,6 +77,17 @@ class TestWarReportFormatting(unittest.TestCase):
         self.assertIn("🎖️ 重要指令", out)
         self.assertNotIn("None", out)
 
+    def test_mo_task_types_and_zero_measured_rate(self):
+        expected = {2: "撤离", 3: "击杀", 7: "完成任务", 9: "完成行动",
+                    11: "解放", 12: "防守", 13: "坚守", 15: "扩张"}
+        self.assertEqual(self.wr.MO_TASK_TYPE_CN, expected)
+
+        window = {"start": 0.0, "end": 96 * 3600000.0, "now": 48 * 3600000.0,
+                  "expected": 50.0}
+        out = self.wr._mo_task_forecast_line({"type": 3}, 25, 100, window, 0.0)
+        self.assertIn("近1h实测 0/h", out)
+        self.assertIn("恐难按时完成", out)
+
     def test_warzone_distribution_site(self):
         with _NetGuard():
             out = self.wr._get_warzone_distribution()
