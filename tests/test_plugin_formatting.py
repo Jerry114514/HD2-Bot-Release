@@ -126,6 +126,20 @@ class TestWarReportFormatting(unittest.TestCase):
             out = self.wr._format_dss_site({"planetIndex": None}, {})
         self.assertIn("DSS", out)
 
+    def test_dss_active_effect_dedup_and_candidate_filter(self):
+        official = {"activeEffectIds": [1425, 1212, 1216, 1238, 1261]}
+        effects = self.wr._collect_active_dss_effects(official)
+        keys = [effect["key"] for effect in effects]
+        self.assertEqual(keys, ["EAGLE STORM", "OPERATIONAL SUPPORT"])
+
+        community = {"tacticalActions": [
+            {"name": "EAGLE STORM", "status": 1, "activeEffectIds": []},
+            {"name": "ORBITAL BLOCKADE", "status": 2, "activeEffectIds": []},
+            {"name": "HEAVY ORDNANCE DISTRIBUTION", "status": 3, "activeEffectIds": []},
+        ]}
+        effects = self.wr._collect_active_dss_effects(community)
+        self.assertEqual([effect["key"] for effect in effects], ["ORBITAL BLOCK"])
+
     def test_ownership_changes_render(self):
         with _NetGuard() as g:
             # 夹具时间是固定的；按夹具自身的更新时间计算，避免真实日期超过 24h 后用例自然过期。
