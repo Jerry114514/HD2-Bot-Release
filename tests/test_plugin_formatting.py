@@ -128,6 +128,35 @@ class TestWarReportFormatting(unittest.TestCase):
         # 站点 campaigns 为空时走官方 API（本测试里网络被禁 -> 返回错误提示而非崩溃）
         self.assertTrue(out.startswith("⚠️") or "当前战线" in out or "当前无" in out)
 
+    def test_campaign_official_zh_uses_api_without_llm(self):
+        import asyncio
+        payload = {
+            "episodes": [{
+                "id32": 883922421,
+                "status": 0,
+                "race": 1,
+                "title": "永恒纪念",
+                "description": "<i=1>官方战役简介</i>",
+                "phases": [{
+                    "status": 0,
+                    "introTitle": "重要指令",
+                    "introMessage": "官方阶段简报 <i=1>Terminids</i>",
+                }],
+            }]
+        }
+        plugin = object.__new__(self.wr.Hd2WarReportPlugin)
+        plugin.planet_map = {}
+        with mock.patch.object(self.wr, "_fetch_official", return_value=payload) as fetch, \
+             mock.patch.object(self.wr, "_warp_blockade_lines", return_value=[]), \
+             mock.patch.object(self.wr, "_translate_en_zh", side_effect=AssertionError("must not translate")):
+            out = asyncio.run(plugin._get_campaign_brief_official())
+        self.assertIn("永恒纪念", out)
+        self.assertIn("· 超级地球", out)
+        self.assertIn("官方战役简介", out)
+        self.assertIn("官方阶段简报", out)
+        self.assertNotIn("<i=1>", out)
+        self.assertEqual(fetch.call_args.kwargs["language"], "zh-Hans")
+
     def test_format_dss_site(self):
         with _NetGuard():
             d = ds.dss(self.wr._site_doc())

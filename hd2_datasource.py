@@ -108,9 +108,12 @@ def fetch_json(url: str, timeout: int = 20, extra_headers: dict | None = None):
         return json.loads(resp.read().decode("utf-8"))
 
 
-def fetch_official(path: str, timeout: int = 20):
-    """官方 API（主源兜底链的最后一环）；失败抛异常"""
-    return fetch_json(OFFICIAL_API_URL + path, timeout=timeout, extra_headers=OFFICIAL_HEADERS)
+def fetch_official(path: str, timeout: int = 20, language: str | None = None):
+    """官方 API（主源兜底链的最后一环）；可覆盖 Accept-Language，失败抛异常。"""
+    headers = dict(OFFICIAL_HEADERS)
+    if language:
+        headers["Accept-Language"] = language
+    return fetch_json(OFFICIAL_API_URL + path, timeout=timeout, extra_headers=headers)
 
 
 # ============ 缓存（带版本号 ver，避免永久钉死旧响应） ============

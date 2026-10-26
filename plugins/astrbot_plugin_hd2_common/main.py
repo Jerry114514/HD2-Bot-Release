@@ -46,9 +46,12 @@ def fetch_json(url: str, timeout: int = 20, extra_headers: dict | None = None):
         return json.loads(resp.read().decode("utf-8"))
 
 
-def fetch_official(path: str, timeout: int = 20):
-    """官方 API 主源（优先）；失败抛异常由调用方回退社区源"""
-    return fetch_json(OFFICIAL_API_URL + path, timeout=timeout, extra_headers=_OFFICIAL_HEADERS)
+def fetch_official(path: str, timeout: int = 20, language: str | None = None):
+    """官方 API 主源（优先）；可覆盖 Accept-Language，失败抛异常由调用方回退。"""
+    headers = dict(_OFFICIAL_HEADERS)
+    if language:
+        headers["Accept-Language"] = language
+    return fetch_json(OFFICIAL_API_URL + path, timeout=timeout, extra_headers=headers)
 
 
 def table_candidates(fname: str) -> list:

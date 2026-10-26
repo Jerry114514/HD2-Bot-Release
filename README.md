@@ -86,11 +86,11 @@
 2. **主站实测帧**（`data/recent/`，15 分钟粒度）——星球/区域/MO 的实测速率差分；清单生成时间超 3 小时视为断更，整块停用实测并自动回退推演（与主站 `rate-source.js` 同口径），**绝不把旧帧冒充实测、也不把"数据缺失"当 0**
 3. **主站翻译产物**（`data/translated/TransNews.json`、`data/campaign_zh.json`，即翻译仓库 HD2Web-Trans 推送到 Pages 的副本）——data.json 合并滞后时的译文回退层
 4. **本地磁盘缓存**（`plugins/*/cache/`，带版本号 ver + 时间戳，按 TTL 自然过期，不做永久钉死）
-5. **官方 API / companion / helldivers2.dev**（最后兜底，口径可能与主站不一致）
+5. **官方 API / companion / helldivers2.dev**（最后兜底；`/战役` 使用 `/api/Episode/{war}/` 的 `zh-Hans` 官中）
 
 - MO 预测、防御战胜负预测、增援占比推演均移植自主站 `forecast.js`；DSS 捐献展示移植自 `dss-donations.js`；归属变化移植自 `ownership-changes.js`；区域开放状态移植自 `regions.js`——口径与主站一致
 - 新增指令：`/归属变化`（星图归属变化，支持 `/归属变化48` 自定义小时窗口）
-- 日常路径（站点可达）**零 LLM、零机翻**：MO 简报、新闻、战役简报、战略机遇状态全部用主站已合并的官方中文
+- 日常路径（站点可达）**零 LLM、零机翻**：MO 简报、新闻、战役简报、战略机遇状态全部用主站已合并的官方中文；站点回溯到官方 Episode API 时也直接请求 `zh-Hans`
 - 缓存周期 / 回退顺序 / 字段级映射 / 旧配置迁移说明见 **[docs/数据源对齐与映射表.md](docs/数据源对齐与映射表.md)**
 - 离线验证：`python scripts/smoke_check.py`（编译 + 全套离线单测）；带外网可加 `--live` 跑真实链路冒烟
 
