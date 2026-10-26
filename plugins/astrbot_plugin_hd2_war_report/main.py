@@ -2389,10 +2389,14 @@ class Hd2WarReportPlugin(Star):
         return "\n".join(lines)
 
     async def _get_campaign_brief_official(self) -> str:
-        """官方 Episode API 路径的战役简报（主站不可用时的兜底，逻辑与旧版一致）"""
+        """官方 Episode API 路径的战役简报：zh-Hans 官中优先，失败才 companion + LLM。"""
         try:
             try:
-                obj = _fetch_official(f"/api/Episode/{OFFICIAL_WAR_ID}/", timeout=20)
+                obj = _fetch_official(
+                    f"/api/Episode/{OFFICIAL_WAR_ID}/",
+                    timeout=20,
+                    language="zh-Hans",
+                )
                 eps = obj.get("episodes") or []
             except Exception as e:
                 logger.warning(f"[HD2] 官方战役简报失败，回退社区源: {e}")
@@ -2406,32 +2410,43 @@ class Hd2WarReportPlugin(Star):
             for ph in (ep.get("phases") or []):
                 if ph.get("status") == 0 or not ph.get("status"):
                     phase = ph
-            title_en = (ep.get("title") or "").strip()
-            status_cn = "进行中" if ep.get("status") == 0 else "已完成"
-            race_cn = {1: "终结族", 2: "机器人", 4: "光能者"}.get(ep.get("race"), "")
-            desc_en = (ep.get("description") or "").strip()
-            msg_en = ((phase or {}).get("introMessage") or desc_en).strip()
-            lines = [f"🎬 战役：{title_en}（{status_cn}" + (f" · {race_cn}" if race_cn else "") + "）"]
-            conf = self.context.astrbot_config_mgr.default_conf
-            provider_id = (conf.get("provider_settings") or {}).get("default_provider_id") or ""
-            translated = ""
-            if provider_id and msg_en:
-                sys_prompt = (
-                    "你是《绝地潜兵2》超级地球真理部宣传官。将英文战役简报翻译成简体中文，"
-                    "保留语气与细节，使用术语表译名，不要添加解释。\n\n" + LLM_GLOSSARY
-                )
-                to_t = f"【战役概述】\n{desc_en}\n\n【当前阶段简报】\n{msg_en}"
-                resp = await self.context.llm_generate(
-                    chat_provider_id=provider_id, prompt=to_t, system_prompt=sys_prompt,
-                )
-                translated = (resp.completion_text or "").strip()
-                # 本地术语修正（如 继电器 -> 中继器）
-                for _ot, _nt in TERM_FIXES:
-                    translated = translated.replace(_ot, _nt)
-            if translated:
-                lines.append(translated)
-            elif msg_en:
-                lines.append(_translate_en_zh(msg_en))
+            title_value = (ep.get("title") or "").strip()
+            status_cn = {0: "进行中", 2: "已完成", 3: "失败"}.get(ep.get("status"), "状态未知")
+            race_cn = OWNER_ID_CN.get(ep.get("race"), "")
+            desc_text = re.sub(r"<[^>]+>", "", ep.get("description") or "").strip()
+            phase_title = re.sub(r"<[^>]+>", "", (phase or {}).get("introTitle") or "").strip()
+            msg_text = re.sub(r"<[^>]+>", "", (phase or {}).get("introMessage") or "").strip()
+            combined_text = "\n".join(x for x in (desc_text, phase_title, msg_text) if x)
+            official_zh = bool(re.search(r"[\u3400-\u9fff]", combined_text))
+            lines = [f"🎬 战役：{title_value}（{status_cn}" + (f" · {race_cn}" if race_cn else "") + "）"]
+            if official_zh:
+                if desc_text:
+                    lines.append(desc_text)
+                if phase_title:
+                    lines.append(f"📌 当前阶段：{phase_title}")
+                if msg_text and msg_text != desc_text:
+                    lines.append(msg_text)
+            else:
+                conf = self.context.astrbot_config_mgr.default_conf
+                provider_id = (conf.get("provider_settings") or {}).get("default_provider_id") or ""
+                translated = ""
+                msg_en = msg_text or desc_text
+                if provider_id and msg_en:
+                    sys_prompt = (
+                        "你是《绝地潜兵2》超级地球真理部宣传官。将英文战役简报翻译成简体中文，"
+                        "保留语气与细节，使用术语表译名，不要添加解释。\n\n" + LLM_GLOSSARY
+                    )
+                    to_t = f"【战役概述】\n{desc_text}\n\n【当前阶段简报】\n{msg_en}"
+                    resp = await self.context.llm_generate(
+                        chat_provider_id=provider_id, prompt=to_t, system_prompt=sys_prompt,
+                    )
+                    translated = (resp.completion_text or "").strip()
+                    for _ot, _nt in TERM_FIXES:
+                        translated = translated.replace(_ot, _nt)
+                if translated:
+                    lines.append(translated)
+                elif msg_en:
+                    lines.append(_translate_en_zh(msg_en))
             # 奖励
             rewards = ep.get("rewards") or []
             if rewards:
