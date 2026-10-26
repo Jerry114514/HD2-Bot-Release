@@ -2,7 +2,7 @@
 
 > 🤖 **AI 生成声明**：本项目由 **DeepSeek V4-Flash 的 Agent 能力**协作完成（代码、架构、文档均通过 Agent 生成与迭代）。项目根目录下 [`Agent/`](Agent/) 文件夹保存了开发过程中的工作报告与记忆记录（已脱敏），可供参考、二次开发与部署。
 
-基于 AstrBot + NapCat + Onebot 的《绝地潜兵 2》战况速报 QQ 群机器人。自动抓取银河战争实时数据，提供战报、DSS 状态、战役简报、战线列表、LLM 战局分析、行动变量/星区查询、随机战备等功能，全部支持中文界面与中英文查询。
+基于 AstrBot 的《绝地潜兵 2》战况速报 QQ 群机器人，支持 **QQ 官方机器人 WebSocket API** 和 **NapCat/OneBot v11** 两种接入方式。自动抓取银河战争实时数据，提供战报、DSS 状态、战役简报、战线列表、LLM 战局分析、行动变量/星区查询、随机战备等功能，全部支持中文界面与中英文查询。
 
 ## 📜 免责声明
 
@@ -28,15 +28,37 @@
 | `/roll` | 随机战备推荐（全类型战备池） |
 | `/<变种名>` | 扫描战役星球，输出存在该变种的星球（官方效果数据，毫秒级） |
 
-配套 Web 控制台（浏览器操作）：一键启动部署、扫码登录、一键群发（战报/战役/DSS/分析）、指定群推送、机器人响应测试（WS 注入）、**群号管理（增删入群白名单 + 设默认推送群，自动生效）**、自重启。
+配套 Web 控制台（浏览器操作）：一键启动部署、扫码登录、一键群发（战报/战役/DSS/分析）、指定群推送、机器人响应测试（WS 注入）、**群号管理（增删入群白名单 + 设默认推送群，自动生效）**、自重启。QQ 官方机器人不使用 NapCat，群指令通过 AstrBot 官方的 `qq_official` 适配器直接收发。
+
+## 🔌 接入方式
+
+| 方案 | 推荐场景 | 必需组件 | 群会话标识 |
+|---|---|---|---|
+| **QQ 官方机器人（WebSocket，推荐）** | 使用 `q.qq.com` 创建的正式/沙箱机器人 | AstrBot + AppID/AppSecret | `group_openid` |
+| **NapCat / OneBot v11** | 使用独立普通 QQ 号作为机器人 | AstrBot + QQNT + NapCat | 普通 QQ 群号 |
+
+两种方案不要混用：
+
+- 官方机器人日志中的平台名为 `qq_official`，消息前缀类似 `HD2_QQbot(qq_official)`；
+- NapCat 日志中的平台名为 `aiocqhttp`，消息前缀类似 `napcat(aiocqhttp)`；
+- 官方机器人必须 @ 后才处理群指令；
+- Web 控制台的扫码、6199 WS 注入、按普通群号主动群发仅适用于 NapCat。
 
 ## 🏗️ 架构
 
 ```
-┌─────────┐   OneBot v11 (WS)   ┌──────────┐
-│  NapCat │ ◄─────────────────► │  AstrBot │  ← 7 个 HD2 插件（含公共库）
-│ (QQ 接入)│    ws://:6199/ws    │ (框架)   │
-└─────────┘                     └────┬─────┘
+┌──────────────────────────────┐
+│ QQ 官方机器人                 │  AppID / AppSecret · WebSocket
+│ q.qq.com                     │
+└──────────────┬───────────────┘
+               │
+               │        ┌──────────┐  ← 8 个 HD2 插件（业务插件 + 公共库）
+               ├───────►│ AstrBot │
+               │        └────┬─────┘
+┌──────────────┴───────────────┐
+│ 普通 QQ 号 + NapCat           │  OneBot v11 · ws://:6199/ws
+│ 可选备用方案                  │
+└──────────────────────────────┘
                                      │ 数据抓取（官方优先，社区兜底）
                           ┌──────────▼──────────┐
                           │ 官方 API（主源）     │ ← MO/战役/战线/DSS/新闻/解放%
@@ -48,9 +70,10 @@
                           └─────────────────────┘
 ```
 
-- **AstrBot**：QQ 群机器人框架（部署插件、LLM 接入、消息管线）
-- **NapCat**：OneBot v11 实现，QQNT 注入，负责 QQ 收发
-- **插件**（`plugins/`）：war_report（战报/战线/战役/dss/分析）、planet_info（/星球）、lookup（/查表）、roll、variant_query（变种扫描）、guard（指令守卫）、**hd2_common（公共库：共享常量/抓取/表加载/译名映射，被 3 个插件 import）**
+- **AstrBot**：机器人框架（平台适配器、插件、LLM 接入、消息管线）
+- **QQ 官方机器人适配器**：通过 AppID/AppSecret 建立官方 WebSocket 连接，无需公网回调地址
+- **NapCat（可选）**：OneBot v11 实现，通过 QQNT 注入接入普通 QQ 号
+- **插件**（`plugins/`）：war_report（战报/战线/战役/dss/分析）、planet_info（/星球）、lookup（/查表）、roll、variant_query（变种扫描）、monitor（指令执行流水监控）、guard（指令守卫）、**hd2_common（公共库：共享常量/抓取/表加载/译名映射，被 3 个插件 import）**
 - **Web 控制台**（`scripts/hd2_webui.py`）：浏览器管理面板，一键部署/推送/测试
 - **对照表**（`tables/`）：行动变量对照表、星图对照表、DSS 效果关联表、效果中文映射表（可自行维护，动态读取）
 - **缓存**（`plugins/astrbot_plugin_hd2_war_report/cache/`）：重要指令缓存（最近 5 条新闻无 NMO 时复用）、DSS 资讯缓存（LLM 翻译）、新闻缓存（LLM 翻译固定输出）
@@ -122,9 +145,27 @@
 
 ## 🚀 快速开始
 
-前置：Windows 10/11 + AstrBot 桌面版 + NapCat + QQNT 9.9.x + Python（AstrBot 自带）
+前置：AstrBot 桌面版 v4.x。选择 NapCat 方案时还需要 Windows 10/11、QQNT 9.9.x 和 NapCat。
 
-**方式一：一键启动（推荐）**
+### 方式一：QQ 官方机器人（推荐）
+
+1. 在 [QQ 开放平台](https://q.qq.com/) 创建机器人并取得 `AppID`、`AppSecret`。
+2. 在 QQ 开放平台配置沙箱测试群、测试成员和群聊消息权限。
+3. 打开 AstrBot WebUI → 消息平台 → 新建 **QQ 官方机器人（WebSocket）**。
+4. 填写 `AppID`、`AppSecret`，启用“消息列表单聊”（对应群聊/C2C 事件）后启动适配器。
+5. 把机器人拉进测试群，向群里 @机器人 后发送 `/战报` 或 `/dss`。
+6. 如果 AstrBot 日志提示 `not in the session allowlist`，把日志中的完整会话 ID 或 `group_openid` 加入对应平台白名单。
+
+官方 WebSocket 模式不需要公网域名或 HTTP 回调地址。正式发布前，只能在 QQ 开放平台配置的沙箱群范围和权限内测试。
+
+### 方式二：NapCat / 普通 QQ 号
+
+1. 安装 AstrBot 桌面版、QQNT 和 NapCat。
+2. 使用独立 QQ 号扫码登录 NapCat。
+3. 配置 NapCat 反向 WebSocket：`ws://127.0.0.1:6199/ws`。
+4. 在 AstrBot 中启用 `OneBot v11 / aiocqhttp` 平台适配器。
+
+**NapCat 一键启动**
 
 ```bash
 # 1. 配置（复制模板并填写：QQ 号/群号/NapCat token/AstrBot 路径/LLM key）
@@ -133,7 +174,7 @@ copy config.example.json config.json
 # 2. 双击 start.bat —— 自动启动 AstrBot + NapCat + Web 控制台并打开浏览器
 ```
 
-**方式二：手动启动**
+**NapCat 手动启动**
 
 ```bash
 # 1. 克隆项目并配置
@@ -158,7 +199,7 @@ python scripts/hd2_webui.py
 | [抓取指南.md](docs/抓取指南.md) | 面向二次开发，如有个人改进/开发需求可参考 |
 
 
-> ⚠️ 重启 AstrBot 请通过桌面版（astrbot-desktop-tauri.exe）拉起后端，不要手动 `Start-Process launch_backend.py`（会丢失环境导致 6199 WS 服务与 aiocqhttp 适配器不启动）。
+> ⚠️ 重启 AstrBot 请通过桌面版（`astrbot-desktop-tauri.exe`）拉起后端。只有 NapCat 方案依赖 `6199` WS；QQ 官方机器人使用出站 WebSocket 连接，不需要该端口。
 
 ## 🔄 一键同步（维护用）
 
@@ -180,7 +221,7 @@ hd2-bot/
 ├── sync_plugins.py        # 一键同步脚本（开发 → Release/部署版 + 自动编译校验）
 ├── hd2_config.py          # 统一配置加载器（config.json + 环境变量）
 ├── config.example.json    # 配置模板（复制为 config.json 填写）
-├── plugins/               # 7 个 AstrBot 插件（含 hd2_common 公共库）
+├── plugins/               # 8 个 AstrBot 插件（业务插件 + hd2_common 公共库）
 ├── scripts/               # Web 控制台 / 推送 / WS 注入 / 自重启
 ├── tables/                # 对照表数据（行动变量/星图/DSS 效果/效果中文映射）
 ├── persona/               # 人格设定（真理部 MTB-114514）
@@ -189,14 +230,37 @@ hd2-bot/
 
 ## ⚙️ 配置说明
 
-所有本机信息集中在 `config.json`（已加入 .gitignore，不会误提交）：
-- `bot.self_id` — 机器人 QQ 号（NapCat 登录号）
-- `bot.groups` / `bot.default_group` — 白名单群 / 默认推送群
-- `napcat.token` — NapCat WebUI token（登录接口用）
-- `napcat.dir` — NapCat 目录（一键启动部署用）
+平台凭据和适配器开关优先在 AstrBot WebUI 配置，不写入本仓库。QQ 官方机器人只需要 AppID/AppSecret；NapCat 才需要 WebUI token、QQ 号和 OneBot 连接。
+
+项目的 `config.json`（已加入 `.gitignore`，不会误提交）主要用于 Web 控制台、NapCat 启动和主动推送：
+- `bot.self_id` — 普通机器人 QQ 号（NapCat 登录号）
+- `bot.groups` / `bot.default_group` — NapCat 群白名单 / 默认推送群
+- `napcat.token` — NapCat WebUI token
+- `napcat.dir` — NapCat 目录
 - `astrbot.exe/python/app_dir` — AstrBot 路径
 - `llm.api_key` — DeepSeek API key（战报 LLM 翻译/分析）
 - `paths.*` — 对照表路径（相对项目根）
+
+QQ 官方机器人的群 ID 不是普通群号。平台级白名单应写入：
+
+```text
+C:\Users\<用户名>\.astrbot\data\platform_whitelist.json
+```
+
+示例：
+
+```json
+{
+  "HD2_QQbot": [
+    "<group_openid>"
+  ],
+  "napcat": [
+    "123456789"
+  ]
+}
+```
+
+官方机器人按普通群号主动推送当前不在 NapCat 兼容范围内；定时群发和 `napcat_ws_inject.py` 仍需使用 NapCat，或另行改造为保存 `group_openid` 并调用官方发送接口。
 
 环境变量 `HD2_PROJECT_DIR` 指向项目根（插件读取对照表/配置用）。
 
@@ -236,6 +300,7 @@ MIT License — 详见 [LICENSE](LICENSE)。
 ## 🙏 致谢
 
 - [AstrBot](https://github.com/Soulter/AstrBot) — QQ 机器人框架
+- [QQ 开放平台](https://q.qq.com/) — 官方 QQ 机器人 API 与沙箱能力
 - [NapCat](https://github.com/NapNeko/NapCatQQ) — OneBot 实现
 - [Helldivers Companion](https://helldiverscompanion.com) — 星图 + 社区数据 API
 - [helldivers2.dev](https://helldivers2.dev) — 星球数据 API

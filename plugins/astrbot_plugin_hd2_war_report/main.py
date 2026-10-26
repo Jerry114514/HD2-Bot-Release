@@ -1313,6 +1313,106 @@ DSS_ACTION_CN = {
 OWNER_ID_CN = {1: "超级地球", 2: "终结族", 3: "机器人", 4: "光能族"}
 
 
+# activeEffectIds 包含同一个战术行动的实现、地图标记和子效果 ID。
+# 先按战术行动归一化，避免“飞鹰风暴”等效果被重复输出。
+DSS_EFFECT_ACTION_KEYS = {
+    1208: "PLANETARY BOMBARDMENT",
+    1209: "EAGLE STORM",
+    1210: "ORBITAL BLOCK",
+    1211: "PLANETARY BOMBARDMENT",
+    1212: "EAGLE STORM",
+    1213: "ORBITAL BLOCK",
+    1214: "HEAVY ORDNANCE DISTRIBUTION",
+    1215: "ORBITAL BLOCK",
+    1216: "EAGLE STORM",
+    1237: "HEAVY ORDNANCE DISTRIBUTION",
+    1238: "OPERATIONAL SUPPORT",
+    1425: "EAGLE STORM",
+}
+
+
+def _normalize_dss_action_key(name: str) -> str:
+    """把 API 行动名归一化为稳定键，兼容 BLOCKADE 与带后缀的标记效果。"""
+    key = re.sub(r"<[^>]+>", "", str(name or "")).upper()
+    key = key.replace("BLOCKADE", "BLOCK")
+    key = re.sub(r"\s*\([^)]*\)\s*$", "", key)
+    return re.sub(r"\s+", " ", key).strip()
+
+
+def _collect_active_dss_effects(
+    space_station: dict,
+    effect_cn: dict | None = None,
+    effect_desc: dict | None = None,
+) -> list[dict]:
+    """收集并归并真正生效的 DSS 效果。
+
+    1. tacticalActions 只在 status=2 或 activeEffectIds 非空时视为生效；
+    2. 顶层 activeEffectIds 按战术行动族归并，保留首次出现的顺序；
+    3. 外骨骼机甲支援等子效果不单独输出。
+    """
+    effect_cn = effect_cn or {}
+    effect_desc = effect_desc or {}
+    result = []
+    seen = set()
+
+    def add_effect(eid=None, action_name: str = "", action_desc: str = "") -> None:
+        try:
+            eid_int = int(eid) if eid is not None else None
+        except (TypeError, ValueError):
+            eid_int = None
+        if eid_int in DSS_EXOSUIT_IDS:
+            return
+
+        key = DSS_EFFECT_ACTION_KEYS.get(eid_int) or _normalize_dss_action_key(action_name)
+        if not key or key in seen:
+            return
+
+        if key in DSS_ACTION_CN:
+            cn, desc = DSS_ACTION_CN[key]
+        else:
+            cn = effect_cn.get(eid_int) or action_name or f"效果{eid_int}"
+            desc = effect_desc.get(eid_int, "") or _clean_news_message(action_desc, limit=600)
+
+        seen.add(key)
+        result.append({"key": key, "cn": cn, "desc": desc})
+
+    for action in space_station.get("tacticalActions") or []:
+        active_ids = action.get("activeEffectIds") or []
+        try:
+            status = int(action.get("status", -1))
+        except (TypeError, ValueError):
+            status = -1
+        if status != 2 and not active_ids:
+            continue
+
+        name = action.get("name") or ""
+        if not name and active_ids:
+            try:
+                name = effect_cn.get(int(active_ids[0]), "")
+            except (TypeError, ValueError):
+                name = ""
+        add_effect(
+            action_name=name,
+            action_desc=action.get("description") or action.get("strategicDescription") or "",
+        )
+
+    for eid in space_station.get("activeEffectIds") or []:
+        add_effect(eid=eid)
+
+    return result
+
+
+def _format_dss_effect_lines(effects: list[dict]) -> list[str]:
+    """格式化已归并的 DSS 生效效果。"""
+    lines = []
+    for effect in effects:
+        line = f"• {effect['cn']}"
+        if effect.get("desc"):
+            line += f"\n  {effect['desc']}"
+        lines.append(line)
+    return lines
+
+
 def _campaign_race_cn(c: dict, p: dict) -> str:
     """从 campaign 星球的 owner 判断敌方阵营（campaign.race 不可靠）"""
     owner = p.get("owner")
@@ -1476,21 +1576,11 @@ async def _get_dss_status_official(planet_map: dict) -> str:
         if strat:
             lines.append(strat)
 
-        # 生效效果（官方 activeEffectIds -> 中文映射，DSS 专用关联表）
-        eff_ids = ss.get("activeEffectIds") or []
-        eff_cn = _load_dss_effect_cn()
-        if eff_ids:
+        # 生效效果：按战术行动归并 activeEffectIds，避免同一行动的多个子效果重复输出
+        effects = _collect_active_dss_effects(ss, _load_dss_effect_cn(), _load_dss_effect_desc())
+        if effects:
             lines.append("⚡ 生效效果（官方数据）：")
-            eff_desc = _load_dss_effect_desc()
-            for eid in eff_ids:
-                if eid in DSS_EXOSUIT_IDS:
-                    continue  # 外骨骼机甲支援已含于行动支持，不单独显示
-                cn = eff_cn.get(eid, f"效果{eid}")
-                line = f"• {cn}"
-                desc = eff_desc.get(eid, "")
-                if desc:
-                    line += f"\n  {desc}"
-                lines.append(line)
+            lines.extend(_format_dss_effect_lines(effects))
 
         # 投票剩余
         end = ss.get("currentElectionEndWarTime")
@@ -1522,26 +1612,11 @@ async def _get_dss_status_official(planet_map: dict) -> str:
         if strat:
             lines.append(strat)
 
-        if "OPERATIONAL SUPPORT" in DSS_ACTION_CN:
-            cn0, desc0 = DSS_ACTION_CN["OPERATIONAL SUPPORT"]
-            lines.append("⚡ 实际生效的行动：")
-            lines.append(f"• {cn0}（OPERATIONAL SUPPORT）")
-            lines.append(f"  {desc0}")
-
-        STATUS_CN = {0: "离线", 1: "投票中", 2: "已激活", 3: "恢复中"}
-        tac = ss.get("tacticalActions") or []
-        if tac:
-            lines.append("🗳️ 投票/行动状态：")
-            for t in tac:
-                name_en = (t.get("name") or "").upper()
-                cn_t = _dss_tac_name_cn(name_en) or name_en
-                desc_t = _dss_tac_desc_cn(name_en)
-                st_v = STATUS_CN.get(t.get("status"), f"状态{t.get('status')}")
-                icon = {2: "🟢", 3: "❄"}.get(t.get("status"), "⏳")
-                line = f"{icon} {st_v}：{cn_t}（{name_en}）"
-                if t.get("status") == 2 and desc_t:
-                    line += f"\n  {desc_t}"
-                lines.append(line)
+        # 社区源也混有“候选/恢复中”行动，只渲染已生效项，不展示整张战术行动表
+        effects = _collect_active_dss_effects(ss, _load_dss_effect_cn(), _load_dss_effect_desc())
+        if effects:
+            lines.append("⚡ 生效效果（社区数据）：")
+            lines.extend(_format_dss_effect_lines(effects))
 
         end = ss.get("currentElectionEndWarTime")
         now = ws.get("time")
