@@ -127,8 +127,19 @@ class TestWarReportFormatting(unittest.TestCase):
         self.assertIn("DSS", out)
 
     def test_ownership_changes_render(self):
-        with _NetGuard():
-            out = self.wr._get_ownership_changes(24)
+        with _NetGuard() as g:
+            # 夹具时间是固定的；按夹具自身的更新时间计算，避免真实日期超过 24h 后用例自然过期。
+            freeze_ms = ds._ms(g.doc["ownership_history"]["updatedAt"])
+            orig_changes = ds.ownership_changes
+
+            def fixed_changes(hours=24, now_ms=None):
+                return orig_changes(hours=hours, now_ms=now_ms or freeze_ms)
+
+            ds.ownership_changes = fixed_changes
+            try:
+                out = self.wr._get_ownership_changes(24)
+            finally:
+                ds.ownership_changes = orig_changes
         self.assertIn("星图归属变化", out)
         self.assertIn("次易主", out)
         self.assertIn("防守成功", out)
