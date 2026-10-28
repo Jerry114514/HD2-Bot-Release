@@ -80,7 +80,7 @@ FACTION_CN = {"Humans": "超级地球", "Terminid": "终结族", "Terminids": "�
               "Automaton": "机器人", "Automatons": "机器人", "Illuminate": "光能者"}
 FACTION_COLOR = {"超级地球": BLUE, "终结族": (245, 197, 24),
                  "机器人": (214, 128, 109), "光能者": (207, 100, 248)}
-DSS_ACTION_SHORT = {"EAGLE STORM": "飞鹰风暴", "ORBITAL BLOCK": "轨道封锁",
+DSS_ACTION_SHORT = {"EAGLE STORM": "飞鹰风暴", "ORBITAL BLOCK": "轨道封锁", "ORBITAL BLOCKADE": "轨道封锁",
                     "HEAVY ORDNANCE DISTRIBUTION": "重型军械分发", "EAGLE BLOCK": "飞鹰封锁",
                     "PLANETARY BOMBARDMENT": "星球轰炸", "OPERATIONAL SUPPORT": "行动支持"}
 ITEM_MIX = {3992382197: "普通样本", 2985106497: "稀有样本"}
@@ -104,6 +104,11 @@ def _static_map_json(url, cache_name, build):
         return json.load(open(cache_file, encoding="utf-8"))
     except Exception:
         return {}
+
+
+def _effect_cn_map_source():
+    """hd2_variables.json 原始对象（被动增益分类查找用）"""
+    return _site_get("https://jerry114514.github.io/HD2-Galatic_war-Map/tables/hd2_variables.json")
 
 
 def _effect_cn_map():
@@ -565,8 +570,11 @@ def render_dss_card(out_dir=None):
             smcn = _starmap_cn_map()
             cn = smcn.get(en) or pl.get("name") or "—"
             emap = _effect_cn_map()
+            active_ids = set(dss.get("activeEffectIds") or [])
+            cur_war = dss.get("currentWarTime") or 0
             y = _hud_head(dr, img, "民主空间站", "DEMOCRACY SPACE STATION")
 
+            # 停靠星球
             panel_h = 100
             dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
             dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
@@ -577,38 +585,22 @@ def render_dss_card(out_dir=None):
                     sub, font=F(16), fill=MUTE)
             y += panel_h + 18
 
-            eids = dss.get("activeEffectIds") or []
-            act_by_eid = {}
-            for act in dss.get("tacticalActions") or []:
-                for eid in act.get("effectIds") or []:
-                    act_by_eid[eid] = DSS_ACTION_SHORT.get(act.get("name"), act.get("name") or "")
-            chips = [emap.get(i) or act_by_eid.get(i) or ("#" + str(i)) for i in eids]
-            eff_panel_h = 96 + (40 if chips else 0)
-            dr.rectangle([PAD, y, W - PAD, y + eff_panel_h], fill=PANEL, outline=LINE)
-            dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
-            section_label(dr, PAD + 18, y + 13, "生效效果", F(25, True))
-            yy = y + 52
-            if not chips:
-                dr.text((PAD + 18, yy), "当前无 DSS 生效效果", font=F(19), fill=MUTE)
-                yy += 30
-            else:
-                cx = PAD + 18
-                for c in chips:
-                    cw = dr.textlength(c, font=F(19, True)) + 24
-                    if cx + cw > W - PAD - 18:
-                        cx = PAD + 18
-                        yy += 40
-                    dr.rectangle([cx, yy, cx + cw, yy + 34], fill=(26, 20, 10), outline=BRASS)
-                    dr.text((cx + 12, yy + 4), c, font=F(19, True), fill=GOLD2)
-                    cx += cw + 10
-            note = "#编号 = 对照表未收录的效果 ID，照实显示"
-            nw = dr.textlength(note, font=F(13))
-            dr.text((W - PAD - 18 - nw, y + eff_panel_h - 24), note, font=F(13), fill=(80, 80, 80))
-            y += eff_panel_h + 18
+            # 被动增益（effect 1238 · 行动支持，口径同主站 tactical_action 分类）
+            passive = None
+            try:
+                v = _site_get("https://jerry114514.github.io/HD2-Galatic_war-Map/tables/hd2_variables.json")
+                for cat in (v.get("categories") or []):
+                    if cat.get("key") != "tactical_action":
+                        continue
+                    for e in cat.get("entries") or []:
+                        if 1238 in (e.get("effect_ids") or []):
+                            passive = e.get("cn") or e.get("name") or passive
+            except Exception:
+                pass
 
+            # 战术行动（照主站三态：已激活 / 冷却中 / 募捐中）
             acts = dss.get("tacticalActions") or []
             if acts:
-                ah = 0
                 blocks = []
                 for act in acts:
                     nm_en = act.get("name") or ""
@@ -621,33 +613,65 @@ def render_dss_card(out_dir=None):
                     quota = ""
                     if isinstance(md, (int, float)) and md > 0 and mps:
                         quota = "每人每 " + str(int(mps // 3600)) + " 小时限捐 " + fmt(md) + " " + res
-                    blocks.append((nm, cur, tgt, res, quota))
-                    ah += 120
-                panel_h = 52 + ah + 12
+                    ids = set(act.get("effectIds") or [])
+                    is_active = bool(ids & active_ids)
+                    is_cool = (act.get("status") == 3) and not is_active
+                    exp = act.get("expireAtWarTime") or 0
+                    remain_ms = max(0, (exp - cur_war) * 1000) if (exp and cur_war) else None
+                    if is_active:
+                        phase = "已激活"
+                        bar = min(100.0, max(0.0, remain_ms / (24 * 3600 * 1000) * 100)) if remain_ms is not None else 100.0
+                    elif is_cool:
+                        phase = "冷却中"
+                        bar = min(100.0, max(0.0, remain_ms / (24 * 3600 * 1000) * 100)) if remain_ms is not None else 100.0
+                    else:
+                        phase = "募捐中"
+                        bar = (cur / tgt * 100.0) if tgt else 0.0
+                    blocks.append((nm, phase, bar, cur, tgt, res, quota, is_active, is_cool))
+                panel_h = 54 + sum(124 for _ in blocks) + 10
                 dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
                 dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
-                section_label(dr, PAD + 18, y + 13, "战术行动 · 捐献进度", F(25, True))
+                section_label(dr, PAD + 18, y + 13, "战术行动", F(25, True))
                 yy = y + 54
-                for nm, cur, tgt, res, quota in blocks:
+                for nm, phase, bar, cur, tgt, res, quota, is_active, is_cool in blocks:
+                    tone = GREEN if is_active else (BLUE if is_cool else GOLD)
                     dr.text((PAD + 18, yy), nm, font=F(23, True), fill=TEXT)
-                    if tgt:
-                        pt = str(round(cur / tgt * 100)) + "%"
-                        pw = dr.textlength(pt, font=F(21, True))
-                        dr.text((W - PAD - 18 - pw, yy), pt, font=F(21, True), fill=GOLD2)
+                    lw = dr.textlength(phase, font=F(19, True))
+                    dr.text((W - PAD - 18 - lw, yy + 2), phase, font=F(19, True), fill=tone)
                     yy += 38
-                    progress_bar(dr, PAD + 18, yy, W - PAD * 2 - 36, 14, (cur / tgt) if tgt else 0.0)
+                    progress_bar(dr, PAD + 18, yy, W - PAD * 2 - 36, 14, bar / 100.0,
+                                 fill=GREEN if is_active else (BLUE if is_cool else GOLD))
                     yy += 24
-                    line = "已筹集 " + fmt(cur) + " / 目标 " + fmt(tgt) + " " + res
-                    if quota:
-                        line += "  ·  " + quota
+                    if is_active:
+                        line = "效果生效中 · 进度条为剩余时间占比"
+                    elif is_cool:
+                        line = "冷却中 · 结束后重新进入募捐"
+                    else:
+                        line = "已筹集 " + fmt(cur) + " / 目标 " + fmt(tgt) + " " + res
+                        if quota:
+                            line += "  ·  " + quota
                     dr.text((PAD + 18, yy), line, font=F(15), fill=DIM)
-                    yy += 58
+                    yy += 62
+                y += panel_h + 18
             else:
                 dr.rectangle([PAD, y, W - PAD, y + 80], fill=PANEL, outline=LINE)
                 dr.text((PAD + 18, y + 26), "当前无进行中的战术行动", font=F(19), fill=MUTE)
                 y += 98
-            return y + 10
 
+            # 被动增益
+            if passive:
+                dr.rectangle([PAD, y, W - PAD, y + 64], fill=PANEL, outline=LINE)
+                dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
+                dr.text((PAD + 18, y + 14), "被动增益", font=F(19, True), fill=MUTE)
+                dr.text((PAD + 18, y + 38), passive, font=F(21, True), fill=TEXT)
+                y += 82
+            # 未收录效果 id（照实显示，口径与主站一致）
+            unknown = sorted(i for i in active_ids if i not in emap and i != 1238)
+            if unknown:
+                note = "未收录效果 ID：" + "、".join("#" + str(i) for i in unknown) + "（照实显示）"
+                nw = dr.textlength(note, font=F(13))
+                dr.text((W - PAD - 18 - nw, y - 12), note, font=F(13), fill=(80, 80, 80))
+            return y + 10
         return _render_cached(out_path, meta_path, rev, draw)
     except Exception:
         if os.environ.get("HD2_CARD_DEBUG"):
@@ -724,7 +748,7 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
             y += panel_h + 18
 
             eids = pl.get("activeEffects") or []
-            chips = [emap.get(i) or ("#" + str(i)) for i in eids]
+            chips = list(dict.fromkeys(emap.get(i) or ("#" + str(i)) for i in eids))
             chip_rows = max(1, -(-len(chips) // 3))
             panel_h = 52 + 16 + 44 * (chip_rows if chips else 1)
             dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
