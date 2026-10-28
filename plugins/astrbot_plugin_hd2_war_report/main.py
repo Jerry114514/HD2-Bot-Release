@@ -35,8 +35,11 @@ except Exception:
         _rc_mod = _ilu.module_from_spec(_rc_spec)
         _rc_spec.loader.exec_module(_rc_mod)
         _render_card = _rc_mod.render_report_card
+        _render_dss_card = _rc_mod.render_dss_card
+        _render_campaigns_card = _rc_mod.render_campaigns_card
+        _render_planet_card = _rc_mod.render_planet_card
     except Exception:
-        _render_card = None
+        _render_card = _render_dss_card = _render_campaigns_card = _render_planet_card = None
 
 
 def _wants_text_mode(t: str) -> bool:
@@ -1779,8 +1782,32 @@ class Hd2WarReportPlugin(Star):
             _log("matched", plugin="war_report", text=text, group=_gid(event), user=_uid(event), name=_uname(event))
             self._ensure_planet_map()
             if "dss" in text:
+                if _render_dss_card:
+                    try:
+                        img_path = _render_dss_card()
+                    except Exception as e:
+                        logger.warning(f"[HD2] DSS 图片卡渲染失败，回退文本: {e}")
+                        img_path = None
+                    if img_path:
+                        yield event.image_result(img_path)
+                        _log("done", plugin="war_report", text=text, group=_gid(event), user=_uid(event),
+                             cost=time.time() - _t0, detail=f"dss-card {img_path}")
+                        event.stop_event()
+                        return
                 report = await _get_dss_status(self.planet_map, self.context)
             elif "战线" in text:
+                if _render_campaigns_card:
+                    try:
+                        img_path = _render_campaigns_card()
+                    except Exception as e:
+                        logger.warning(f"[HD2] 战线图片卡渲染失败，回退文本: {e}")
+                        img_path = None
+                    if img_path:
+                        yield event.image_result(img_path)
+                        _log("done", plugin="war_report", text=text, group=_gid(event), user=_uid(event),
+                             cost=time.time() - _t0, detail=f"campaigns-card {img_path}")
+                        event.stop_event()
+                        return
                 report = _get_campaigns(self.planet_map)
             elif "战役" in text:
                 report = await self._get_campaign_brief()

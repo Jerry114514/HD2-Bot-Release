@@ -62,6 +62,74 @@ def _get(url):
             time.sleep(0.6)
     raise last
 
+
+_site_cache = {}  # url -> (ts, obj)·全卡共享 240s TTL
+
+
+def _site_get(url, ttl=240):
+    hit = _site_cache.get(url)
+    if hit and time.time() - hit[0] < ttl:
+        return hit[1]
+    obj = _get(url)
+    _site_cache[url] = (time.time(), obj)
+    return obj
+
+
+FACTION_CN = {"Humans": "超级地球", "Terminid": "终结族", "Terminids": "终结族",
+              "Automaton": "机器人", "Automatons": "机器人", "Illuminate": "光能者"}
+FACTION_COLOR = {"超级地球": BLUE, "终结族": (245, 197, 24),
+                 "机器人": (214, 128, 109), "光能者": (207, 100, 248)}
+DSS_ACTION_SHORT = {"EAGLE STORM": "飞鹰风暴", "ORBITAL BLOCK": "轨道封锁",
+                    "HEAVY ORDNANCE DISTRIBUTION": "重型军械分发", "EAGLE BLOCK": "飞鹰封锁",
+                    "PLANETARY BOMBARDMENT": "星球轰炸", "OPERATIONAL SUPPORT": "行动支持"}
+ITEM_MIX = {3992382197: "普通样本", 2985106497: "稀有样本"}
+
+
+def _static_map_json(url, cache_name, build):
+    """静态表抓取：成功写盘，网络失败读磁盘副本（静态表永不失效）。"""
+    cache_file = os.path.join(CACHE_DIR, cache_name)
+    try:
+        obj = _site_get(url)
+        m = build(obj)
+        if m:
+            try:
+                json.dump(m, open(cache_file, "w", encoding="utf-8"))
+            except Exception:
+                pass
+            return m
+    except Exception:
+        pass
+    try:
+        return json.load(open(cache_file, encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _effect_cn_map():
+    """hd2_variables.json → {effect_id: 中文词条名}"""
+    def build(v):
+        m = {}
+        for cat in v.get("categories") or []:
+            for e in cat.get("entries") or []:
+                cn = e.get("cn") or e.get("name") or ""
+                for eid in e.get("effect_ids") or []:
+                    if eid is not None and cn:
+                        m[eid] = cn
+        return m
+    return _static_map_json(
+        "https://jerry114514.github.io/HD2-Galatic_war-Map/tables/hd2_variables.json",
+        "effect_cn.json", build)
+
+
+def _starmap_cn_map():
+    """starmap.json → {EN_NAME_UPPER: 中文名}"""
+    def build(sm):
+        pls = sm.get("planets") or {}
+        return {k.upper(): (v.get("cn") or "") for k, v in pls.items() if isinstance(v, dict)}
+    return _static_map_json(
+        "https://jerry114514.github.io/HD2-Galatic_war-Map/tables/starmap.json",
+        "starmap_cn.json", build)
+
 def fmt(n):
     return f"{int(n or 0):,}"
 
@@ -122,9 +190,9 @@ def render_report_card(out_dir=None):
         except Exception:
             pass
 
-        data = _get(DATA_URL)
+        data = _site_get(DATA_URL)
         try:
-            dist_hist = _get(DIST_URL).get("history") or []
+            dist_hist = _site_get(DIST_URL).get("history") or []
         except Exception:
             dist_hist = []
 
@@ -322,6 +390,342 @@ def render_report_card(out_dir=None):
             import traceback
             traceback.print_exc()
         return None
+
+# ═══════════════════════════════════════════════════════════════
+# 其他板块图片卡（/战线 · /dss · /查询）——数据一律从主站抓取
+# ═══════════════════════════════════════════════════════════════
+
+def _hud_head(dr, img, title, sub_en):
+    stripe_band(img, 0, 92, alpha=22)
+    dr.rectangle([0, 0, 5, 92], fill=GOLD)
+    dr.text((PAD, 14), title, font=F(42, True), fill=GOLD)
+    dr.text((PAD + dr.textlength(title, font=F(42, True)) + 24, 36), sub_en, font=F(15), fill=MUTE)
+    now = datetime.now(timezone.utc).astimezone()
+    ts = now.strftime("%Y-%m-%d %H:%M")
+    tw = dr.textlength(ts, font=F(16))
+    dr.text((W - PAD - tw, 16), ts, font=F(16), fill=DIM)
+    sw = dr.textlength("真理部 · MOT", font=F(16))
+    dr.text((W - PAD - sw, 44), "真理部 · MOT", font=F(16), fill=BRASS)
+    dr.line([(0, 92), (W, 92)], fill=LINE2)
+    return 92 + 16
+
+
+def _render_cached(out_path, meta_path, rev, draw_fn):
+    """通用缓存外壳：rev 未变 → 直接复用成品"""
+    try:
+        if os.path.exists(out_path) and os.path.exists(meta_path):
+            if json.loads(open(meta_path, encoding="utf-8").read()).get("rev") == rev:
+                return out_path
+    except Exception:
+        pass
+    try:
+        img = Image.new("RGB", (W, TALL), BG)
+        dr = ImageDraw.Draw(img)
+        y = draw_fn(dr, img)
+        H = min(TALL, y + 20)
+        img = img.crop((0, 0, W, H))
+        tmp = out_path + ".tmp"
+        img.save(tmp, format="PNG")
+        os.replace(tmp, out_path)
+        try:
+            open(meta_path, "w", encoding="utf-8").write(json.dumps({"rev": rev, "ts": time.time()}))
+        except Exception:
+            pass
+        return out_path
+    except Exception:
+        if os.environ.get("HD2_CARD_DEBUG"):
+            import traceback
+            traceback.print_exc()
+        return None
+
+
+def render_campaigns_card(out_dir=None):
+    """/战线 图片卡：全部进行中战役，按在线玩家降序。失败返回 None。"""
+    out_dir = out_dir or CACHE_DIR
+    try:
+        os.makedirs(out_dir, exist_ok=True)
+        out_path = os.path.join(out_dir, "campaigns_card.png")
+        meta_path = out_path + ".meta"
+        data = _site_get(DATA_URL)
+        rev = "lines:" + str(data.get("fetchedAt") or "")
+
+        def draw(dr, img):
+            cs = data.get("campaigns") or []
+            planets = {p.get("index"): p for p in (data.get("planets") or []) if p.get("index") is not None}
+            smcn = _starmap_cn_map()
+            rows = []
+            for c in cs:
+                cp = c.get("planet") or {}
+                pl = planets.get(cp.get("index"))
+                if not pl:
+                    continue
+                en = (pl.get("name") or "").upper()
+                cn = smcn.get(en) or cp.get("name") or en
+                fac_en = c.get("faction") or pl.get("currentOwner") or ""
+                fac = FACTION_CN.get(fac_en, fac_en)
+                if pl.get("currentOwner") == "Humans":
+                    ratio = 100.0
+                else:
+                    ratio = (1 - (pl.get("health") or 0) / (pl.get("maxHealth") or 1)) * 100.0
+                rows.append((cn, pl.get("sector") or "", fac, ratio,
+                             pl.get("players") or 0, True))
+            rows.sort(key=lambda x: -x[4])
+            players_sum = sum(r[4] for r in rows)
+            top_lib = max((r[3] for r in rows), default=0.0)
+            y = _hud_head(dr, img, "战线总览", "CAMPAIGN LINES")
+            KPI_H = 78
+            kpis = [("进行中战线", str(len(rows)) + " 条"),
+                    ("最高解放度", str(round(top_lib, 1)) + "%"),
+                    ("战线在线", fmt(players_sum))]
+            kw = (W - PAD * 2 - 12 * 2) // 3
+            for i, (lab, val) in enumerate(kpis):
+                kx = PAD + i * (kw + 12)
+                dr.rectangle([kx, y, kx + kw, y + KPI_H], fill=PANEL, outline=LINE)
+                dr.rectangle([kx, y, kx + 4, y + KPI_H], fill=BRASS)
+                dr.text((kx + 16, y + 9), lab, font=F(15), fill=MUTE)
+                dr.text((kx + 16, y + 30), val, font=F(30, True), fill=TEXT)
+            y += KPI_H + 18
+
+            panel_h = 52 + 46 * len(rows) + 34
+            dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
+            dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
+            section_label(dr, PAD + 18, y + 13, "全部战线（按在线人数排序）", F(25, True))
+            yy = y + 54
+            bw_x, bw_w = PAD + 320, W - PAD * 2 - 610
+            for cn, sector, fac, ratio, players, attacking in rows:
+                color = FACTION_COLOR.get(fac, GOLD)
+                dr.rectangle([PAD + 18, yy + 6, PAD + 22, yy + 30], fill=color)
+                dr.text((PAD + 32, yy), cn, font=F(20, True), fill=TEXT)
+                sw = dr.textlength(sector, font=F(14))
+                dr.text((W - PAD - 18 - sw, yy + 8), sector, font=F(14), fill=MUTE)
+                progress_bar(dr, bw_x, yy + 2, bw_w, 12, ratio / 100.0,
+                             fill=GOLD if attacking else (60, 60, 60))
+                pt = str(round(ratio, 1)) + "%"
+                dr.text((bw_x + bw_w + 12, yy - 4), pt, font=F(18, True),
+                        fill=GOLD if attacking else MUTE)
+                pw = dr.textlength(fmt(players) + " 人", font=F(15))
+                dr.text((W - PAD - 18 - pw, yy - 2), fmt(players) + " 人", font=F(15), fill=DIM)
+                dr.text((PAD + 32, yy + 24), fac + " · 解放战役", font=F(14), fill=color)
+                yy += 46
+            dr.text((PAD + 18, y + panel_h - 26),
+                    "解放度 = 1 − 当前血量占比 · 己方星球按 100% 显示（官方报满血）",
+                    font=F(13), fill=(80, 80, 80))
+            return y + panel_h + 12
+
+        return _render_cached(out_path, meta_path, rev, draw)
+    except Exception:
+        if os.environ.get("HD2_CARD_DEBUG"):
+            import traceback
+            traceback.print_exc()
+        return None
+
+
+def render_dss_card(out_dir=None):
+    """/dss 图片卡：停靠星球 + 生效词条 + 战术行动捐献进度。失败返回 None。"""
+    out_dir = out_dir or CACHE_DIR
+    try:
+        os.makedirs(out_dir, exist_ok=True)
+        out_path = os.path.join(out_dir, "dss_card.png")
+        meta_path = out_path + ".meta"
+        data = _site_get(DATA_URL)
+        dss = data.get("dss") or {}
+        rev = "dss:" + str(data.get("fetchedAt") or "")
+
+        def draw(dr, img):
+            planets = {p.get("index"): p for p in (data.get("planets") or []) if p.get("index") is not None}
+            pl = planets.get(dss.get("planetIndex")) or {}
+            en = (pl.get("name") or "").upper()
+            smcn = _starmap_cn_map()
+            cn = smcn.get(en) or pl.get("name") or "—"
+            emap = _effect_cn_map()
+            y = _hud_head(dr, img, "民主空间站", "DEMOCRACY SPACE STATION")
+
+            panel_h = 100
+            dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
+            dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
+            section_label(dr, PAD + 18, y + 13, "当前停靠", F(25, True))
+            dr.text((PAD + 18, y + 50), cn, font=F(34, True), fill=TEXT)
+            sub = en + "  ·  " + (pl.get("sector") or "")
+            dr.text((PAD + 18 + dr.textlength(cn, font=F(34, True)) + 18, y + 60),
+                    sub, font=F(16), fill=MUTE)
+            y += panel_h + 18
+
+            eids = dss.get("activeEffectIds") or []
+            act_by_eid = {}
+            for act in dss.get("tacticalActions") or []:
+                for eid in act.get("effectIds") or []:
+                    act_by_eid[eid] = DSS_ACTION_SHORT.get(act.get("name"), act.get("name") or "")
+            chips = [emap.get(i) or act_by_eid.get(i) or ("#" + str(i)) for i in eids]
+            eff_panel_h = 96 + (40 if chips else 0)
+            dr.rectangle([PAD, y, W - PAD, y + eff_panel_h], fill=PANEL, outline=LINE)
+            dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
+            section_label(dr, PAD + 18, y + 13, "生效效果", F(25, True))
+            yy = y + 52
+            if not chips:
+                dr.text((PAD + 18, yy), "当前无 DSS 生效效果", font=F(19), fill=MUTE)
+                yy += 30
+            else:
+                cx = PAD + 18
+                for c in chips:
+                    cw = dr.textlength(c, font=F(19, True)) + 24
+                    if cx + cw > W - PAD - 18:
+                        cx = PAD + 18
+                        yy += 40
+                    dr.rectangle([cx, yy, cx + cw, yy + 34], fill=(26, 20, 10), outline=BRASS)
+                    dr.text((cx + 12, yy + 4), c, font=F(19, True), fill=GOLD2)
+                    cx += cw + 10
+            note = "#编号 = 对照表未收录的效果 ID，照实显示"
+            nw = dr.textlength(note, font=F(13))
+            dr.text((W - PAD - 18 - nw, y + eff_panel_h - 24), note, font=F(13), fill=(80, 80, 80))
+            y += eff_panel_h + 18
+
+            acts = dss.get("tacticalActions") or []
+            if acts:
+                ah = 0
+                blocks = []
+                for act in acts:
+                    nm_en = act.get("name") or ""
+                    nm = DSS_ACTION_SHORT.get(nm_en, nm_en)
+                    cost = (act.get("cost") or [{}])[0]
+                    cur, tgt = cost.get("current") or 0, cost.get("target") or 0
+                    res = ITEM_MIX.get(cost.get("itemMixId"), "资源")
+                    md = cost.get("maxDonation")
+                    mps = cost.get("maxDonationPeriodSec")
+                    quota = ""
+                    if isinstance(md, (int, float)) and md > 0 and mps:
+                        quota = "每人每 " + str(int(mps // 3600)) + " 小时限捐 " + fmt(md) + " " + res
+                    blocks.append((nm, cur, tgt, res, quota))
+                    ah += 120
+                panel_h = 52 + ah + 12
+                dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
+                dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
+                section_label(dr, PAD + 18, y + 13, "战术行动 · 捐献进度", F(25, True))
+                yy = y + 54
+                for nm, cur, tgt, res, quota in blocks:
+                    dr.text((PAD + 18, yy), nm, font=F(23, True), fill=TEXT)
+                    if tgt:
+                        pt = str(round(cur / tgt * 100)) + "%"
+                        pw = dr.textlength(pt, font=F(21, True))
+                        dr.text((W - PAD - 18 - pw, yy), pt, font=F(21, True), fill=GOLD2)
+                    yy += 38
+                    progress_bar(dr, PAD + 18, yy, W - PAD * 2 - 36, 14, (cur / tgt) if tgt else 0.0)
+                    yy += 24
+                    line = "已筹集 " + fmt(cur) + " / 目标 " + fmt(tgt) + " " + res
+                    if quota:
+                        line += "  ·  " + quota
+                    dr.text((PAD + 18, yy), line, font=F(15), fill=DIM)
+                    yy += 58
+            else:
+                dr.rectangle([PAD, y, W - PAD, y + 80], fill=PANEL, outline=LINE)
+                dr.text((PAD + 18, y + 26), "当前无进行中的战术行动", font=F(19), fill=MUTE)
+                y += 98
+            return y + 10
+
+        return _render_cached(out_path, meta_path, rev, draw)
+    except Exception:
+        if os.environ.get("HD2_CARD_DEBUG"):
+            import traceback
+            traceback.print_exc()
+        return None
+
+
+def render_planet_card(slug, title_cn=None, out_dir=None):
+    """/查询 图片卡：slug 形如 zea_rugosia。失败返回 None。"""
+    out_dir = out_dir or CACHE_DIR
+    try:
+        os.makedirs(out_dir, exist_ok=True)
+        en = (slug or "").replace("_", " ").replace("-", " ").upper().strip()
+        out_path = os.path.join(out_dir, "planet_" + en.replace(" ", "_") + ".png")
+        meta_path = out_path + ".meta"
+        data = _site_get(DATA_URL)
+        pl = next((x for x in (data.get("planets") or [])
+                   if (x.get("name") or "").upper() == en), None)
+        if not pl:
+            return None
+        rev = "planet:" + str(data.get("fetchedAt") or "") + ":" + en
+
+        def draw(dr, img):
+            smcn = _starmap_cn_map()
+            emap = _effect_cn_map()
+            cn = title_cn or smcn.get(en) or pl.get("name") or en
+            owner_en = pl.get("currentOwner") or ""
+            owner = FACTION_CN.get(owner_en, owner_en)
+            ocolor = FACTION_COLOR.get(owner, GOLD)
+            maxh = pl.get("maxHealth") or 1
+            lib = 100.0 if owner == "超级地球" else (1 - (pl.get("health") or 0) / maxh) * 100.0
+            y = _hud_head(dr, img, "星球档案", "PLANET INTEL")
+
+            panel_h = 122
+            dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
+            dr.rectangle([PAD, y, W - PAD, y + 3], fill=ocolor)
+            dr.text((PAD + 18, y + 16), cn, font=F(40, True), fill=TEXT)
+            sub = (pl.get("name") or en) + "  ·  " + (pl.get("sector") or "") + " 星区"
+            dr.text((PAD + 20, y + 72), sub, font=F(17), fill=MUTE)
+            ob = "当前归属：" + owner
+            ow = dr.textlength(ob, font=F(21, True)) + 30
+            dr.rectangle([W - PAD - 18 - ow, y + 18, W - PAD - 18, y + 58],
+                         fill=(20, 26, 24), outline=ocolor)
+            dr.rectangle([W - PAD - 16 - ow, y + 27, W - PAD - 14 - ow, y + 49], fill=ocolor)
+            dr.text((W - PAD - ow, y + 25), ob, font=F(21, True), fill=TEXT)
+            st = "⚔ 交战中" if pl.get("attacking") else "无交战"
+            stw = dr.textlength(st, font=F(17))
+            dr.text((W - PAD - 18 - stw, y + 72), st, font=F(17),
+                    fill=RED if pl.get("attacking") else MUTE)
+            y += panel_h + 18
+
+            panel_h = 172
+            dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
+            dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
+            section_label(dr, PAD + 18, y + 13, "解放度", F(25, True))
+            ltxt = str(round(lib, 1)) + "%"
+            lw = dr.textlength(ltxt, font=F(44, True))
+            dr.text((W - PAD - 18 - lw, y + 6), ltxt, font=F(44, True),
+                    fill=GREEN if lib >= 99.9 else GOLD)
+            progress_bar(dr, PAD + 18, y + 62, W - PAD * 2 - 36, 20, lib / 100.0,
+                         fill=GREEN if lib >= 99.9 else GOLD)
+            ky = y + 106
+            kpis = [("在线玩家", fmt(pl.get("players") or 0)),
+                    ("阻力", str(pl.get("resistance") or 0) + "%/h"),
+                    ("当前血量", fmt(pl.get("health") or 0)),
+                    ("血池上限", fmt(maxh))]
+            kw = (W - PAD * 2 - 36 - 12 * 3) // 4
+            for i, (lab, val) in enumerate(kpis):
+                kx = PAD + 18 + i * (kw + 12)
+                dr.rectangle([kx, ky, kx + kw, ky + 54], fill=(24, 24, 24), outline=LINE)
+                dr.text((kx + 10, ky + 6), lab, font=F(14), fill=MUTE)
+                dr.text((kx + 10, ky + 25), val, font=F(21, True), fill=TEXT)
+            y += panel_h + 18
+
+            eids = pl.get("activeEffects") or []
+            chips = [emap.get(i) or ("#" + str(i)) for i in eids]
+            chip_rows = max(1, -(-len(chips) // 3))
+            panel_h = 52 + 16 + 44 * (chip_rows if chips else 1)
+            dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
+            dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
+            section_label(dr, PAD + 18, y + 13, "环境与作战词条", F(25, True))
+            yy = y + 58
+            if not chips:
+                dr.text((PAD + 18, yy), "当前无环境词条", font=F(19), fill=MUTE)
+            else:
+                cx = PAD + 18
+                for c in chips:
+                    cw = dr.textlength(c, font=F(19, True)) + 24
+                    if cx + cw > W - PAD - 18:
+                        cx = PAD + 18
+                        yy += 44
+                    dr.rectangle([cx, yy, cx + cw, yy + 36], fill=(26, 20, 10), outline=BRASS)
+                    dr.text((cx + 12, yy + 5), c, font=F(19, True), fill=GOLD2)
+                    cx += cw + 10
+            y += panel_h + 18
+            return y
+
+        return _render_cached(out_path, meta_path, rev, draw)
+    except Exception:
+        if os.environ.get("HD2_CARD_DEBUG"):
+            import traceback
+            traceback.print_exc()
+        return None
+
 
 if __name__ == "__main__":
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(CACHE_DIR, OUT_NAME)

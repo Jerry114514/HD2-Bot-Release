@@ -870,6 +870,19 @@ class Hd2PlanetInfoPlugin(Star):
                     break
             if not title_cn and slug in ("super-earth", "superearth", "super_earth"):
                 title_cn = "超级地球"
+            # 图片卡优先：主站黑金 HUD 星球档案（渲染失败回退文本管线）
+            if slug not in ("super-earth", "superearth", "super_earth"):
+                try:
+                    from astrbot_plugin_hd2_war_report.report_card import render_planet_card as _rpc
+                    _card = _rpc(slug, title_cn=title_cn)
+                    if _card:
+                        yield event.image_result(_card)
+                        _log("done", plugin="planet_info", text=text_clean, group=_gid(event),
+                             user=_uid(event), cost=time.time() - _t0, detail=f"planet-card {_card}")
+                        event.stop_event()
+                        return
+                except Exception as e:
+                    logger.warning(f"[HD2-PlanetInfo] 星球图片卡失败，回退文本: {e}")
             # 超级地球：直接硬编码输出（页面是星系总览，无星球战况数据）
             if slug in ("super-earth", "superearth", "super_earth"):
                 result = _translate_planet_info({"is_super_earth": True})
