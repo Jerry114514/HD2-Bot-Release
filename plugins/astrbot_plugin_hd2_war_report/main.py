@@ -23,6 +23,27 @@ except Exception:
     def _log(*a, **k):
         pass
 
+# /战报 图片卡渲染（report_card.py 与本文件同目录；渲染失败自动回退文本）
+try:
+    from astrbot_plugin_hd2_war_report.report_card import render_report_card as _render_card
+except Exception:
+    try:
+        import importlib.util as _ilu
+        _rc_spec = _ilu.spec_from_file_location(
+            "hd2_report_card",
+            _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "report_card.py"))
+        _rc_mod = _ilu.module_from_spec(_rc_spec)
+        _rc_spec.loader.exec_module(_rc_mod)
+        _render_card = _rc_mod.render_report_card
+    except Exception:
+        _render_card = None
+
+
+def _wants_text_mode(t: str) -> bool:
+    """显式要纯文本：/战报t、/战报T 或包含「文字」"""
+    t = (t or "").strip()
+    return t.endswith(("t", "T")) or ("文字" in t)
+
 # 公共库（hd2_common）：共享常量/抓取/表加载/译名映射
 from astrbot_plugin_hd2_common.main import (
     fetch_json as _fetch_json,
@@ -1766,6 +1787,19 @@ class Hd2WarReportPlugin(Star):
             elif "分析" in text:
                 report = await self._get_analysis()
             else:
+                # /战报 → 图片卡优先（主站黑金 HUD 风格）；渲染失败或显式要文字 → 文本
+                if "战报" in text and not _wants_text_mode(text):
+                    try:
+                        img_path = _render_card() if _render_card else None
+                    except Exception as e:
+                        logger.warning(f"[HD2] 战报图片卡渲染失败，回退文本: {e}")
+                        img_path = None
+                    if img_path:
+                        yield event.image_result(img_path)
+                        _log("done", plugin="war_report", text=text, group=_gid(event), user=_uid(event),
+                             cost=time.time() - _t0, detail=f"report-card {img_path}")
+                        event.stop_event()
+                        return
                 report = await self._build_report()
             yield event.plain_result(report)
             _log("done", plugin="war_report", text=text, group=_gid(event), user=_uid(event), cost=time.time() - _t0, detail=report[:60])
