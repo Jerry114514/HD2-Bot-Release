@@ -25,7 +25,13 @@ except Exception:
 
 # /战报 图片卡渲染（report_card.py 与本文件同目录；渲染失败自动回退文本）
 try:
-    from astrbot_plugin_hd2_war_report.report_card import render_report_card as _render_card
+    from astrbot_plugin_hd2_war_report.report_card import (
+        render_report_card as _render_card,
+        render_dss_card as _render_dss_card,
+        render_campaigns_card as _render_campaigns_card,
+        render_planet_card as _render_planet_card,
+        render_briefing_card as _render_briefing_card,
+    )
 except Exception:
     try:
         import importlib.util as _ilu
@@ -38,8 +44,10 @@ except Exception:
         _render_dss_card = _rc_mod.render_dss_card
         _render_campaigns_card = _rc_mod.render_campaigns_card
         _render_planet_card = _rc_mod.render_planet_card
+        _render_briefing_card = _rc_mod.render_briefing_card
     except Exception:
-        _render_card = _render_dss_card = _render_campaigns_card = _render_planet_card = None
+        _render_card = _render_dss_card = _render_campaigns_card = None
+        _render_planet_card = _render_briefing_card = None
 
 
 def _wants_text_mode(t: str) -> bool:
@@ -1810,6 +1818,18 @@ class Hd2WarReportPlugin(Star):
                         return
                 report = _get_campaigns(self.planet_map)
             elif "战役" in text:
+                if _render_briefing_card:
+                    try:
+                        img_path = _render_briefing_card()
+                    except Exception as e:
+                        logger.warning(f"[HD2] 战役简报图片卡渲染失败，回退文本: {e}")
+                        img_path = None
+                    if img_path:
+                        yield event.image_result(img_path)
+                        _log("done", plugin="war_report", text=text, group=_gid(event), user=_uid(event),
+                             cost=time.time() - _t0, detail=f"briefing-card {img_path}")
+                        event.stop_event()
+                        return
                 report = await self._get_campaign_brief()
             elif "分析" in text:
                 report = await self._get_analysis()
