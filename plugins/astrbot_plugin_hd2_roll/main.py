@@ -129,6 +129,27 @@ ROLL_COMMENTS = [
     "这种配装让后勤部血压飙升，建议三思而后行。",
 ]
 
+try:
+    from astrbot_plugin_hd2_roll.roll_card import render_roll_card as _render_roll_card
+except Exception:
+    try:
+        import importlib.util as _ilu
+        _rc_spec = _ilu.spec_from_file_location(
+            "hd2_roll_card",
+            _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "roll_card.py"))
+        _rc_mod = _ilu.module_from_spec(_rc_spec)
+        _rc_spec.loader.exec_module(_rc_mod)
+        _render_roll_card = _rc_mod.render_roll_card
+    except Exception:
+        _render_roll_card = None
+
+
+def _wants_text_mode(t: str) -> bool:
+    """显式要纯文本：/rollt 或包含「文字」"""
+    t = (t or "").strip()
+    return t.endswith("t") or ("文字" in t)
+
+
 def _roll_stratagems(n: int = 4) -> str:
     """从全类型池随机抽 n 个战备；同类型>=3 个时附带 50 字内评价"""
     import random
@@ -195,6 +216,23 @@ class Hd2RollPlugin(Star):
             return
         _t0 = time.time()
         _log("matched", plugin="roll", text=text, group=_gid(event), user=_uid(event), name=_uname(event))
+        if not _wants_text_mode(text):
+            mode = "balanced" if ("平衡" in text) else "pure"
+            try:
+                img_path = _render_roll_card(mode) if _render_roll_card else None
+            except Exception as e:
+                try:
+                    from astrbot.api import logger as _logger
+                    _logger.warning(f"[HD2] roll 图片卡渲染失败，回退文本: {e}")
+                except Exception:
+                    pass
+                img_path = None
+            if img_path:
+                yield event.image_result(img_path)
+                _log("done", plugin="roll", text=text, group=_gid(event), user=_uid(event),
+                     cost=time.time() - _t0, detail=f"roll-card {mode}")
+                event.stop_event()
+                return
         result = _roll_stratagems(4)
         yield event.plain_result(result)
         _log("done", plugin="roll", text=text, group=_gid(event), user=_uid(event), cost=time.time() - _t0)
