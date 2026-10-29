@@ -21,6 +21,18 @@ try:
 except Exception:
     _cfg_ok = False
 
+# /帮助 图片卡（渲染器在 war_report 插件的 report_card.py，文案代码化同源）
+_PLUGINS_PARENT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+if _PLUGINS_PARENT and _PLUGINS_PARENT not in _sys.path:
+    _sys.path.insert(0, _PLUGINS_PARENT)
+try:
+    from astrbot_plugin_hd2_war_report.report_card import (
+        render_help_card as _render_help_card,
+        build_help_text as _build_help_text,
+    )
+except Exception:
+    _render_help_card = _build_help_text = None
+
 
 def _tables_dir() -> str:
     """对照表所在目录：优先 hd2_config.paths 解析；无配置时回退 插件目录 tables 副本 -> 项目根 tables"""
@@ -207,15 +219,29 @@ class Hd2LookupPlugin(Star):
             return
         cmd = text[1:].strip()
         _t0 = time.time()
-        # /帮助 /help -> 发送群使用说明（读 tables/群使用说明.txt，动态加载）
+        # /帮助 /help -> 作战手册（图片卡优先；文本回退：代码同源文案 -> 群使用说明.txt）
         if cmd.lower() in ("帮助", "help"):
             _log("matched", plugin="lookup", text=text, group=_gid(event), user=_uid(event), name=_uname(event))
+            img_path = None
+            if _render_help_card:
+                try:
+                    img_path = _render_help_card()
+                except Exception as e:
+                    logger.warning(f"[HD2] 帮助卡渲染失败，回退文本: {e}")
+                    img_path = None
+            if img_path:
+                yield event.image_result(img_path)
+                _log("done", plugin="lookup", text=text, group=_gid(event), user=_uid(event), cost=time.time() - _t0, detail="help-card")
+                event.stop_event()
+                return
             try:
-                gpath = _os.path.join(_tables_dir(), "群使用说明.txt")
-                with io.open(gpath, encoding="utf-8") as f:
-                    guide = f.read().strip()
+                guide = _build_help_text() if _build_help_text else ""
+                if not guide:
+                    gpath = _os.path.join(_tables_dir(), "群使用说明.txt")
+                    with io.open(gpath, encoding="utf-8") as f:
+                        guide = f.read().strip()
                 yield event.plain_result(guide or "📖 暂无使用说明内容。")
-                _log("done", plugin="lookup", text=text, group=_gid(event), user=_uid(event), cost=time.time() - _t0)
+                _log("done", plugin="lookup", text=text, group=_gid(event), user=_uid(event), cost=time.time() - _t0, detail="help-text")
             except Exception as e:
                 _log("failed", plugin="lookup", text=text, group=_gid(event), user=_uid(event), cost=time.time() - _t0, detail=str(e)[:150])
                 yield event.plain_result(f"⚠️ 读取使用说明失败：{e}")

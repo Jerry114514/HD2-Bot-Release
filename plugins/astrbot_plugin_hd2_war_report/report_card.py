@@ -1284,3 +1284,135 @@ if __name__ == "__main__":
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(CACHE_DIR, OUT_NAME)
     path = render_report_card(os.path.dirname(os.path.abspath(out)) or CACHE_DIR)
     print("rendered:", path)
+
+
+# ============ /帮助 作战手册卡（文案与各插件实际指令同步维护） ============
+
+HELP_SECTIONS = [
+    ("战况速报", "INTEL", [
+        ("/战报", "银河战况速报卡：重要指令进度、目标星球、四阵营兵力分布"),
+        ("/战线", "全银河战线列表：各战区解放/防御进度与交战双方"),
+        ("/dss", "民主空间站：停靠星球、生效行动效果、投票与捐献进度"),
+        ("/战役", "当前战役简报：战役故事与阶段目标（中文优先）"),
+        ("/api", "游戏 API 变动监测：效果与接口变更从主仓 Issue 实时抓取"),
+    ]),
+    ("星球情报", "PLANET INTEL", [
+        ("/查询 星球名", "星球指挥台卡：解放环、兵力趋势、区域战况、环境词条"
+                       "（中英文均可；/星球 名 同效）"),
+        ("/查表 星区", "星区列表；「/查表 星区 星区名」列出该星区全部星球"),
+    ]),
+    ("配装与对照", "LOADOUT", [
+        ("/roll", "随机抽取七格战术配装：主武器/副武器/手雷 + 四战备，带总评与装备图标"),
+        ("/查表", "行动变量对照表分类列表"),
+        ("/查表 名称", "参数详情或分类条目（如 /查表 孢裂变种、/查表 深域惧像）"),
+        ("/变种名", "该变种当前出没星球（如 /孢裂变种）"),
+    ]),
+    ("AI 增强", "AUGMENT", [
+        ("/分析", "AI 战局分析：威胁评估与目标建议（需 LLM 连通，断连自动回退常规播报）"),
+    ]),
+]
+
+HELP_NOTES = [
+    "指令无需 @，以 / 开头；参数中英文均可，查不到先发 /查表",
+    "默认输出战术 HUD 图片卡，渲染失败自动回退文本；指令后加 t 可要纯文本",
+    "新成员进群自动播报欢迎与指令速查 · 数据每 5 分钟与前线同步",
+]
+
+HELP_TAGLINE = "为超级地球而战！"
+
+
+def build_help_text():
+    """/帮助 纯文本版（与图片卡同源数据，保证两条输出永不脱节）"""
+    lines = ["📖 绝地潜兵2 战报机器人 · 作战手册", ""]
+    lines.append("直接发送指令即可（无需 @，以 / 开头），默认输出图片卡：")
+    lines.append("")
+    for cn, _en, rows in HELP_SECTIONS:
+        lines.append(f"━━ {cn} ━━")
+        for cmd, desc in rows:
+            lines.append(f"▶ {cmd} —— {desc}")
+        lines.append("")
+    for note in HELP_NOTES:
+        lines.append(f"· {note}")
+    lines.append("")
+    lines.append(HELP_TAGLINE)
+    return "\n".join(lines)
+
+
+def _help_wrap(text, font, max_w, dr):
+    """按像素宽度硬折行（中文无空格，逐字累加）"""
+    lines, buf = [], ""
+    for ch in text:
+        if dr.textlength(buf + ch, font=font) > max_w:
+            lines.append(buf)
+            buf = ch
+        else:
+            buf += ch
+    if buf:
+        lines.append(buf)
+    return lines or [""]
+
+
+def _draw_help(dr, img):
+    y = _hud_head(dr, img, "群使用说明", "HELLDIVERS 2 · FIELD MANUAL")
+    dr.rectangle([PAD, y + 2, PAD + 4, y + 30], fill=GOLD)
+    dr.text((PAD + 16, y + 4), "直接发送指令即可，默认输出战术 HUD 图片卡",
+            font=F(21), fill=TEXT)
+    y += 46
+    for si, (cn, en, rows) in enumerate(HELP_SECTIONS, 1):
+        y += 10
+        stripe_band(img, y, 34, alpha=14)
+        dr.rectangle([PAD, y + 3, PAD + 6, y + 31], fill=GOLD)
+        dr.text((PAD + 18, y + 3), cn, font=F(24, True), fill=GOLD2)
+        en_x = PAD + 18 + dr.textlength(cn, font=F(24, True)) + 14
+        dr.text((en_x, y + 11), en, font=F(13), fill=MUTE)
+        idx = "%02d" % si
+        dr.text((W - PAD - dr.textlength(idx, font=F(18, True)), y + 7),
+                idx, font=F(18, True), fill=BRASS)
+        y += 48
+        col = min(330, max(int(dr.textlength(c, font=F(21, True)))
+                           for c, _ in rows) + 26)
+        for cmd, desc in rows:
+            bh = 34
+            dr.rectangle([PAD, y, PAD + col, y + bh], fill=PANEL, outline=LINE2)
+            dr.rectangle([PAD, y, PAD + 3, y + bh], fill=GOLD)
+            dr.text((PAD + 14, y + 5), cmd, font=F(21, True), fill=GOLD2)
+            tx = PAD + col + 16
+            dlines = _help_wrap(desc, F(19), W - PAD - tx, dr)
+            lh = 27
+            ty = y + (bh - lh * len(dlines)) // 2 + 2
+            for ln in dlines:
+                dr.text((tx, ty), ln, font=F(19), fill=TEXT)
+                ty += lh
+            y += max(bh, lh * len(dlines) + 6) + 10
+            dr.line([(PAD, y), (W - PAD, y)], fill=LINE)
+            y += 6
+        y += 4
+    y += 8
+    dr.line([(0, y), (W, y)], fill=LINE2)
+    y += 16
+    for note in HELP_NOTES:
+        dr.text((PAD, y), "·", font=F(18, True), fill=BRASS)
+        dr.text((PAD + 18, y), note, font=F(18), fill=DIM)
+        y += 28
+    y += 12
+    stripe_band(img, y, 40, alpha=22)
+    tw = dr.textlength(HELP_TAGLINE, font=F(22, True))
+    dr.text(((W - tw) // 2, y + 8), HELP_TAGLINE, font=F(22, True), fill=GOLD)
+    y += 54
+    return y
+
+
+def render_help_card(out_dir=None):
+    """/帮助 图片卡：作战手册（零外部依赖，内容见 HELP_SECTIONS）。失败返回 None。"""
+    out_dir = out_dir or CACHE_DIR
+    try:
+        os.makedirs(out_dir, exist_ok=True)
+        return _render_cached(
+            os.path.join(out_dir, "help_card.png"),
+            os.path.join(out_dir, "help_card.meta.json"),
+            "help-v1", _draw_help)
+    except Exception:
+        if os.environ.get("HD2_CARD_DEBUG"):
+            import traceback
+            traceback.print_exc()
+        return None
