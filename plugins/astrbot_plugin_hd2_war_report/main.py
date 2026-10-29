@@ -1789,6 +1789,31 @@ class Hd2WarReportPlugin(Star):
             _t0 = time.time()
             _log("matched", plugin="war_report", text=text, group=_gid(event), user=_uid(event), name=_uname(event))
             self._ensure_planet_map()
+            if text.startswith("api"):
+                img_path = None
+                if _render_api_card:
+                    try:
+                        img_path = _render_api_card()
+                    except Exception as e:
+                        logger.warning(f"[HD2] API 图片卡渲染失败，回退文本: {e}")
+                        img_path = None
+                if img_path:
+                    yield event.image_result(img_path)
+                    _log("done", plugin="war_report", text=text, group=_gid(event), user=_uid(event),
+                         cost=time.time() - _t0, detail=f"api-card {img_path}")
+                    event.stop_event()
+                    return
+                # 文本回退：简要正文
+                try:
+                    _body = _fetch_issue60()
+                except Exception:
+                    _body = ""
+                report = ("📡 API 变动监测（主仓 Issue #60）\n\n" + (_body[:600] or "暂时无法获取，稍后再试。"))
+                yield event.plain_result(report)
+                _log("done", plugin="war_report", text=text, group=_gid(event), user=_uid(event),
+                     cost=time.time() - _t0, detail="api-text")
+                event.stop_event()
+                return
             if "dss" in text:
                 if _render_dss_card:
                     try:
