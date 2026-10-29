@@ -1170,6 +1170,116 @@ def render_api_card(out_dir=None):
         return None
 
 
+def _banner_file(rel):
+    """主站战役 banner → 本地缓存文件路径；失败返回 None。"""
+    if not rel:
+        return None
+    name = os.path.basename(rel.replace("\\", "/"))
+    if not name:
+        return None
+    cache_file = os.path.join(CACHE_DIR, "banners", name)
+    if os.path.exists(cache_file) and os.path.getsize(cache_file) > 0:
+        return cache_file
+    try:
+        os.makedirs(os.path.dirname(cache_file), exist_ok=True)
+        url = "https://jerry114514.github.io/HD2-Galatic_war-Map/assets/campaign/" + name
+        req = urllib.request.Request(url, headers={"User-Agent": "HD2Bot/1.0"})
+        with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT) as r:
+            data = r.read()
+        with open(cache_file, "wb") as f:
+            f.write(data)
+        return cache_file if len(data) > 0 else None
+    except Exception:
+        return None
+
+
+def render_briefing_card(out_dir=None):
+    """/战役 图片卡：战役简报（概述 + 当前阶段 + 奖励），全部主站中文数据，无 LLM。失败返回 None。"""
+    out_dir = out_dir or CACHE_DIR
+    try:
+        os.makedirs(out_dir, exist_ok=True)
+        out_path = os.path.join(out_dir, "briefing_card.png")
+        meta_path = out_path + ".meta"
+        data = _site_get(DATA_URL)
+        ac = data.get("active_campaign") or {}
+        if not ac.get("title_cn"):
+            return None
+        rev = "brief:" + str(ac.get("computed_at") or data.get("fetchedAt") or "")
+
+        def draw(dr, img):
+            from PIL import ImageOps
+            y = _hud_head(dr, img, "战役简报", "CAMPAIGN BRIEFING")
+
+            # banner（cover 裁切；失败 → 扫描线占位）
+            bw, bh = W - PAD * 2, int((W - PAD * 2) * 24.4 / 50)
+            bl = _banner_file(ac.get("banner_image_local"))
+            if bl:
+                try:
+                    bimg = Image.open(bl).convert("RGB")
+                    img.paste(ImageOps.fit(bimg, (bw, bh)), (PAD, y))
+                except Exception:
+                    bl = None
+            if not bl:
+                dr.rectangle([PAD, y, W - PAD, y + bh], fill=(16, 26, 40), outline=LINE)
+                for sy in range(y + 4, y + bh - 2, 5):
+                    dr.line([(PAD + 2, sy), (W - PAD - 2, sy)], fill=(22, 34, 50))
+            y += bh
+            dr.line([(PAD, y), (W - PAD, y)], fill=LINE2)   # banner 下方 2px 分隔
+            y += 2
+
+            # 标题块
+            panel_h = 96
+            dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
+            dr.text((PAD + 18, y + 12), ac.get("title_cn") or "", font=F(36, True), fill=TEXT)
+            sub = " / ".join(x for x in [ac.get("title") or "", ac.get("label_cn") or "",
+                                          (ac.get("race_cn") or "") + "阵营"] if x)
+            dr.text((PAD + 20, y + 60), sub, font=F(16), fill=MUTE)
+            y += panel_h + 14
+
+            # 【战役概述】
+            desc_lines = wrap(ac.get("description_cn") or "", 46)[:10]
+            if desc_lines:
+                section_label(dr, PAD + 18, y + 6, "战役概述", F(23, True))
+                yy = y + 42
+                for ln in desc_lines:
+                    dr.text((PAD + 18, yy), ln, font=F(19), fill=TEXT)
+                    yy += 26
+                y = yy + 12
+
+            # 【当前阶段简报】
+            ph = ac.get("phases") or []
+            cur = next((x for x in ph if x.get("id") == ac.get("current_phase_id")), None) or (ph[0] if ph else None)
+            if cur:
+                section_label(dr, PAD + 18, y + 6, "当前阶段 · " + (cur.get("title_cn") or cur.get("title") or ""),
+                              F(23, True))
+                yy = y + 42
+                for ln in wrap(cur.get("briefing_cn") or cur.get("briefing") or "", 46)[:12]:
+                    dr.text((PAD + 18, yy), ln, font=F(19), fill=TEXT)
+                    yy += 26
+                y = yy + 12
+
+            # 【阶段奖励】
+            rw = ac.get("reward") or {}
+            if rw.get("amount") and (rw.get("name_cn") or rw.get("name")):
+                section_label(dr, PAD + 18, y + 6, "阶段奖励", F(23, True))
+                rt = f"{rw.get('amount')} × {rw.get('name_cn') or rw.get('name')}"
+                dr.text((PAD + 18, y + 44), "🏅 " + rt, font=F(21, True), fill=GOLD)
+                y += 84
+
+            # 数据口径小字
+            note = "简报文本来自主站官方中文数据 · 翻译仓同步"
+            nw = dr.textlength(note, font=F(13))
+            dr.text((W - PAD - 18 - nw, y - 2), note, font=F(13), fill=(80, 80, 80))
+            return y + 18
+
+        return _render_cached(out_path, meta_path, rev, draw)
+    except Exception:
+        if os.environ.get("HD2_CARD_DEBUG"):
+            import traceback
+            traceback.print_exc()
+        return None
+
+
 if __name__ == "__main__":
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(CACHE_DIR, OUT_NAME)
     path = render_report_card(os.path.dirname(os.path.abspath(out)) or CACHE_DIR)
