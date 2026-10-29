@@ -156,6 +156,87 @@ def _sector_maps():
         "https://jerry114514.github.io/HD2-Galatic_war-Map/tables/starmap.json",
         "starmap_sector.json", build)
 
+
+# ── 下属区域（主站 sec-regions 同款口径） ──
+_REGION_BASE_HP = {"Settlement": 100000, "Town": 200000, "City": 400000, "MegaCity": 600000}
+_REGION_TYPE_ZH = {"Settlement": "定居点", "Town": "城镇", "City": "城市", "MegaCity": "大城市"}
+_REGION_STARS = {"Settlement": 1, "Town": 2, "City": 3, "MegaCity": 4}
+_REGION_OWNER_NUM_CN = {1: "超级地球", 2: "终结族", 3: "机器人", 4: "光能者"}
+
+
+def _region_tables():
+    """主站区域静态表（84 星 / 211 区域）+ 官方简中名表（各自磁盘缓存，静态表永不失效）"""
+    regions = _static_map_json(
+        "https://jerry114514.github.io/HD2-Galatic_war-Map/tables/planet_regions.json",
+        "planet_regions_static.json", lambda o: o.get("planets") or {})
+    zh = _static_map_json(
+        "https://jerry114514.github.io/HD2-Galatic_war-Map/tables/planet_regions_zh.json",
+        "planet_regions_zh_static.json", lambda o: o.get("planets") or {})
+    return regions, zh
+
+
+def _iso_ts(s):
+    """ISO 时间串 → datetime（失败 None；空串/缺字段容错）"""
+    try:
+        return datetime.fromisoformat(str(s or "").replace("Z", "+00:00"))
+    except Exception:
+        return None
+
+
+def _region_recent_frames(pidx, ridx):
+    """主站 data/recent/planet_regions.json → 该区域 (首帧, 末帧, 最新 regen)；无帧 None。
+    注意采集器字段拼写就是 regerPerSecond（兼容 regenPerSecond）。"""
+    try:
+        d = _get("https://jerry114514.github.io/HD2-Galatic_war-Map/data/recent/planet_regions.json")
+    except Exception:
+        return None
+    hits = []
+    for fr in d.get("data") or []:
+        ts = str(fr.get("timestampUtc") or "")
+        for rg in fr.get("planetRegions") or []:
+            if rg.get("planetIndex") == pidx and rg.get("regionIndex") == ridx and _iso_ts(ts):
+                hits.append((ts, rg))
+    if not hits:
+        return None
+    hits.sort(key=lambda x: _iso_ts(x[0]) or datetime.min.replace(tzinfo=timezone.utc))
+    regen = None
+    for _, rg in reversed(hits):
+        regen = rg.get("regerPerSecond")
+        if regen is None:
+            regen = rg.get("regenPerSecond")
+        if regen is not None:
+            break
+    return hits[0][1], hits[-1][1], regen
+
+
+def _region_rate(pl, lv, impact):
+    """区域净推进 %/h（主站 regionRateOf 口径）：实测帧差分优先
+    （帧距 ≥0.5h、无易主、双满血拒绝），推演兜底
+    gross = 玩家 × 影响系数 × 90 ÷ 区域血量 × 100，res = regen × 3600 ÷ 血量 × 100。
+    己方控制 → None。返回 (net, res, measured) 或 None"""
+    if not isinstance(lv, dict) or not (lv.get("maxHealth") or 0):
+        return None
+    if str(lv.get("owner") or "").lower() in ("humans", "1"):
+        return None
+    maxh = lv["maxHealth"]
+    frames = _region_recent_frames(pl.get("index"), lv.get("regionIndex"))
+    regen = frames[2] if frames else None
+    net, measured = None, False
+    if frames:
+        f0, f1, _ = frames
+        t0, t1 = _iso_ts(f0.get("timestampUtc")), _iso_ts(f1.get("timestampUtc"))
+        dh = (t1 - t0).total_seconds() / 3600 if (t0 and t1) else 0
+        both_full = ((f0.get("health") or 0) >= maxh * 0.9995
+                     and (f1.get("health") or 0) >= maxh * 0.9995)
+        if dh >= 0.5 and f0.get("owner") == f1.get("owner") and not both_full:
+            net = -((f1.get("health") or 0) - (f0.get("health") or 0)) / maxh * 100 / dh
+            measured = True
+    if net is None:
+        gross = (lv.get("players") or 0) * (impact or 0) * 90 / maxh * 100
+        net = gross - (regen or 0) * 3600 / maxh * 100
+    res = (regen or 0) * 3600 / maxh * 100
+    return (net, res, measured)
+
 def fmt(n):
     return f"{int(n or 0):,}"
 
@@ -1054,6 +1135,96 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
                         "该星球暂无累计统计（官方 war_stats 里没有这一条；通常是从未被打过的星球）。",
                         font=F(17), fill=DIM)
             y += panel_h + 18
+
+            # ══ 下属区域（城市 / 超大型工厂；数据与口径照主站 sec-regions） ══
+            rt_map, rzh_map = _region_tables()
+            rst = rt_map.get(str(pl.get("index"))) or {}
+            rst_regions = rst.get("regions") or []
+            if rst_regions:
+                rzh = rzh_map.get(str(pl.get("index"))) or {}
+                live_regions = pl.get("regions") or []
+
+                def _live(ridx):
+                    for r in live_regions:
+                        if r.get("regionIndex") == ridx:
+                            return r
+                    if ridx < len(live_regions) and live_regions[ridx].get("regionIndex") is None:
+                        return live_regions[ridx]
+                    return None
+
+                ours_pl = str(pl.get("currentOwner") or "").lower() == "humans"
+                rows_r = []
+                for k, rg in enumerate(rst_regions):
+                    lv = _live(k) or {}
+                    flags = lv.get("flags") or 0
+                    factory = str(rg.get("region_type") or "").lower() == "megafactory" or (flags & 1)
+                    size = rg.get("size") or ""
+                    if factory:
+                        type_cn, stars = "超大型工厂", 4
+                    else:
+                        type_cn = _REGION_TYPE_ZH.get(size, size or "区域")
+                        stars = _REGION_STARS.get(size, 0)
+                    p = None
+                    if lv.get("maxHealth"):
+                        p = max(0.0, min(100.0, (1 - (lv.get("health") or 0) / lv["maxHealth"]) * 100))
+                    if p is None and ours_pl:
+                        p = 100.0                      # 己方星球官方不下发 regions → 按已解放（主站口径）
+                    if lv.get("owner"):
+                        owner_cn = FACTION_CN.get(lv["owner"], lv["owner"])
+                    elif ours_pl:
+                        owner_cn = "超级地球"          # 静态表 owner 是抓取当时的阵营，己方一律记超级地球
+                    else:
+                        owner_cn = FACTION_CN.get(rg.get("owner") or "", rg.get("owner") or "—")
+                    rate = _region_rate(pl, lv, impact)
+                    if rate:
+                        net, _res, _measured = rate
+                        if p is None:
+                            rate_txt, eta_r = "—", "—"
+                        else:
+                            left = max(0.0, 100.0 - p)
+                            if net > 0.0005:
+                                h = left / net
+                                eta_r = ("%d 小时" % round(h)) if h <= 24 else (
+                                    "%d 天 %d 时" % (int(h // 24), int(h % 24)) if h <= 720 else "超过 30 天")
+                            else:
+                                eta_r = "不会解放"
+                            rate_txt = ("+" if net >= 0 else "−") + "%.2f%%/h · %s" % (abs(net), eta_r)
+                    else:
+                        rate_txt = "—"
+                    en_name = rg.get("name") or ""
+                    zh = rzh.get(en_name) or ""
+                    rows_r.append((zh or en_name or "区域", en_name, owner_cn, type_cn, stars,
+                                   lv.get("players"), p, rate_txt))
+                if rows_r:
+                    panel_h = 50 + 24 + 34 * len(rows_r) + 10
+                    dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
+                    dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
+                    section_label(dr, PAD + 18, y + 13, "下属区域（城市 / 超大型工厂）", F(23, True))
+                    hy = y + 50
+                    c_owner, c_plr, c_lib, c_rate = PAD + 330, PAD + 700, PAD + 830, W - PAD - 14
+                    for lbl, rx, ralign in (("区域", PAD + 14, 0), ("归属 · 类型", c_owner, 0),
+                                            ("玩家", c_plr, 1), ("已解放", c_lib, 1), ("推进 · 预计", c_rate, 1)):
+                        lw = dr.textlength(lbl, font=F(13))
+                        dr.text(((rx - lw) if ralign else rx, hy), lbl, font=F(13), fill=MUTE)
+                    for i, (nm, en_nm, owner_cn, type_cn, stars, players, p, rate_txt) in enumerate(rows_r):
+                        ry = hy + 24 + i * 34
+                        dr.line([(PAD + 10, ry), (W - PAD - 10, ry)], fill=LINE)
+                        dr.text((PAD + 14, ry + 7), nm, font=F(17, True), fill=TEXT)
+                        if en_nm and en_nm != nm:
+                            dr.text((PAD + 14 + dr.textlength(nm, font=F(17, True)) + 10, ry + 11),
+                                    en_nm, font=F(11), fill=(80, 80, 80))
+                        dr.text((c_owner, ry + 9), owner_cn + " · " + type_cn + "★" * stars,
+                                font=F(14), fill=DIM)
+                        pw = dr.textlength(fmt(players) if players else "—", font=F(16, True))
+                        dr.text((c_plr - pw, ry + 8), fmt(players) if players else "—", font=F(16, True), fill=TEXT)
+                        lib_s = "—" if p is None else "%.2f%%" % p
+                        lw2 = dr.textlength(lib_s, font=F(16, True))
+                        dr.text((c_lib - lw2, ry + 8), lib_s, font=F(16, True),
+                                fill=GREEN if p == 100 else TEXT)
+                        rw = dr.textlength(rate_txt, font=F(15))
+                        dr.text((c_rate - rw, ry + 9), rate_txt, font=F(15),
+                                fill=(80, 80, 80) if rate_txt == "—" else DIM)
+                    y += panel_h + 18
 
             # ══ 环境与作战词条（分组照主站：变种类 + 作战限制 保留组，其余平铺） ══
             eids = [i for i in (pl.get("activeEffects") or []) if i is not None]
