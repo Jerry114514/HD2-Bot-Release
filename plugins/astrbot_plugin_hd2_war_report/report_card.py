@@ -137,6 +137,25 @@ def _starmap_cn_map():
         "https://jerry114514.github.io/HD2-Galatic_war-Map/tables/starmap.json",
         "starmap_cn.json", build)
 
+
+def _sector_maps():
+    """starmap.json → {"pl_sec": 星球→游戏星区中文名, "sec_cn": hd2dev英文星区→中文名}
+    主站口径（planet.html secCn）：官方 API 的 sector 字段不可靠（273 颗里 152 空、
+    有值的仅 8 颗与游戏分区一致），星区一律以 starmap 的 system 优先，API sector 仅兜底。"""
+    def build(sm):
+        pl_sec = {}
+        for k, v in (sm.get("planets") or {}).items():
+            if isinstance(v, dict) and v.get("system"):
+                pl_sec[str(k).upper()] = str(v["system"])
+        sec_cn = {}
+        for s in sm.get("systems") or []:
+            if isinstance(s, dict) and s.get("name") and s.get("name_en"):
+                sec_cn[str(s["name_en"]).upper()] = str(s["name"])
+        return {"pl_sec": pl_sec, "sec_cn": sec_cn}
+    return _static_map_json(
+        "https://jerry114514.github.io/HD2-Galatic_war-Map/tables/starmap.json",
+        "starmap_sector.json", build)
+
 def fmt(n):
     return f"{int(n or 0):,}"
 
@@ -869,6 +888,11 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
             y = _hud_head(dr, img, "星球指挥台", "PLANET COMMAND")
 
             cn = title_cn or smcn.get(en) or pl.get("name") or en
+            # 星区中文名：starmap system 优先，API sector 仅兜底（主站 secCn 口径）
+            secmaps = _sector_maps()
+            sec_cn = ((secmaps.get("pl_sec") or {}).get((pl.get("name") or en).upper())
+                      or (secmaps.get("sec_cn") or {}).get((pl.get("sector") or "").upper())
+                      or (pl.get("sector") or "") or "未知星区")
             # ══ Hero：环境图背景 + 遮罩 + 身份 + 解放环 + Quick Intel ══
             hero_h = 330
             bimg = _biome_landscape(_planet_biome_name(pl))
@@ -915,10 +939,10 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
                     pass
             dr.text((PAD + 86, ix + 2), "Planet Command · 星球指挥台", font=F(14), fill=GOLD)
             dr.text((PAD + 86, ix + 24), cn, font=F(42, True), fill=TEXT)
-            dr.text((PAD + 88, ix + 78), (pl.get("name") or en) + " · 序号 #" + str(pl.get("index")),
+            dr.text((PAD + 88, ix + 78), (pl.get("name") or en) + " · " + sec_cn + "星区",
                     font=F(15), fill=DIM)
             cx, cyy = PAD + 18, ix + 116
-            for txt, col in ((status_cn, ocolor), ("◆ " + owner, ocolor), ((pl.get("sector") or "") + " 星区", BRASS)):
+            for txt, col in ((status_cn, ocolor), ("◆ " + owner, ocolor)):
                 cw = dr.textlength(txt, font=F(15, True)) + 20
                 dr.rectangle([cx, cyy, cx + cw, cyy + 30], fill=(16, 18, 22, 220), outline=col)
                 dr.text((cx + 10, cyy + 5), txt, font=F(15, True), fill=TEXT)
