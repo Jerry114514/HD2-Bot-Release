@@ -1,5 +1,5 @@
 ---
 name: astrbot_plugin_hd2_lookup
-desc: HD2 查表插件 - 发送 /查表 查询行动变量对照表与星区对照表
+desc: HD2 帮助插件 - 发送 /帮助 输出作战手册图片卡（指令速查；原 /查表 功能已移除）
 author: local
-version: 1.0.0
+version: 1.1.0

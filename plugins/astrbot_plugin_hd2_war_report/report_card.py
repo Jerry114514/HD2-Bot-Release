@@ -704,11 +704,40 @@ def _planet_icon_file(en_name):
         return None
 
 
+def _biome_index():
+    """主站 assets/biomes/index.json（生态名 → 图片文件名，如 Acidic Badlands → Sandy_acid_Landscape.png）；磁盘缓存优先。"""
+    cache_file = os.path.join(CACHE_DIR, "biomes", "index.json")
+    try:
+        if os.path.exists(cache_file) and os.path.getsize(cache_file) > 100:
+            v = json.load(open(cache_file, encoding="utf-8"))
+            if isinstance(v, dict) and v:
+                return v
+    except Exception:
+        pass
+    try:
+        v = _get("https://jerry114514.github.io/HD2-Galatic_war-Map/assets/biomes/index.json")
+        if isinstance(v, dict) and v:
+            os.makedirs(os.path.dirname(cache_file), exist_ok=True)
+            json.dump(v, open(cache_file, "w", encoding="utf-8"), ensure_ascii=False)
+            return v
+    except Exception:
+        pass
+    return None
+
+
 def _biome_landscape(biome_name):
-    """主站环境图 assets/biomes/<Biome_Name>_Landscape.png → 缓存路径；失败 None。"""
+    """主站环境图（index.json 映射为主，朴素命名兜底）→ 缓存路径；失败 None。"""
     if not biome_name:
         return None
-    fn = biome_name.strip().replace(" ", "_") + "_Landscape.png"
+    key = biome_name.strip()
+    fn = None
+    idx = _biome_index()
+    if idx:
+        v = idx.get(key)
+        if v:
+            fn = v if isinstance(v, str) else (v.get("file") or v.get("img") or v.get("image"))
+    if not fn:
+        fn = key.replace(" ", "_") + "_Landscape.png"
     cache_file = os.path.join(CACHE_DIR, "biomes", fn)
     if os.path.exists(cache_file) and os.path.getsize(cache_file) > 500:
         return cache_file
@@ -849,14 +878,36 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
                     img.paste(ImageOps.fit(Image.open(bimg).convert("RGB"), (W - PAD * 2, hero_h)), (PAD, y))
                 except Exception:
                     bimg = None
+            # 主站式暗化渐变遮罩（.hero-media::after：顶部 .62 → 55% .78 → 底部 .92）
             overlay = Image.new("RGBA", (W - PAD * 2, hero_h), (0, 0, 0, 0))
             odr = ImageDraw.Draw(overlay, "RGBA")
-            odr.rectangle([0, 0, W - PAD * 2, hero_h], fill=(5, 6, 8, 155))
+
+            def _ga(t):
+                if t <= 0.55:
+                    return int(158 + (199 - 158) * (t / 0.55))
+                return int(199 + (235 - 199) * ((t - 0.55) / 0.45))
+
+            for yy in range(hero_h):
+                odr.line([(0, yy), (W - PAD * 2, yy)], fill=(6, 6, 6, _ga(yy / max(1, hero_h - 1))))
             odr.rectangle([0, 0, 3, hero_h], fill=GOLD + (255,))
             img.paste(overlay, (PAD, y), overlay)
             dr.rectangle([PAD, y, W - PAD, y + hero_h], outline=LINE2)
             ix = y + 14
             picon = _planet_icon_file(pl.get("name"))
+            if not bimg and picon:
+                # 主站 .no-bio 回退：星球图标作居中大水印（50% 不透明度）
+                try:
+                    ic = Image.open(picon).convert("RGBA")
+                    ih = int(hero_h * 0.72)
+                    iw = int(ic.width * ih / max(1, ic.height))
+                    if iw > W - PAD * 2 - 40:
+                        iw = W - PAD * 2 - 40
+                        ih = int(ic.height * iw / max(1, ic.width))
+                    ic = ic.resize((max(1, iw), max(1, ih)))
+                    ic.putalpha(ic.getchannel("A").point(lambda v: v * 50 // 100))
+                    img.paste(ic, (PAD + (W - PAD * 2 - ic.width) // 2, y + (hero_h - ic.height) // 2), ic)
+                except Exception:
+                    pass
             if picon:
                 try:
                     paste_contain(img, Image.open(picon).convert("RGBA"), (PAD + 18, ix, 56, 56))
@@ -867,7 +918,7 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
             dr.text((PAD + 88, ix + 78), (pl.get("name") or en) + " · 序号 #" + str(pl.get("index")),
                     font=F(15), fill=DIM)
             cx, cyy = PAD + 18, ix + 116
-            for txt, col in ((status_cn, ocolor), ("⚑ " + owner, ocolor), ((pl.get("sector") or "") + " 星区", BRASS)):
+            for txt, col in ((status_cn, ocolor), ("◆ " + owner, ocolor), ((pl.get("sector") or "") + " 星区", BRASS)):
                 cw = dr.textlength(txt, font=F(15, True)) + 20
                 dr.rectangle([cx, cyy, cx + cw, cyy + 30], fill=(16, 18, 22, 220), outline=col)
                 dr.text((cx + 10, cyy + 5), txt, font=F(15, True), fill=TEXT)
@@ -1299,12 +1350,9 @@ HELP_SECTIONS = [
     ("星球情报", "PLANET INTEL", [
         ("/查询 星球名", "星球指挥台卡：解放环、兵力趋势、区域战况、环境词条"
                        "（中英文均可；/星球 名 同效）"),
-        ("/查表 星区", "星区列表；「/查表 星区 星区名」列出该星区全部星球"),
     ]),
-    ("配装与对照", "LOADOUT", [
+    ("配装与变种", "LOADOUT & VARIANTS", [
         ("/roll", "随机抽取七格战术配装：主武器/副武器/手雷 + 四战备，带总评与装备图标"),
-        ("/查表", "行动变量对照表分类列表"),
-        ("/查表 名称", "参数详情或分类条目（如 /查表 孢裂变种、/查表 深域惧像）"),
         ("/变种名", "该变种当前出没星球（如 /孢裂变种）"),
     ]),
     ("AI 增强", "AUGMENT", [
@@ -1313,7 +1361,7 @@ HELP_SECTIONS = [
 ]
 
 HELP_NOTES = [
-    "指令无需 @，以 / 开头；参数中英文均可，查不到先发 /查表",
+    "指令无需 @，以 / 开头；星球与变种名称中英文均可",
     "默认输出战术 HUD 图片卡，渲染失败自动回退文本；指令后加 t 可要纯文本",
     "新成员进群自动播报欢迎与指令速查 · 数据每 5 分钟与前线同步",
 ]
@@ -1410,7 +1458,7 @@ def render_help_card(out_dir=None):
         return _render_cached(
             os.path.join(out_dir, "help_card.png"),
             os.path.join(out_dir, "help_card.meta.json"),
-            "help-v1", _draw_help)
+            "help-v2", _draw_help)
     except Exception:
         if os.environ.get("HD2_CARD_DEBUG"):
             import traceback
