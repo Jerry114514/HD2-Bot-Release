@@ -1553,6 +1553,10 @@ HELP_SECTIONS = [
     ("AI 增强", "AUGMENT", [
         ("/分析", "AI 战局分析：威胁评估与目标建议（需 LLM 连通，断连自动回退常规播报）"),
     ]),
+    ("资料库", "WIKI", [
+        ("/wiki 关键词", "Helldivers 中文 Wiki 词条查询：正文摘要 + 主图"
+                       "（如 /wiki 战略配备、/wiki 仰齐浜）"),
+    ]),
 ]
 
 HELP_NOTES = [
@@ -1582,9 +1586,13 @@ def build_help_text():
 
 
 def _help_wrap(text, font, max_w, dr):
-    """按像素宽度硬折行（中文无空格，逐字累加）"""
+    """按像素宽度硬折行（中文无空格，逐字累加；\n 视为强制断行）"""
     lines, buf = [], ""
     for ch in text:
+        if ch == "\n":
+            lines.append(buf)
+            buf = ""
+            continue
         if dr.textlength(buf + ch, font=font) > max_w:
             lines.append(buf)
             buf = ch
@@ -1653,7 +1661,7 @@ def render_help_card(out_dir=None):
         return _render_cached(
             os.path.join(out_dir, "help_card.png"),
             os.path.join(out_dir, "help_card.meta.json"),
-            "help-v2", _draw_help)
+            "help-v3", _draw_help)
     except Exception:
         if os.environ.get("HD2_CARD_DEBUG"):
             import traceback

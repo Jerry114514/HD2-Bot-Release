@@ -1,0 +1,5 @@
+---
+name: astrbot_plugin_hd2_wiki
+desc: 绝地潜兵2 Wiki 查询 - /wiki 关键词 搜索 helldivers.wiki.gg 中文站，取词条纯文本与主图渲染成黑金 HUD 图片卡（不含编辑按钮与空段落模板）。
+author: local
+version: 1.0.0
