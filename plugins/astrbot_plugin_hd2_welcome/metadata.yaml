@@ -1,0 +1,5 @@
+---
+name: astrbot_plugin_hd2_welcome
+desc: 绝地潜兵2 进群欢迎 - 检测到新成员进群时 @新人 并播报超级地球风格欢迎文案与机器人全部指令的使用说明。
+author: local
+version: 1.0.0

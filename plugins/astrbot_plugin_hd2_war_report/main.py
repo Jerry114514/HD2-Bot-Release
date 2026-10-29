@@ -31,6 +31,7 @@ try:
         render_campaigns_card as _render_campaigns_card,
         render_planet_card as _render_planet_card,
         render_briefing_card as _render_briefing_card,
+        render_api_card as _render_api_card,
     )
 except Exception:
     try:
@@ -45,9 +46,10 @@ except Exception:
         _render_campaigns_card = _rc_mod.render_campaigns_card
         _render_planet_card = _rc_mod.render_planet_card
         _render_briefing_card = _rc_mod.render_briefing_card
+        _render_api_card = _rc_mod.render_api_card
     except Exception:
         _render_card = _render_dss_card = _render_campaigns_card = None
-        _render_planet_card = _render_briefing_card = None
+        _render_planet_card = _render_briefing_card = _render_api_card = None
 
 
 def _wants_text_mode(t: str) -> bool:
@@ -98,6 +100,7 @@ def _uname(event):
 
 # 触发关键词（消息里包含任一即触发）
 TRIGGER_KEYWORDS = [
+    "api",
     "目前战况如何",
     "现在在打哪里",
     "重要指令是什么",
