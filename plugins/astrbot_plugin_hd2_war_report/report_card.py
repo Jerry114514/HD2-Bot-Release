@@ -1554,8 +1554,8 @@ HELP_SECTIONS = [
         ("/分析", "AI 战局分析：威胁评估与目标建议（需 LLM 连通，断连自动回退常规播报）"),
     ]),
     ("资料库", "WIKI", [
-        ("/wiki 关键词", "Helldivers 中文 Wiki 词条查询：正文摘要 + 主图"
-                       "（如 /wiki 战略配备、/wiki 仰齐浜）"),
+        ("/wiki 关键词", "Helldivers 中文 Wiki 词条查询长图：数据表 + 正文摘要 + 主图"
+                       "（如 /wiki 战略配备、/wiki 轨道120MM高爆弹火力网）"),
     ]),
 ]
 
@@ -1661,7 +1661,7 @@ def render_help_card(out_dir=None):
         return _render_cached(
             os.path.join(out_dir, "help_card.png"),
             os.path.join(out_dir, "help_card.meta.json"),
-            "help-v3", _draw_help)
+            "help-v4", _draw_help)
     except Exception:
         if os.environ.get("HD2_CARD_DEBUG"):
             import traceback
