@@ -878,7 +878,7 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
             if net > 0.0005:
                 h = (100 - lib) / net
                 eta_h = h if h <= 720 else None
-            eta_txt = ("—" if net <= 0.0005 else
+            eta_txt = ("—" if (net <= 0.0005 or lib >= 99.9) else
                        (f"{int(eta_h // 24)} 天 {int(eta_h % 24)} 时" if eta_h is not None else "超出 30 天"))
             online_all = ((data.get("war") or {}).get("statistics") or {}).get("playerCount") or 0
             share = (players / online_all * 100) if online_all else 0

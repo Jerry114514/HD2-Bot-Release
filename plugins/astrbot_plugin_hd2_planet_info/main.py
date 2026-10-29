@@ -870,38 +870,34 @@ class Hd2PlanetInfoPlugin(Star):
                     break
             if not title_cn and slug in ("super-earth", "superearth", "super_earth"):
                 title_cn = "超级地球"
-            # 图片卡优先：主站黑金 HUD 星球档案（渲染失败回退文本管线）
-            if slug not in ("super-earth", "superearth", "super_earth"):
+            # 图片卡优先：主站黑金 HUD 星球档案（超级地球同主站标准页，不再特判文本；
+            # 渲染失败统一回退文本管线）
+            try:
+                from astrbot_plugin_hd2_war_report.report_card import render_planet_card as _rpc
+                _card = _rpc(slug, title_cn=title_cn)
+                if _card:
+                    yield event.image_result(_card)
+                    _log("done", plugin="planet_info", text=text_clean, group=_gid(event),
+                         user=_uid(event), cost=time.time() - _t0, detail=f"planet-card {_card}")
+                    event.stop_event()
+                    return
+            except Exception as e:
+                logger.warning(f"[HD2-PlanetInfo] 星球图片卡失败，回退文本: {e}")
+            # 文本回退：官方源优先（planetStatus/planetActiveEffects/planetEvents），页面抓取兜底
+            info = None
+            idx = _slug_to_index(slug)
+            if idx is not None:
                 try:
-                    from astrbot_plugin_hd2_war_report.report_card import render_planet_card as _rpc
-                    _card = _rpc(slug, title_cn=title_cn)
-                    if _card:
-                        yield event.image_result(_card)
-                        _log("done", plugin="planet_info", text=text_clean, group=_gid(event),
-                             user=_uid(event), cost=time.time() - _t0, detail=f"planet-card {_card}")
-                        event.stop_event()
-                        return
+                    info = _fetch_planet_official(idx)
                 except Exception as e:
-                    logger.warning(f"[HD2-PlanetInfo] 星球图片卡失败，回退文本: {e}")
-            # 超级地球：直接硬编码输出（页面是星系总览，无星球战况数据）
-            if slug in ("super-earth", "superearth", "super_earth"):
-                result = _translate_planet_info({"is_super_earth": True})
+                    logger.warning(f"[HD2-PlanetInfo] 官方详情失败({slug}): {type(e).__name__}: {e}")
+                    info = None
+            if info:
+                result = _translate_planet_info(info)
             else:
-                # 官方源优先（planetStatus/planetActiveEffects/planetEvents），页面抓取兜底
-                info = None
-                idx = _slug_to_index(slug)
-                if idx is not None:
-                    try:
-                        info = _fetch_planet_official(idx)
-                    except Exception as e:
-                        logger.warning(f"[HD2-PlanetInfo] 官方详情失败({slug}): {type(e).__name__}: {e}")
-                        info = None
-                if info:
-                    result = _translate_planet_info(info)
-                else:
-                    body = await _fetch_planet_page_text(slug)
-                    info = _parse_planet_info(body)
-                    result = _translate_planet_info(info)
+                body = await _fetch_planet_page_text(slug)
+                info = _parse_planet_info(body)
+                result = _translate_planet_info(info)
             # 输出开头加中文星球名
             if title_cn:
                 result = f"🪐 {title_cn}\n\n" + result
