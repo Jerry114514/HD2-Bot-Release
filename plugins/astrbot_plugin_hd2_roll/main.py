@@ -217,9 +217,8 @@ class Hd2RollPlugin(Star):
         _t0 = time.time()
         _log("matched", plugin="roll", text=text, group=_gid(event), user=_uid(event), name=_uname(event))
         if not _wants_text_mode(text):
-            mode = "balanced" if ("平衡" in text) else "pure"
             try:
-                img_path = _render_roll_card(mode) if _render_roll_card else None
+                img_path = _render_roll_card() if _render_roll_card else None
             except Exception as e:
                 try:
                     from astrbot.api import logger as _logger
@@ -230,7 +229,7 @@ class Hd2RollPlugin(Star):
             if img_path:
                 yield event.image_result(img_path)
                 _log("done", plugin="roll", text=text, group=_gid(event), user=_uid(event),
-                     cost=time.time() - _t0, detail=f"roll-card {mode}")
+                     cost=time.time() - _t0, detail=f"loadout-card {img_path}")
                 event.stop_event()
                 return
         result = _roll_stratagems(4)
