@@ -15,6 +15,8 @@ import json
 import time
 import socket
 import shutil
+import secrets
+import tempfile
 import subprocess
 import threading
 import urllib.request
@@ -23,7 +25,8 @@ import datetime as _dt
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 # UTF-8 统一
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+if __name__ == "__main__" and hasattr(sys.stdout, "buffer"):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 # ============ 配置化（hd2_config + config.json） ============
 _ROOT = os.environ.get("HD2_PROJECT_DIR") or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -52,16 +55,19 @@ def _default_group() -> int:
         return 0
 
 
-def _target_group(raw=None) -> int:
-    """解析本次操作的目标群：前端传来的群号优先，否则用默认推送群"""
-    try:
-        v = int(str(raw).strip())
-        if v > 0:
-            return v
-    except Exception:
-        pass
-    return _default_group()
+def _target_group(raw=None):
+    if instance.platform() != "napcat":
+        raise ValueError("控制台主动推送只支持已配置的 NapCat 通道；官方 QQ 请在 AstrBot 适配器中配置支持的会话能力")
+    value = _default_group() if raw is None or str(raw).strip() == "" else raw
+    return int(_norm_gid(value))
 PORT = int(_g("webui", "port", d=8630))
+from scripts import instance
+sys.path.insert(0, os.path.join(_ROOT, "plugins"))
+from astrbot_plugin_hd2_common import commands as service
+from astrbot_plugin_hd2_common.diagnostics import hd2_log
+from astrbot_plugin_hd2_common.runtime import new_request, request_id
+_CONFIG_LOCK = threading.RLock()
+CSRF_TOKEN = secrets.token_urlsafe(32)
 
 SEND_SCRIPT = os.path.join(BASE, "scripts", "napcat_send_msg.py")
 GEN_REPORT = os.path.join(BASE, "scripts", "gen_report_live.py")
@@ -119,22 +125,23 @@ def _port_listen(port: int) -> bool:
     return _ps(f"(Get-NetTCPConnection -State Listen -LocalPort {port} -ErrorAction SilentlyContinue | Measure-Object).Count") not in ("", "0")
 
 
-def _ws_connected() -> bool:
-    return _ps("(Get-NetTCPConnection -LocalPort 6199 -State Established -ErrorAction SilentlyContinue | Measure-Object).Count") not in ("", "0")
+def _ws_connected():
+    if instance.platform() != "napcat":
+        return False
+    port = int(_g("astrbot","ws_port",d=6199))
+    return _ps(f"(Get-NetTCPConnection -LocalPort {port} -State Established -ErrorAction SilentlyContinue | Measure-Object).Count") not in ("","0")
 
 
-def _start_astrbot() -> str:
-    if _port_listen(6185):
-        return "✅ AstrBot 已在运行（WebUI 6185）"
-    try:
-        subprocess.Popen([ASTRBOT_EXE])
-    except Exception as e:
-        return f"❌ 启动 AstrBot 失败: {e}"
-    for _ in range(20):
-        time.sleep(3)
-        if _port_listen(6185):
-            return "✅ AstrBot 已启动（WebUI 6185）"
-    return "⚠️ AstrBot 启动中，WebUI 尚未就绪（稍等片刻）"
+def _start_astrbot():
+    port = int(_g("astrbot","webui_port",d=6185))
+    if _port_listen(port):
+        instance.verified_pids("astrbot")
+        return f"✅ 当前实例已监听 {port}；平台连接状态请在 AstrBot 中确认"
+    exe = _cfg.resolve(str(_g("astrbot","exe",d="")))
+    if not os.path.isfile(exe):
+        return "❌ 未找到已配置的 AstrBot 程序"
+    subprocess.Popen([exe],env=dict(os.environ,HD2_PROJECT_DIR=_ROOT))
+    return "ℹ️ AstrBot 启动请求已提交，尚未确认平台在线"
 
 
 def _start_napcat() -> str:
@@ -155,69 +162,32 @@ def _start_napcat() -> str:
         return f"❌ 启动 NapCat 失败: {e}"
 
 
-def action_boot_all() -> str:
-    lines = ["🛠️ 一键启动部署："]
-    lines.append("· " + _start_astrbot())
-    lines.append("· " + _start_napcat())
-    for _ in range(30):
-        time.sleep(2)
-        if os.path.exists(QRCODE_FILE) and time.time() - os.path.getmtime(QRCODE_FILE) < 180:
-            break
-    if os.path.exists(QRCODE_FILE):
-        import datetime as _dt
-        mt = _dt.datetime.fromtimestamp(os.path.getmtime(QRCODE_FILE)).strftime("%H:%M:%S")
-        lines.append(f"· 📱 二维码已生成（{mt}）")
-        lines.append(f"· 请用手机 QQ 扫一扫登录主号 {_g('bot','self_id', d='机器人号')}（若报已登录，先退出 PC 端 QQ）")
-        try:
-            os.startfile(QRCODE_FILE)
-            lines.append("· 已用图片查看器打开二维码")
-        except Exception:
-            pass
-        lines.append(f"· 缓存路径：{QRCODE_FILE}")
+def action_boot_all():
+    lines = [_start_astrbot()]
+    if instance.platform() == "napcat":
+        from scripts.launch import start_napcat
+        lines.append(start_napcat())
     else:
-        lines.append("· ⚠️ 二维码尚未生成，稍后点「📱 打开二维码」")
-    for _ in range(20):
-        time.sleep(3)
-        if _ws_connected():
-            break
-    lines.append("· WS 6199 连接：" + ("✅ 已连接（机器人上线）" if _ws_connected() else "⏳ 未连接（等待扫码登录）"))
+        lines.append("官方平台模式，请在 AstrBot 适配器完成认证；跳过 NapCat 登录")
     return "\n".join(lines)
 
 
-def action_status() -> str:
-    import datetime as _dt
-    names = _proc_names()
-    lines = ["🔍 全链路状态："]
-    lines.append("· AstrBot 进程：" + ("✅ 运行中" if any(n == "astrbot-desktop-tauri" for n in names) else "❌ 未运行"))
-    lines.append("· WebUI 6185：" + ("✅ 监听中" if _port_listen(6185) else "❌ 未监听"))
-    lines.append("· NapCat 进程：" + ("✅ 运行中" if any(n.startswith("NapCat") for n in names) else "❌ 未运行"))
-    lines.append("· QQ 进程：" + ("✅ 存在" if "QQ" in names else "❌ 无"))
-    lines.append("· WS 6199：" + ("✅ 已连接" if _ws_connected() else "❌ 未连接"))
-    if os.path.exists(QRCODE_FILE):
-        mt = _dt.datetime.fromtimestamp(os.path.getmtime(QRCODE_FILE)).strftime("%m-%d %H:%M:%S")
-        lines.append(f"· 二维码：{QRCODE_FILE}（更新于 {mt}）")
-    return "\n".join(lines)
-
-
-def action_restart_napcat() -> str:
-    _ps("Stop-Process -Name NapCatWinBootMain,QQ -Force -ErrorAction SilentlyContinue")
-    time.sleep(3)
-    lines = ["🔄 已停止旧 NapCat/QQ 进程，重新启动..."]
-    lines.append("· " + _start_napcat())
-    for _ in range(30):
-        time.sleep(2)
-        if os.path.exists(QRCODE_FILE) and time.time() - os.path.getmtime(QRCODE_FILE) < 180:
-            break
-    if os.path.exists(QRCODE_FILE):
-        lines.append("· 📱 新二维码已生成，点「打开二维码」扫码（先退出 PC 端 QQ）")
-        try:
-            os.startfile(QRCODE_FILE)
-            lines.append("· 已用图片查看器打开二维码")
-        except Exception:
-            pass
+def action_status():
+    port = int(_g("astrbot","webui_port",d=6185))
+    lines = ["当前接入：" + instance.platform(), f"AstrBot {port}：" + ("已监听" if _port_listen(port) else "未监听")]
+    if instance.platform() == "napcat":
+        lines.append(f"OneBot {_g('astrbot','ws_port',d=6199)}：" + ("存在连接（不等于消息发送成功）" if _ws_connected() else "未连接"))
     else:
-        lines.append("· ⚠️ 二维码尚未生成，稍后再试")
+        lines.append("官方平台认证和连接状态在 AstrBot 适配器中确认；控制台不使用 NapCat 推送/欢迎能力")
     return "\n".join(lines)
+
+
+def action_restart_napcat():
+    if instance.platform() != "napcat":
+        return "❌ 当前是官方平台模式，不启动 NapCat"
+    instance.stop("napcat")
+    from scripts.launch import start_napcat
+    return start_napcat()
 
 
 def action_open_qrcode() -> str:
@@ -239,7 +209,7 @@ def action_send_guide(group=None) -> str:
         if not guide:
             return "❌ 使用说明文件为空：" + GUIDE_FILE
         push = send_msg(guide, gid)
-        return f"📖 使用说明已推送（目标群 {gid}）\n{push}\n\n──── 内容预览 ────\n{guide[:200]}"
+        return f"📖 使用说明发送结果（目标群 {gid}）\n{push}\n\n──── 内容预览 ────\n{guide[:200]}"
     except Exception as e:
         return f"❌ 推送使用说明失败: {e}"
 
@@ -256,75 +226,40 @@ def action_send_guide_to(group_id=None) -> str:
         return f"❌ 推送失败: {e}"
 
 
-def action_push_all() -> str:
-    """全局推送：使用说明推送到所有白名单群"""
-    try:
-        groups = _g("bot", "groups", d=[]) or []
-        if not groups:
-            return "❌ 未配置 bot.groups"
-        with io.open(GUIDE_FILE, encoding="utf-8") as f:
-            guide = f.read().strip()
-        lines = ["📖 全局推送使用说明（" + str(len(groups)) + " 个群）："]
-        for g in groups:
-            r = send_msg(guide, int(g))
-            lines.append(f"群 {g}: {r}")
-        return "\n".join(lines)
-    except Exception as e:
-        return f"❌ 全局推送失败: {e}"
+def action_push_all():
+    with open(GUIDE_FILE,encoding="utf-8") as stream:
+        return _push_text_all("使用说明推送",stream.read())
 
 
-def _push_text_all(title: str, text: str) -> str:
-    """把内容推送到所有白名单群，返回汇总"""
-    groups = _g("bot", "groups", d=[]) or []
+def _push_text_all(title,text):
+    if instance.platform() != "napcat":
+        return "❌ 控制台主动推送只支持已配置的 NapCat；官方平台能力在 AstrBot 管理"
+    groups = [_target_group(g) for g in (_g("bot","groups",d=[]) or [])]
     if not groups:
-        return "❌ 未配置 bot.groups"
-    lines = [f"{title}（{len(groups)} 个群）："]
-    for g in groups:
-        r = send_msg(text, int(g))
-        lines.append(f"群 {g}: {r}")
-    return "\n".join(lines)
+        return "❌ 未配置推送目标"
+    return title + "\n" + "\n".join(send_msg(text,group) for group in groups)
 
 
 def action_push_all_report() -> str:
     """战报群发：生成战报推送到所有群"""
-    r = run_sub([PYTHON, GEN_REPORT], timeout=180)
-    if os.path.exists(REPORT_FILE):
-        with io.open(REPORT_FILE, encoding="utf-8") as f:
-            report = f.read()
-        return _push_text_all("📊 战报群发", report)
-    return "❌ 战报生成失败\n" + (r.stdout or r.stderr)[-300:]
-
-
-def action_push_all_dss() -> str:
-    """DSS 群发"""
-    import asyncio as _aio
     try:
-        for p in APP_PATHS:
-            sys.path.insert(0, p)
-        wr = _load_plugin(PLUGIN_WAR)
-        pm = wr._load_planet_map()
-        text = _aio.run(wr._get_dss_status(pm))
-        return _push_text_all("🛰️ DSS 群发", text)
+        return _push_text_all("📊 战报群发", _generate_report())
     except Exception as e:
-        return f"❌ DSS 群发失败: {e}"
+        return f"❌ 战报生成失败：{e}"
 
 
-def action_push_all_campaigns() -> str:
-    """战役群发"""
-    try:
-        for p in APP_PATHS:
-            sys.path.insert(0, p)
-        wr = _load_plugin(PLUGIN_WAR)
-        pm = wr._load_planet_map()
-        text = wr._get_campaigns(pm)
-        return _push_text_all("⚔️ 战役群发", text)
-    except Exception as e:
-        return f"❌ 战役群发失败: {e}"
+def action_push_all_dss():
+    return _push_text_all("战况推送",service.result("dss").text)
+
+
+def action_push_all_campaigns():
+    return _push_text_all("战况推送",service.result("campaigns").text)
 
 
 def action_push_all_analysis() -> str:
     """LLM 战局分析群发（走 WS 注入拿回复后群发；注入群用当前默认群）"""
-    r = run_sub([PYTHON, WS_INJECT, "/分析", str(_default_group())], timeout=180)
+    gid = _target_group()
+    r = run_sub([PYTHON, WS_INJECT, "/分析", str(gid)], timeout=180)
     out = (r.stdout or "") + ("\n" + r.stderr if r.stderr else "")
     reply = _extract_reply(out)
     if not reply:
@@ -332,14 +267,8 @@ def action_push_all_analysis() -> str:
     return _push_text_all("🧠 战局分析群发", reply)
 
 
-def action_push_all_campaign_brief() -> str:
-    """战役简报群发（走 WS 注入 /战役 拿回复后群发；注入群用当前默认群）"""
-    r = run_sub([PYTHON, WS_INJECT, "/战役", str(_default_group())], timeout=180)
-    out = (r.stdout or "") + ("\n" + r.stderr if r.stderr else "")
-    reply = _extract_reply(out)
-    if not reply:
-        return "❌ 机器人未返回有效回复，未推送。\n\n" + out[-300:]
-    return _push_text_all("🎬 战役简报群发", reply)
+def action_push_all_campaign_brief():
+    return _push_text_all("战况推送",service.result("briefing").text)
 
 
 def action_groups() -> str:
@@ -393,33 +322,26 @@ def _read_json(path: str, default=None):
 def _atomic_write(path: str, text: str) -> None:
     """原子写：同目录临时文件 + os.replace，避免写一半把配置写坏"""
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-    tmp = path + ".tmp_webui"
-    with io.open(tmp, "w", encoding="utf-8", newline="\n") as f:
-        f.write(text)
-    os.replace(tmp, path)
+    fd, tmp = tempfile.mkstemp(prefix=".tmp_webui_", dir=os.path.dirname(path) or ".")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
+            f.write(text)
+        os.replace(tmp, path)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
 
 
-def _backup_file(path: str) -> str:
-    """改前备份；返回备份路径（文件不存在则返回空串），并清理超量旧备份"""
-    if not os.path.exists(path):
+def _backup_file(path):
+    if not os.path.isfile(path):
         return ""
-    bak = f"{path}.bak_webui_{_now_tag()}"
-    try:
-        shutil.copy2(path, bak)
-    except Exception:
-        return ""
-    try:
-        stem = os.path.basename(path) + ".bak_webui_"
-        olds = sorted(
-            [os.path.join(os.path.dirname(path), n) for n in os.listdir(os.path.dirname(path) or ".")
-             if n.startswith(stem)],
-            key=lambda p: os.path.getmtime(p),
-        )
-        for old in olds[:-WL_BAK_KEEP]:
-            os.remove(old)
-    except Exception:
-        pass
-    return bak
+    import hashlib
+    folder = os.path.join(TEMP,"config_backups")
+    os.makedirs(folder,exist_ok=True)
+    key = hashlib.sha256(os.path.abspath(path).encode()).hexdigest()[:12]
+    backup = os.path.join(folder,os.path.basename(path) + ".bak_webui_" + key + "_" + str(time.time_ns()))
+    shutil.copy2(path,backup)
+    return backup
 
 
 def _local_ip() -> str:
@@ -510,98 +432,50 @@ def _astrbot_data_dirs() -> list:
     return out
 
 
-def _astrbot_data_dir(refresh: bool = False):
-    """定位**正在使用**的 AstrBot 数据目录。
-
-    判据（按可靠性排序）：
-      1) 该目录存在 data_v4.db-wal —— 只有 DB 被真正打开才会有，最能说明"在用"
-      2) data_v4.db 的修改时间
-      3) 存在 platform_whitelist.json（本项目平台白名单所在）
-      4) cmd_config.json 的修改时间
-    在用的那份通常同时满足 1+3；D 盘那种残留副本只有静态文件，会被排在后面。
-    返回 (目录, cmd_config 路径, cmd_config stat)；找不到返回 (None, None, None)。
-    """
-    global _ASTRBOT_DATA_DIR
-    if _ASTRBOT_DATA_DIR is not None and not refresh:
-        return _ASTRBOT_DATA_DIR
-    best, best_key = (None, None, None), None
-    for d in _astrbot_data_dirs():
-        cc = os.path.join(d, "cmd_config.json")
-        st = _mode_of(cc)
-        if not st:
-            continue
-        wal = _mode_of(os.path.join(d, "data_v4.db-wal"))
-        db = _mode_of(os.path.join(d, "data_v4.db"))
-        key = (
-            1 if wal else 0,
-            (wal or db).st_mtime if (wal or db) else 0,
-            1 if os.path.exists(os.path.join(d, "platform_whitelist.json")) else 0,
-            st.st_mtime,
-        )
-        if best_key is None or key > best_key:
-            best_key, best = key, (d, cc, st)
-    if best[0] is None:
-        for d in _astrbot_data_dirs():      # 兜底：取第一个存在的目录
-            best = (d, os.path.join(d, "cmd_config.json"), None)
-            break
-    if refresh or _ASTRBOT_DATA_DIR is None:
-        _ASTRBOT_DATA_DIR = best
-    return best
+def _astrbot_data_dir(refresh=False):
+    path = str(_g("astrbot", "data_dir", d="") or "")
+    if not path:
+        raise RuntimeError("请明确配置 astrbot.data_dir，不能自动选择其他实例")
+    path = _cfg.resolve(path)
+    config = os.path.join(path, "cmd_config.json")
+    if not os.path.isdir(path):
+        raise RuntimeError("指定的 AstrBot 数据目录不存在")
+    return path, config, _mode_of(config)
 
 
-def _read_whitelist(force: bool = False):
-    """读取当前生效的入群白名单来源。
-    返回 dict: source(文件路径) / groups(list[str]) / plat(dict) / per_platform(bool)
-    """
-    d, cc, _ = _astrbot_data_dir(refresh=force)
-    if not d:
-        raise RuntimeError("未找到 AstrBot 数据目录（请在 config.json 配置 astrbot.data_dir）")
-    wl_path = os.path.join(d, "platform_whitelist.json")
-    plat = _read_json(wl_path, default=None)
-    if isinstance(plat, dict) and plat:
-        groups = []
-        for k, v in plat.items():
-            if isinstance(v, (list, tuple)):
-                groups += [str(x).strip() for x in v if str(x).strip()]
-        return {"source": wl_path, "groups": sorted(set(groups), key=lambda x: (len(x), x)),
-                "plat": plat, "per_platform": True}
-    cfg = _read_json(cc, default={}) or {}
-    ids = (((cfg.get("platform_settings") or {}).get("id_whitelist")) or [])
-    groups = [str(x).strip() for x in ids if str(x).strip()]
-    return {"source": cc, "groups": sorted(set(groups), key=lambda x: (len(x), x)),
-            "plat": {}, "per_platform": False}
+def _read_whitelist(force=False):
+    directory, _, _ = _astrbot_data_dir()
+    path = os.path.join(directory, "platform_whitelist.json")
+    plat = _read_json(path, default={})
+    adapter = str(_g("bot", "platform_id", d="") or "")
+    if not adapter:
+        raise RuntimeError("请配置 bot.platform_id，群管理必须限定到一个 AstrBot 适配器")
+    if not isinstance(plat, dict):
+        raise RuntimeError("平台白名单格式错误")
+    return {"source":path,"groups":[str(g) for g in plat.get(adapter,[])],"plat":plat,"per_platform":True}
 
 
 def _norm_gid(raw) -> str:
     """群号规范化 + 校验：纯数字、5~12 位"""
-    gid = re.sub(r"\D", "", str(raw or ""))
-    if not gid:
-        raise ValueError("群号为空（只填数字即可）")
-    if not (5 <= len(gid) <= 12):
-        raise ValueError(f"群号 {gid} 位数异常（需 5~12 位数字）")
+    gid = str(raw or "").strip()
+    if not re.fullmatch(r"[1-9][0-9]{4,11}", gid):
+        raise ValueError("群号需为 5~12 位数字，不能包含其他字符")
     return gid
 
 
-def action_group_list() -> str:
-    """当前生效白名单 + 推送群列表（供弹窗展示）"""
-    out = {}
-    try:
-        wl = _read_whitelist(force=True)
-        out["running_groups"] = wl["groups"]
-        out["running_source"] = wl["source"]
-        out["source_kind"] = "平台级 platform_whitelist.json" if wl["per_platform"] else "全局 cmd_config.json id_whitelist"
-    except Exception as e:
-        out["running_groups"] = []
-        out["error"] = str(e)
-    d, cc, st = _astrbot_data_dir()
-    out["data_dir"] = d or ""
-    out["cmd_config"] = cc or ""
-    out["cmd_config_mtime"] = _dt.datetime.fromtimestamp(st.st_mtime).strftime("%m-%d %H:%M:%S") if st else ""
-    out["push_groups"] = [int(g) for g in (_g("bot", "groups", d=[]) or [])]
-    out["default_group"] = int(_g("bot", "default_group", d=0) or 0)
-    out["config_active"] = _active_cfg_path()
-    out["config_local"] = _local_cfg_path()
-    return json.dumps(out, ensure_ascii=False)
+def action_group_list():
+    out = {"platform":instance.platform(),"push_groups":[str(g) for g in (_g("bot","groups",d=[]) or [])],
+           "default_group":str(_g("bot","default_group",d="") or ""),"data_dir":str(_g("astrbot","data_dir",d="") or ""),
+           "config_active":_cfg.config_path(),"running_groups":[]}
+    if instance.platform() == "qq_official":
+        out["source_kind"] = "官方平台会话由 AstrBot 管理"
+    else:
+        try:
+            whitelist = _read_whitelist(force=True)
+            out.update({"running_groups":whitelist["groups"],"running_source":whitelist["source"],"source_kind":"已保存的所选平台白名单"})
+        except Exception as error:
+            out["error"] = str(error)
+    return json.dumps(out,ensure_ascii=False)
 
 
 def _active_cfg_path() -> str:
@@ -650,157 +524,33 @@ def _write_push_groups(path: str, groups: list, default_group=None) -> dict:
     return {"path": path, "backup": bak, "cfg": cfg}
 
 
-def _set_push_groups(groups: list, default_group=None) -> tuple:
-    """更新推送群列表：主写"进程实际使用的 config.json"，
-    并同步脚本目录里的那份（两份都在就用同一份），随后刷新内存缓存。
-    返回 (内存里的最新配置, 结果说明行 list)
-    """
-    act = _active_cfg_path()
-    loc = _local_cfg_path()
-    msgs = []
-    _write_push_groups(act, groups, default_group)
-    msgs.append(f"✅ 推送群列表已写入：{act}" + (f"（{len(groups)} 个群）" if True else ""))
-    if os.path.normcase(act) != os.path.normcase(loc):
-        try:
-            _write_push_groups(loc, groups, default_group)
-            msgs.append(f"✅ 同目录副本已同步：{loc}")
-        except Exception as e:
-            msgs.append(f"⚠️ 同步 {loc} 失败（不影响运行）: {e}")
-    # 刷新内存缓存（hd2_config 有缓存，不刷新则 _g() 仍是旧值）
-    try:
-        if _cfg:
-            _cfg.load_config(force=True)
-    except Exception:
-        pass
-    cur = {}
-    try:
-        cur = _read_json(act, default={}) or {}
-    except Exception:
-        pass
-    return cur, msgs
+def _set_push_groups(groups, default_group=None):
+    path = _cfg.config_path()
+    with _CONFIG_LOCK:
+        updated = _write_push_groups(path, groups, default_group)
+        _cfg.load_config(force=True)
+    return updated["cfg"], ["✅ 已保存当前配置的推送群列表"]
 
 
-def _apply_whitelist(plat: dict, per_platform: bool, groups: list) -> tuple:
-    """把新的白名单写回 AstrBot（平台级 + 全局双写保持一致）；返回 (结果说明行 list, 是否实际变更)"""
-    d, cc, old_st = _astrbot_data_dir()
-    msgs, changed = [], False
-    if not d:
-        raise RuntimeError("未找到 AstrBot 数据目录")
-    # --- 平台级 platform_whitelist.json ---
-    if per_platform and plat:
-        new_plat = {}
-        for k, v in plat.items():
-            ex = [str(x).strip() for x in (v or []) if str(x).strip()]
-            merged = sorted(set(ex) | set(groups), key=lambda x: (len(x), x))
-            new_plat[k] = merged
-            if merged != sorted(set(ex), key=lambda x: (len(x), x)):
-                changed = True
-        p = os.path.join(d, "platform_whitelist.json")
-        old = _read_json(p, default=None)
-        if old != new_plat:
-            bak = _backup_file(p)
-            _atomic_write(p, json.dumps(new_plat, ensure_ascii=False, indent=2) + "\n")
-            changed = True
-            msgs.append("✅ 平台白名单已更新：" + p + (f"（备份 {os.path.basename(bak)}）" if bak else ""))
-        else:
-            msgs.append("• 平台白名单无变化：" + p)
-    # --- 全局 cmd_config.json id_whitelist（与平台级保持一致，避免歧义）---
-    if old_st:
-        try:
-            cfg = _read_json(cc, default={}) or {}
-            ps = cfg.setdefault("platform_settings", {})
-            cur = [str(x).strip() for x in (ps.get("id_whitelist") or []) if str(x).strip()]
-            merged = sorted(set(cur) | set(groups), key=lambda x: (len(x), x))
-            if merged != sorted(set(cur), key=lambda x: (len(x), x)):
-                ps["id_whitelist"] = [int(x) if x.isdigit() else x for x in merged]
-                bak = _backup_file(cc)
-                _atomic_write(cc, json.dumps(cfg, ensure_ascii=False, indent=2) + "\n")
-                changed = True
-                msgs.append("✅ 全局白名单已更新：cmd_config.json id_whitelist（备份 "
-                            + (os.path.basename(bak) if bak else "-") + "）")
-            else:
-                msgs.append("• 全局白名单无变化")
-        except Exception as e:
-            msgs.append(f"⚠️ 全局白名单写入失败（不影响平台级）: {e}")
-    else:
-        msgs.append("• 未找到 cmd_config.json，跳过全局白名单")
-    return msgs, changed
+def _apply_whitelist(plat, per_platform, groups):
+    with _CONFIG_LOCK:
+        current = _read_whitelist(force=True)
+        target = str(_g("bot", "platform_id", d=""))
+        existing = current["plat"]
+        values = sorted(set(current["groups"]) | set(map(str,groups)))
+        existing[target] = values
+        _backup_file(current["source"])
+        _atomic_write(current["source"], json.dumps(existing,ensure_ascii=False,indent=2))
+    return ["✅ 已保存所选平台白名单；未修改其他平台及全局白名单"], True
 
 
-def _running_bot_procs() -> list:
-    """只列出 AstrBot/Qt 自身进程（按命令行精确过滤，绝不动 WebUI 的 pythonw）"""
-    cmd = (
-        "Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | "
-        "Where-Object { $_.Name -notlike 'pythonw*' -and "
-        "($_.CommandLine -like '*launch_backend*' -or $_.CommandLine -like '*AstrBot*' -or "
-        "$_.Name -like 'astrbot-desktop-tauri*') } | "
-        "Select-Object ProcessId, Name, CommandLine | ConvertTo-Json -Compress"
-    )
-    out = _ps(cmd, timeout=25)
-    if not out:
-        return []
-    try:
-        data = json.loads(out)
-    except Exception:
-        return []
-    if isinstance(data, dict):
-        data = [data]
-    return data or []
+def _running_bot_procs():
+    return [{"ProcessId":pid} for pid in instance.verified_pids("astrbot")]
 
 
-def _restart_astrbot() -> list:
-    """重启 AstrBot：优先官方桌面端 exe（保留启动环境），回退 launch_backend.py"""
-    global _LIVE_EXE
-    port = int(_g("astrbot", "webui_port", d=6185) or 6185)
-    exe = str(_g("astrbot", "exe", d="") or "")
-    py = str(_g("astrbot", "python", d="") or "")
-    app = str(_g("astrbot", "app_dir", d="") or "")
-    lines = []
-    procs = _running_bot_procs()
-    if procs:
-        ids = [int(p.get("ProcessId") or 0) for p in procs if p.get("ProcessId")]
-        names = ", ".join(sorted({str(p.get("Name")) for p in procs}))
-        lines.append(f"· 正在结束旧进程 {names}（PID {', '.join(str(i) for i in ids)}）")
-        _ps("Stop-Process -Id " + ",".join(str(i) for i in ids) + " -Force -ErrorAction SilentlyContinue", timeout=25)
-        time.sleep(4)
-    else:
-        lines.append("· 未发现运行中的 AstrBot 进程")
-    env = dict(os.environ, HD2_PROJECT_DIR=_ROOT)
-    started = False
-    if exe and os.path.exists(exe):
-        try:
-            subprocess.Popen([exe], env=env, cwd=os.path.dirname(exe))
-            _LIVE_EXE = exe
-            started = True
-            lines.append("· 已拉起桌面端：" + exe)
-        except Exception as e:
-            lines.append(f"· ⚠️ 拉起桌面端失败: {e}")
-    if not started and py and app and os.path.exists(os.path.join(app, "launch_backend.py")):
-        try:
-            subprocess.Popen([py, "-X", "utf8", os.path.join(app, "launch_backend.py")],
-                             env=env, cwd=app,
-                             creationflags=getattr(subprocess, "DETACHED_PROCESS", 0))
-            started = True
-            lines.append("· 已用 launch_backend.py 拉起（注意：该方式可能缺启动环境）")
-        except Exception as e:
-            lines.append(f"· ⚠️ 回退启动失败: {e}")
-    if not started:
-        lines.append("· ❌ 未找到可用的 AstrBot 启动方式（检查 config.json 的 astrbot.exe）")
-        return lines
-    ok = False
-    for _ in range(20):
-        time.sleep(3)
-        if _port_listen(port):
-            ok = True
-            break
-    lines.append(f"· Dashboard {port}：" + ("✅ 已就绪" if ok else "⏳ 尚未就绪（稍等再用「状态」查看）"))
-    for _ in range(15):
-        if _ws_connected():
-            lines.append("· WS 6199：✅ 已连接（机器人上线）")
-            return lines
-        time.sleep(3)
-    lines.append("· WS 6199：" + ("✅ 已连接" if _ws_connected() else "⏳ 未连接（可能需要扫码登录）"))
-    return lines
+def _restart_astrbot():
+    instance.stop("astrbot")
+    return [_start_astrbot()]
 
 
 def _dashboard_hot_reload(groups: list) -> list:
@@ -843,35 +593,14 @@ def _dashboard_hot_reload(groups: list) -> list:
     return errs
 
 
-def _reload_or_restart(groups: list) -> str:
-    """让新白名单生效：热重载 -> 重启 AstrBot；返回给用户看的说明"""
-    # 先试 Dashboard 热重载
-    errs = _dashboard_hot_reload(groups)
-    if not errs:
-        # 回读校验
-        try:
-            got = set(_read_whitelist(force=True)["groups"])
-            if set(groups) <= got:
-                return ("⚡ 已通过 Dashboard API 热重载生效（**无需重启**）\n"
-                        "· 当前生效群：" + ", ".join(sorted(got, key=lambda x: (len(x), x))))
-            return "⚠️ 热重载已调用，但回读校验不一致，建议点「重启 AstrBot」"
-        except Exception as e:
-            return f"⚡ 已热重载（回读校验失败：{e}）"
-    # 热重载不可用 -> 重启 AstrBot
-    lines = ["ℹ️ Dashboard 热重载不可用，改为重启 AstrBot："]
-    joined = " ".join(str(x) for x in errs)
-    if "默认密码" in joined or "default password" in joined.lower() or "密码" in joined:
-        lines.append("   · 原因：AstrBot Dashboard 仍是**默认密码**，出于安全会拒绝登录")
-        lines.append("   · 想要「零重启」生效：在 AstrBot 控制台改掉 Dashboard 密码，"
-                     "再把新密码填到 config.json 的 astrbot.dashboard_password")
-    for e in errs[:2]:
-        lines.append("   · " + e)
-    lines += _restart_astrbot()
-    return "\n".join(lines)
+def _reload_or_restart(groups):
+    return "ℹ️ 配置已保存。HD2指令守卫读取当前推送群范围；AstrBot自身白名单请在后台重载所选平台。文件回读不代表框架配置已生效。"
 
 
 def action_group_add(raw: str) -> str:
     """添加群号：写白名单（AstrBot）+ 写推送群列表（config.json），然后生效"""
+    if instance.platform() != "napcat":
+        return "❌ 官方平台请在 AstrBot 中管理会话与白名单"
     try:
         gid = _norm_gid(raw)
     except ValueError as e:
@@ -899,97 +628,37 @@ def action_group_add(raw: str) -> str:
     msgs.append("")
     msgs.append(_reload_or_restart([gid]))
     try:
-        msgs.append("\n· 回读生效群：" + ", ".join(_read_whitelist(force=True)["groups"]))
+        msgs.append("\n· 回读已保存白名单：" + ", ".join(_read_whitelist(force=True)["groups"]))
     except Exception:
         pass
     return "\n".join(msgs)
 
 
-def action_group_remove(raw: str) -> str:
-    """移除群号：从白名单与推送群列表里删除"""
+def action_group_remove(raw):
     try:
+        if instance.platform() != "napcat":
+            raise ValueError("官方平台请在 AstrBot 中管理会话白名单")
         gid = _norm_gid(raw)
-    except ValueError as e:
-        return f"❌ {e}"
-    try:
-        wl = _read_whitelist(force=True)
-    except Exception as e:
-        return f"❌ 读取 AstrBot 白名单失败：{e}"
-    msgs = [f"👥 移除群 {gid}"]
-    # ---- AstrBot 白名单 ----
-    changed = False
-    if wl["per_platform"] and wl["plat"]:
-        new_plat = {}
-        for k, v in wl["plat"].items():
-            ex = [str(x).strip() for x in (v or []) if str(x).strip()]
-            kept = [x for x in ex if x != gid]
-            if len(kept) != len(ex):
-                changed = True
-            new_plat[k] = kept
-        p = os.path.join(os.path.dirname(wl["source"]), "platform_whitelist.json")
-        bak = _backup_file(p)
-        _atomic_write(p, json.dumps(new_plat, ensure_ascii=False, indent=2) + "\n")
-        msgs.append("✅ 平台白名单已移除（备份 " + (os.path.basename(bak) if bak else "-") + "）")
-        # 全局同步删除
-        d, cc, st = _astrbot_data_dir()
-        if st:
-            try:
-                cfg = _read_json(cc, default={}) or {}
-                ps = cfg.setdefault("platform_settings", {})
-                cur = [str(x).strip() for x in (ps.get("id_whitelist") or []) if str(x).strip()]
-                kept = [x for x in cur if x != gid]
-                if len(kept) != len(cur):
-                    ps["id_whitelist"] = [int(x) if x.isdigit() else x for x in kept]
-                    _backup_file(cc)
-                    _atomic_write(cc, json.dumps(cfg, ensure_ascii=False, indent=2) + "\n")
-                    msgs.append("✅ 全局白名单已同步移除")
-            except Exception as e:
-                msgs.append(f"⚠️ 全局白名单移除失败: {e}")
-    else:
-        try:
-            d, cc, st = _astrbot_data_dir()
-            cfg = _read_json(cc, default={}) or {}
-            ps = cfg.setdefault("platform_settings", {})
-            cur = [str(x).strip() for x in (ps.get("id_whitelist") or []) if str(x).strip()]
-            kept = [x for x in cur if x != gid]
-            changed = len(kept) != len(cur)
-            ps["id_whitelist"] = [int(x) if x.isdigit() else x for x in kept]
-            bak = _backup_file(cc)
-            _atomic_write(cc, json.dumps(cfg, ensure_ascii=False, indent=2) + "\n")
-            msgs.append("✅ 全局白名单已移除（备份 " + (os.path.basename(bak) if bak else "-") + "）")
-        except Exception as e:
-            return f"❌ 写 AstrBot 白名单失败：{e}"
-    # ---- config.json 推送群 ----
-    push = [str(g) for g in (_g("bot", "groups", d=[]) or [])]
-    default_group = int(_g("bot", "default_group", d=0) or 0)
-    if gid in push:
-        new_push = [x for x in push if x != gid]
-        new_default = default_group
-        if str(default_group) == gid and new_push:
-            new_default = int(new_push[0])
-            msgs.append(f"· 默认推送群已自动切换到 {new_default}")
-        try:
-            _, pmsg = _set_push_groups(new_push, new_default)
-            msgs += pmsg
-            msgs.append(f"· 推送群列表剩 {len(new_push)} 个")
-        except Exception as e:
-            msgs.append(f"⚠️ 写 config.json 失败: {e}")
-    else:
-        msgs.append("• 推送群列表本来就没有该群")
-    if not changed:
-        msgs.append("• AstrBot 白名单本来就没有该群")
-    msgs.append("")
-    msgs.append(_reload_or_restart([]))
-    try:
-        left = _read_whitelist(force=True)["groups"]
-        msgs.append("\n· 回读生效群：" + (", ".join(left) if left else "(空)"))
-    except Exception:
-        pass
-    return "\n".join(msgs)
+        with _CONFIG_LOCK:
+            current = _read_whitelist(force=True)
+            target = str(_g("bot", "platform_id", d=""))
+            current["plat"][target] = [x for x in current["groups"] if x != gid]
+            _backup_file(current["source"])
+            _atomic_write(current["source"], json.dumps(current["plat"],ensure_ascii=False,indent=2))
+            groups = [str(g) for g in (_g("bot","groups",d=[]) or []) if str(g) != gid]
+            default = _default_group()
+            if str(default) == gid:
+                default = int(groups[0]) if groups else 0
+            _set_push_groups(groups,default)
+        return "✅ 已移除群 " + gid + "\n" + _reload_or_restart([])
+    except Exception as error:
+        return "❌ " + str(error)
 
 
 def action_group_default(raw: str) -> str:
     """设为默认推送群（只影响推送，不影响是否响应）"""
+    if instance.platform() != "napcat":
+        return "❌ 官方平台请在 AstrBot 中管理会话与白名单"
     try:
         gid = _norm_gid(raw)
     except ValueError as e:
@@ -1011,7 +680,7 @@ def action_restart_astrbot() -> str:
     lines = ["🔄 重启 AstrBot："]
     lines += _restart_astrbot()
     try:
-        lines.append("· 当前生效群：" + ", ".join(_read_whitelist(force=True)["groups"]))
+        lines.append("· 已保存白名单：" + ", ".join(_read_whitelist(force=True)["groups"]))
     except Exception:
         pass
     return "\n".join(lines)
@@ -1037,99 +706,82 @@ def action_logs() -> str:
     except Exception as e:
         return json.dumps({"logs": [], "error": str(e)}, ensure_ascii=False)
 
-def action_restart_webui() -> str:
-    """重启 WebUI 自身：由独立进程延迟杀旧 + 拉起新进程（约 5 秒后服务恢复，需刷新页面）"""
-    try:
-        subprocess.Popen(
-            [PYTHON.replace("python.exe", "pythonw.exe") if PYTHON.lower().endswith("python.exe") else "pythonw", RESTART_HELPER],
-            creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
-            close_fds=True,
-            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        )
-        return "🔁 正在重启 WebUI（约 5 秒后服务恢复），请稍后刷新页面。\n若 10 秒后仍无法访问，请双击 启动HD2推送终端.bat 手动启动。"
-    except Exception as e:
-        return f"❌ 触发重启失败: {e}"
+def action_restart_webui():
+    helper = os.path.join(_ROOT,"scripts","restart_webui.py")
+    subprocess.Popen([sys.executable,helper,"--parent-pid",str(os.getpid())],creationflags=getattr(subprocess,"CREATE_NO_WINDOW",0),env=dict(os.environ,HD2_PROJECT_DIR=_ROOT))
+    return "ℹ️ 已请求重启当前控制台，完成后请刷新页面"
 
 
 
 def run_sub(args, timeout=180):
     env = dict(os.environ)
     env["PYTHONIOENCODING"] = "utf-8"
+    env["HD2_PROJECT_DIR"] = _ROOT
     r = subprocess.run(args, capture_output=True, text=True, encoding="utf-8",
                        errors="replace", timeout=timeout, env=env, cwd=HD2)
     return r
 
 
-def send_msg(text: str, group_id=None) -> str:
-    """推送消息到群（走 NapCat WebUI API）；group_id 缺省/非法时用默认推送群"""
+def send_msg(text, group_id=None):
     gid = _target_group(group_id)
-    msg_file = os.path.join(TEMP, "webui_send_msg.txt")
-    with io.open(msg_file, "w", encoding="utf-8") as f:
-        f.write(text)
-    r = run_sub([PYTHON, SEND_SCRIPT, msg_file, str(gid)], timeout=60)
-    ok = "RESULT: OK" in r.stdout
-    return ("✅ 已推送到群 %d" % gid) if ok else ("❌ 推送失败: " + (r.stdout or r.stderr)[-300:])
+    fd, path = tempfile.mkstemp(prefix="send_",suffix=".txt",dir=TEMP)
+    try:
+        with os.fdopen(fd,"w",encoding="utf-8") as stream:
+            stream.write(text)
+        hd2_log("submitted",plugin="console",group=gid,platform="napcat",detail="提交发送请求")
+        try:
+            run = run_sub([PYTHON,SEND_SCRIPT,path,str(gid)],timeout=60)
+        except subprocess.TimeoutExpired:
+            hd2_log("unknown",plugin="console",group=gid,platform="napcat",detail="发送超时，不能确认平台是否接收")
+            return "⚠️ 发送结果不明，请先核对群消息，不要直接重复发送"
+        ok = run.returncode == 0 and "RESULT: OK" in run.stdout
+        hd2_log("acknowledged" if ok else "failed",plugin="console",group=gid,platform="napcat",detail="平台API已确认" if ok else "未取得成功回执")
+        return f"✅ 平台已确认群 {gid} 的发送请求" if ok else "❌ 未取得发送成功回执：" + (run.stdout or run.stderr)[-300:]
+    finally:
+        os.unlink(path)
+
+
+def _generate_report() -> str:
+    """仅使用本次成功生成的产物，不读取历史战报文件。"""
+    with tempfile.TemporaryDirectory(prefix="report_", dir=TEMP) as work:
+        output = os.path.join(work, "report.txt")
+        r = run_sub([PYTHON, GEN_REPORT, "--output", output], timeout=180)
+        if r.returncode != 0 or not os.path.isfile(output):
+            raise RuntimeError((r.stderr or r.stdout or "未生成战报")[-500:])
+        with open(output, encoding="utf-8") as f:
+            report = f.read().strip()
+        if not report:
+            raise RuntimeError("生成结果为空")
+        return report
 
 
 def action_report(group=None) -> str:
     """生成战报并推送（LLM 翻译，约 30-60 秒）"""
     gid = _target_group(group)
-    r = run_sub([PYTHON, GEN_REPORT], timeout=180)
-    if os.path.exists(REPORT_FILE):
-        with io.open(REPORT_FILE, encoding="utf-8") as f:
-            report = f.read()
+    try:
+        report = _generate_report()
         lines = [f"📊 战报已生成（{len(report)} 字符），目标群 {gid}，推送结果："]
         lines.append(send_msg(report, gid))
         lines.append("")
         lines.append("──── 战报内容 ────")
         lines.append(report)
         return "\n".join(lines)
-    return "❌ 战报生成失败\n" + (r.stdout or r.stderr)[-500:]
-
-
-def action_roll(group=None) -> str:
-    try:
-        gid = _target_group(group)
-        for p in APP_PATHS:
-            sys.path.insert(0, p)
-        roll_mod = _load_plugin(PLUGIN_ROLL)
-        result = roll_mod._roll_stratagems(4)
-        return f"🎲 随机战备（目标群 {gid}）\n" + result + "\n\n推送结果：" + send_msg(result, gid)
     except Exception as e:
-        return f"❌ Roll 失败: {e}"
+        return f"❌ 战报生成失败：{e}"
 
 
-def action_planet(name: str, group=None) -> str:
-    import asyncio
-    try:
-        gid = _target_group(group)
-        for p in APP_PATHS:
-            sys.path.insert(0, p)
-        planet_mod = _load_plugin(PLUGIN_PLANET)
+def action_roll(group=None,mode="assessment"):
+    gid = _target_group(group)
+    from astrbot_plugin_hd2_roll.loadout import draw, format_result
+    result = draw(mode)
+    text = format_result(result)
+    return text + "\n\n" + send_msg(text,gid)
 
-        async def run():
-            slug = planet_mod._planet_slug_from_query(name.strip().lower())
-            if not slug:
-                return "⚠️ 未识别该星球名，请用中英文名重试。"
-            title_cn = None
-            for en, cn in planet_mod._get_planet_name_map().items():
-                if cn and en.lower().replace(" ", "_") == slug:
-                    title_cn = cn
-                    break
-            if slug in ("super-earth", "superearth", "super_earth"):
-                result = planet_mod._translate_planet_info({"is_super_earth": True})
-            else:
-                body = await planet_mod._fetch_planet_page_text(slug)
-                info = planet_mod._parse_planet_info(body)
-                result = planet_mod._translate_planet_info(info)
-            if title_cn:
-                result = f"🪐 {title_cn}\n\n" + result
-            return result
 
-        result = asyncio.run(run())
-        return f"🪐 星球信息（目标群 {gid}）\n" + result + "\n\n推送结果：" + send_msg(result, gid)
-    except Exception as e:
-        return f"❌ 星球信息失败: {e}"
+def action_planet(name, group=None):
+    gid = _target_group(group)
+    view = service.result("planet",name)
+    return view.text + "\n\n" + send_msg(view.text,gid)
 
 
 def action_variant(name: str, group=None) -> str:
@@ -1143,18 +795,18 @@ def action_variant(name: str, group=None) -> str:
         async def run():
             matched = None
             for kw, cn in variant_mod.VARIANT_CN.items():
-                if cn in name:
+                if name.strip() == cn or name.strip().upper() == kw:
                     matched = kw
                     break
             if not matched:
                 if "变种" in name or "变异" in name:
-                    return "未查询到该变种信息。切莫粗心大意。"
+                    return "当前没有该变种的活动战役。"
                 return "⚠️ 未识别该变种名（如：孢裂变种/掠食变种/无脑群氓/生化人/蟑龙/霸王虫/炽灼部队/占领者/喷气旅）"
             scan = await variant_mod._scan_all_variants()
             planets = scan.get(matched, [])
             cn_name = variant_mod.VARIANT_CN[matched]
             if not planets:
-                return "未查询到该变种信息。切莫粗心大意。"
+                return "当前没有该变种的活动战役。"
             cn_map = variant_mod._load_planet_cn_map()
             lines = ["目前的变种信息："]
             for p in planets:
@@ -1200,7 +852,7 @@ def action_inject_push(cmd: str, group=None) -> str:
     if not reply:
         return "❌ 机器人未返回有效回复，未推送。\n\n" + out[-500:]
     push = send_msg(reply, gid)
-    return f"📤 注入指令: {cmd}（模拟群 {gid}）\n\n✅ 机器人回复已推送到群 {gid}\n{push}\n\n──── 回复内容 ────\n{reply}"
+    return f"📤 注入指令: {cmd}（模拟群 {gid}）\n\n机器人模拟回复的推送结果（群 {gid}）\n{push}\n\n──── 回复内容 ────\n{reply}"
 
 
 ACTIONS = {
@@ -1388,7 +1040,7 @@ PAGE = r"""<!DOCTYPE html>
   <div class="card">
     <h3>🎲 推送随机战备</h3>
     <p class="desc">从全类型战备池随机抽取 4 个，推送到所选的群</p>
-    <div class="btn-row"><button class="sec" onclick="run('roll',null,{group:targetGroup()})">Roll 并推送</button></div>
+    <div class="btn-row"><button class="sec" onclick="run('roll',null,{group:targetGroup()})">抽取配装并推送</button><button class="sec" onclick="run('roll',null,{group:targetGroup(),mode:'pure'})">纯随机配装并推送</button></div>
   </div>
 
   <div class="card">
@@ -1425,7 +1077,7 @@ PAGE = r"""<!DOCTYPE html>
   <div class="card">
     <h3>🧪 查询推送 / 响应测试</h3>
     <p class="desc">输入指令（查表/战报/星球等），「测试并推送」= 注入拿到机器人回复后直接推送到所选的群；「仅测试」= 只看回复不发群</p>
-    <input type="text" id="inject" value="/查表" placeholder="/战报  /查表  /查表 星区 巴纳德  /查表 孢裂变种  /roll">
+    <input type="text" id="inject" value="/帮助" placeholder="/战报  /帮助  /查询 X-45  /变种 名称  /roll">
     <div class="btn-row">
       <button class="danger" onclick="run('inject_push', document.getElementById('inject').value, {group:targetGroup()})">📤 测试并推送</button>
       <button class="sec" onclick="run('inject', document.getElementById('inject').value, {group:targetGroup()})">🧪 仅测试</button>
@@ -1508,7 +1160,7 @@ async function run(action, value, extra) {
   try {
     const resp = await fetch('/api/action', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-HD2-CSRF': '{CSRF_TOKEN}' },
       body: JSON.stringify(body),
     });
     const data = await resp.json();
@@ -1531,7 +1183,7 @@ async function loadGroups() {
     const sel = document.getElementById('targetGroup');
     if (!sel) return;
     const list = d.groups || [];
-    sel.innerHTML = list.map(g => `<option value="${g}">群 ${g}${g===d.default?'（默认）':''}</option>`).join('');
+    sel.replaceChildren(...list.map(g => new Option('群 '+g+(String(g)===String(d.default)?'（默认）':''),String(g))));
     if (!list.length) sel.innerHTML = '<option value="">未配置群</option>';
     // 用接口返回的真实默认群刷新页面文案（页面初始值是服务端渲染的，改过默认群后需要更新）
     // 避免"设为默认推送群"后界面仍显示旧群号
@@ -1546,7 +1198,7 @@ function updateTargetHint() {
   const g = targetGroup();
   if (!g) return;
   if (el.dataset.base === undefined) el.dataset.base = el.innerHTML;
-  el.innerHTML = `🎯 当前推送目标：<b style="color:var(--accent)">群 ${g}</b>　`
+  el.innerHTML = `🎯 当前推送目标：<b style="color:var(--accent)">群 ${escapeHtml(g)}</b>　`
     + `<a href="#" onclick="event.preventDefault();openGroupDialog()" style="color:var(--accent2)">管理群号</a><br>`
     + el.dataset.base;
 }
@@ -1559,12 +1211,22 @@ async function refreshLogs() {
   } catch (e) {}
 }
 function statusBadge(stage) {
-  const m = {received:['已接收','#4da6ff'], blocked:['已拦截','#f87171'], matched:['处理中','#fbbf24'], done:['完成','#4ade80'], failed:['失败','#f87171'], ignored:['忽略','#9aa3b2']};
+  const m = {generated:['已生成（未确认收发）','#4ade80'], degraded:['降级输出','#fbbf24'], submitted:['已提交发送','#fbbf24'], acknowledged:['平台已确认','#4ade80'], unknown:['发送结果不明','#fbbf24'],received:['已接收','#4da6ff'], blocked:['已拦截','#f87171'], matched:['处理中','#fbbf24'], done:['完成','#4ade80'], failed:['失败','#f87171'], ignored:['忽略','#9aa3b2']};
   const [t,c] = m[stage] || [stage,'#9aa3b2'];
-  return `<span style="color:${c};font-weight:600">${t}</span>`;
+  return `<span style="color:${c};font-weight:600">${escapeHtml(t)}</span>`;
+}
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
 function logDetail(l) {
   const s = [];
+  if (l.request_id) s.push('请求：'+l.request_id);
+  if (l.platform) s.push('平台：'+l.platform);
+  if (l.source_time) s.push('数据时间：'+l.source_time+(l.stale?'（陈旧）':''));
+  if (l.source) s.push('来源：'+l.source);
+  if (l.data_version) s.push('数据版本：'+l.data_version);
+  if (l.output_mode) s.push('输出：'+l.output_mode);
+  if (['generated','degraded','acknowledged','unknown','submitted'].includes(l.stage)) s.push(l.detail||'');
   if (l.stage==='blocked') s.push(`⛔ 白名单拦截：${l.detail||''}`);
   if (l.stage==='matched') s.push(`🔍 命中插件 ${l.plugin}，开始执行`);
   if (l.stage==='done') s.push(`✅ 执行完成${l.cost!=null?'（'+l.cost+'s）':''}${l.detail?'：'+l.detail:''}`);
@@ -1579,11 +1241,11 @@ function renderLogs() {
   if (!body) return;
   if (!rows.length) { body.innerHTML = '<tr><td colspan="8" style="color:var(--muted);text-align:center">暂无记录</td></tr>'; return; }
   body.innerHTML = rows.map(l => `<tr>
-    <td>${l.time||''}</td><td>${l.group||'-'}</td><td>${l.name||l.user||'-'}</td>
-    <td title="${(l.text||'').replace(/"/g,'&quot;')}">${(l.text||'').slice(0,24)}</td>
-    <td>${statusBadge(l.stage)}</td><td>${l.plugin||'-'}</td><td>${l.cost!=null?l.cost+'s':''}</td>
-    <td><button class="mini" onclick="toggleLogDetail(this,'${l.ts}')">▼</button></td></tr>
-    <tr id="d-${l.ts}" style="display:none"><td colspan="8" class="log-detail-cell">${logDetail(l)}</td></tr>`).join('');
+    <td>${escapeHtml(l.time||'')}</td><td>${escapeHtml(l.group||'-')}</td><td>${escapeHtml(l.name||l.user||'-')}</td>
+    <td title="${escapeHtml(l.text||'')}">${escapeHtml((l.text||'').slice(0,24))}</td>
+    <td>${statusBadge(l.stage)}</td><td>${escapeHtml(l.plugin||'-')}</td><td>${escapeHtml(l.cost!=null?l.cost+'s':'')}</td>
+    <td><button class="mini" onclick="toggleLogDetail(this,'${Number(l.ts)||0}')">▼</button></td></tr>
+    <tr id="d-${Number(l.ts)||0}" style="display:none"><td colspan="8" class="log-detail-cell">${escapeHtml(logDetail(l))}</td></tr>`).join('');
 }
 function toggleLogDetail(btn, ts){ const el=document.getElementById('d-'+ts); const on=el.style.display==='none'; el.style.display=on?'':'none'; btn.textContent=on?'▲':'▼'; }
 function setLogFilter(f){ logFilter=f; renderLogs(); }
@@ -1595,7 +1257,7 @@ async function callApi(action, value) {
   const body = { action };
   if (value !== undefined) body.value = value;
   const r = await fetch('/api/action', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-HD2-CSRF': '{CSRF_TOKEN}' }, body: JSON.stringify(body),
   });
   return await r.json();
 }
@@ -1619,19 +1281,19 @@ async function groupRefresh() {
     if (info.error) {
       src.textContent = '⚠️ ' + info.error;
     } else {
-      src.innerHTML = 'AstrBot 数据目录：<code>' + (info.data_dir || '-') + '</code><br>'
-        + '白名单来源（' + (info.source_kind || '-') + '）：<code>' + (info.running_source || '-') + '</code><br>'
-        + '生效群（' + (info.running_groups || []).length + ' 个）';
+      src.innerHTML = 'AstrBot 数据目录：<code>' + escapeHtml(info.data_dir || '-') + '</code><br>'
+        + '白名单来源（' + escapeHtml(info.source_kind || '-') + '）：<code>' + escapeHtml(info.running_source || '-') + '</code><br>'
+        + '已保存白名单（' + (info.running_groups || []).length + ' 个）';
     }
     const rg = info.running_groups || [];
     chips.innerHTML = rg.length
-      ? rg.map(g => `<span class="grp-chip"><b>${g}</b>${(info.push_groups||[]).includes(Number(g))?'📤':''}<span title="移除此群" onclick="groupAct('group_remove','${g}')">✖</span></span>`).join('')
-      : '<span class="hint">白名单为空（不限制）</span>';
-    src.innerHTML += `<br>推送群列表（${(info.push_groups||[]).length} 个）：${(info.push_groups||[]).join(', ') || '-'}`
-      + `　默认推送群：<b>${info.default_group||'-'}</b>`;
-    src.innerHTML += `<br>推送配置：<code>${info.config_active || '-'}</code>`
+      ? rg.map(g => `<span class="grp-chip"><b>${escapeHtml(g)}</b>${(info.push_groups||[]).map(String).includes(String(g))?'📤':''}<span title="移除此群" data-group="${escapeHtml(g)}" onclick="groupAct('group_remove',this.dataset.group)">✖</span></span>`).join('')
+      : '<span class="hint">暂无所选平台白名单；以 AstrBot 配置与已配置推送群范围为准</span>';
+    src.innerHTML += `<br>推送群列表（${(info.push_groups||[]).length} 个）：${escapeHtml((info.push_groups||[]).join(', ') || '-')}`
+      + `　默认推送群：<b>${escapeHtml(info.default_group||'-')}</b>`;
+    src.innerHTML += `<br>推送配置：<code>${escapeHtml(info.config_active || '-')}</code>`
       + ((info.config_local && info.config_local !== info.config_active)
-          ? `<br>同目录副本：<code>${info.config_local}</code>` : '');
+          ? `<br>同目录副本：<code>${escapeHtml(info.config_local)}</code>` : '');
   } catch (e) {
     src.textContent = '❌ 读取失败: ' + e;
   }
@@ -1668,6 +1330,21 @@ document.getElementById('groupModal').addEventListener('click', e => {
 
 
 class Handler(BaseHTTPRequestHandler):
+    def _trusted_request(self, mutation=False):
+        port = self.server.server_port
+        hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
+        host = self.headers.get("Host", "").lower()
+        origin = self.headers.get("Origin")
+        if host not in hosts or (origin is not None and origin != "http://" + host):
+            return False
+        if self.headers.get("Sec-Fetch-Site") == "cross-site":
+            return False
+        if mutation:
+            token = self.headers.get("X-HD2-CSRF", "")
+            return (self.headers.get_content_type() == "application/json"
+                    and secrets.compare_digest(token, CSRF_TOKEN))
+        return True
+
     def log_message(self, *a):
         pass
 
@@ -1676,12 +1353,19 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", ctype + "; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
         self.end_headers()
         self.wfile.write(data)
 
     def do_GET(self):
+        if not self._trusted_request():
+            self._send(403, '{"ok":false,"output":"请求来源不可信"}')
+            return
         if self.path == "/" or self.path == "/index.html":
-            self._send(200, PAGE.replace("{GROUP}", str(_default_group())), "text/html")
+            page = PAGE.replace("{GROUP}", str(_default_group())).replace("{CSRF_TOKEN}", CSRF_TOKEN)
+            self._send(200, page, "text/html")
         elif self.path == "/api/logs":
             self._send(200, action_logs(), "application/json")
         elif self.path == "/api/groups":
@@ -1690,31 +1374,44 @@ class Handler(BaseHTTPRequestHandler):
             self._send(404, "Not Found", "text/plain")
 
     def do_POST(self):
-        if self.path != "/api/action":
-            self._send(404, "Not Found", "text/plain")
+        if not self._trusted_request(mutation=True):
+            self._send(403,'{"ok":false,"output":"请求来源或会话校验失败，请刷新控制台"}')
             return
+        if self.path != "/api/action":
+            self._send(404,"Not Found","text/plain")
+            return
+        token = new_request()
         try:
-            length = int(self.headers.get("Content-Length", 0))
+            length = int(self.headers.get("Content-Length",0))
+            if not 0 < length <= 65536:
+                raise ValueError("请求长度无效")
             req = json.loads(self.rfile.read(length).decode("utf-8"))
-            action = req.get("action", "")
-            value = str(req.get("value", "")).strip()
-            group = req.get("group")
-            fn = ACTIONS.get(action)
-            if not fn:
-                self._send(200, json.dumps({"ok": False, "output": "未知操作"}))
-                return
-            TWO_ARG = ("planet", "variant", "custom", "inject", "inject_push")
-            GROUP_ARG = TWO_ARG + ("send_guide", "report", "roll", "send_guide_to")
-            if action in TWO_ARG:
-                output = fn(value, group=group)
-            elif action in GROUP_ARG:
-                output = fn(group=group)
-            else:
-                output = fn()
-            self._send(200, json.dumps({"ok": True, "output": output}, ensure_ascii=False))
-        except Exception as e:
-            import traceback
-            self._send(200, json.dumps({"ok": False, "output": "服务端异常: %s\n%s" % (e, traceback.format_exc())}, ensure_ascii=False))
+            if not isinstance(req,dict):
+                raise ValueError("请求必须为JSON对象")
+            if set(req) - {"action","value","group","mode"}:
+                raise ValueError("请求含不支持的参数；抽取仅支持整套结果")
+            action = req.get("action")
+            fn = ACTIONS.get(action) if isinstance(action,str) else None
+            if fn is None:
+                raise ValueError("未知操作")
+            value, group = str(req.get("value","")).strip(), req.get("group")
+            with _CONFIG_LOCK:
+                if action == "roll":
+                    output = fn(group=group,mode=req.get("mode","assessment"))
+                elif action in ("planet","variant","custom","inject","inject_push"):
+                    output = fn(value,group=group)
+                elif action in ("send_guide","report","roll","send_guide_to"):
+                    output = fn(group=group)
+                else:
+                    output = fn()
+            self._send(200,json.dumps({"ok":not str(output).startswith(("❌","⚠️")),"output":output},ensure_ascii=False))
+        except (ValueError,UnicodeError) as error:
+            self._send(400,json.dumps({"ok":False,"output":str(error)},ensure_ascii=False))
+        except Exception as error:
+            print("控制台操作失败：",type(error).__name__,file=sys.stderr)
+            self._send(500,'{"ok":false,"output":"操作失败，请检查配置和服务端日志"}')
+        finally:
+            request_id.reset(token)
 
 
 def open_browser():

@@ -34,13 +34,13 @@ try:
     from astrbot_plugin_hd2_war_report.report_card import (
         W, PAD, BG, PANEL, LINE, LINE2, TEXT, DIM, MUTE, GOLD, GOLD2, BRASS,
         BLUE, GREEN, RED,
-        F, _hud_head, _help_wrap,
+        F, _hud_head, _help_wrap, _render_cached,
         CACHE_DIR,
     )
 except Exception as _e:  # 渲染基建不可用 → 整卡降级，main.py 回退文本
     raise ImportError(f"report_card 样式基建导入失败: {_e}")
 
-from bs4 import BeautifulSoup  # AstrBot 后端自带（4.15+，lxml 解析器）
+from astrbot_plugin_hd2_wiki.wiki_data import wiki_lookup, _fetch_thumb
 
 WIKI_API = "https://helldivers.wiki.gg/zh/api.php"
 WIKI_HOME = "https://helldivers.wiki.gg/zh"
@@ -58,207 +58,20 @@ WIKI_JUNK_RE = re.compile(
     r"|^\s*\[\s*编辑.*?\]\s*$|^\s*编辑\s*$|^\s*编辑源代码\s*$")
 
 
-def _wiki_get(params):
-    """MediaWiki api.php GET，重试 2 次，返回 JSON（带 error 抛错）。"""
-    qs = urllib.parse.urlencode({"format": "json", **params})
-    last = None
-    for _ in range(2):
-        try:
-            req = urllib.request.Request(
-                WIKI_API + "?" + qs,
-                headers={"User-Agent": "HD2Bot/1.0 (wiki-card; read-only)"})
-            with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT) as r:
-                data = json.loads(r.read().decode("utf-8"))
-            if data.get("error"):
-                raise RuntimeError("Wiki API 错误 %s: %s"
-                                   % (data["error"].get("code"), data["error"].get("info")))
-            return data
-        except Exception as e:
-            last = e
-    raise last
 
 
-def _clean_extract(ext):
-    """纯文本清洗：剥维护模板残留行、压缩连续空行、按上限截断。返回 (text, truncated)"""
-    lines, out = (ext or "").splitlines(), []
-    for ln in lines:
-        s = ln.strip()
-        if not s:
-            if out and out[-1] != "":
-                out.append("")
-            continue
-        if WIKI_JUNK_RE.search(s):
-            continue
-        out.append(s)
-    text = "\n".join(out).strip()
-    truncated = False
-    if len(text) > TEXT_LIMIT:
-        cut = text[:TEXT_LIMIT]
-        nl = cut.rfind("\n")
-        text = (cut[:nl] if nl > TEXT_LIMIT // 2 else cut).rstrip() + "\n……（正文较长，数据见下方表格与原页）"
-        truncated = True
-    return text, truncated
 
 
-def _fetch_thumb(src):
-    """下载页面主图（只收 png/jpg/jpeg 位图；svg 交给无图版式）→ 本地缓存路径或 None"""
-    if not src:
-        return None
-    low = src.split("?")[0].lower()
-    if not low.endswith((".png", ".jpg", ".jpeg")):
-        return None
-    ext = ".png" if low.endswith(".png") else ".jpg"
-    cache_file = os.path.join(CACHE_DIR, "wiki",
-                              "thumb_" + hashlib.md5(src.encode()).hexdigest()[:16] + ext)
-    if os.path.exists(cache_file) and os.path.getsize(cache_file) > 500:
-        return cache_file
-    try:
-        os.makedirs(os.path.dirname(cache_file), exist_ok=True)
-        req = urllib.request.Request(src, headers={"User-Agent": "HD2Bot/1.0 (wiki-card)"})
-        with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT) as r:
-            data = r.read()
-        if len(data) < 500:
-            return None
-        open(cache_file, "wb").write(data)
-        return cache_file
-    except Exception as e:
-        logger.warning(f"[HD2-Wiki] 主图下载失败: {e}")
-        return None
 
 
 # ── 表格抽取（action=parse 的 HTML → 结构化行） ──
 
-def _cell_text(cell):
-    """单元格文本：<br> 转 ' / '，剥标签，压空白，截 CELL_MAX。"""
-    for br in cell.find_all("br"):
-        br.replace_with(" / ")
-    txt = re.sub(r"\s+", " ", cell.get_text(" ", strip=True)).strip()
-    return txt[:CELL_MAX]
 
 
-def _extract_tables(html):
-    """parse HTML → [{"section", "title", "rows": [[cell,...],...]}]
-    跳过：tabs 切换器 / navbox / <2 行的表；表格归属最近的 h2/h3 小节。"""
-    soup = BeautifulSoup(html, "lxml")
-    for sel in ("div.toc", "sup.reference", "div.mw-references-wrap",
-                "style", "script", "table.navbox", "div.navbox"):
-        for x in soup.select(sel):
-            x.decompose()
-    out, section, seen = [], "", set()
-    for el in soup.find_all(["h2", "h3", "table"]):
-        if el.name in ("h2", "h3"):
-            h = re.sub(r"\[.*?\]\s*$", "", el.get_text(" ", strip=True)).strip()
-            h = h.replace("编辑", "").strip()
-            if h:
-                section = h
-            continue
-        cls = " ".join(el.get("class") or [])
-        if "tabs" in cls or "navbox" in cls:
-            continue
-        raw = []
-        for tr in el.find_all("tr"):
-            cs = tr.find_all(["th", "td"])
-            cells = [_cell_text(c) for c in cs]
-            if any(cells):
-                raw.append((cs, cells))
-        if len(raw) < 2:
-            continue
-        # 表名：首行单格（或全 th）视作标题带；否则用小节名
-        first_cs, first_cells = raw[0]
-        is_band = len(first_cells) == 1 or all(c.name == "th" for c in first_cs)
-        title = first_cells[0] if is_band else ""
-        rows = [cells for _, cells in (raw[1:] if is_band else raw)]
-        rows = rows[:TABLE_ROWS_MAX]
-        if len(rows) < 1:
-            continue
-        key = (section, title)
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append({"section": section or "数据", "title": title,
-                    "rows": [r for r in rows if any(r)]})
-        if len(out) >= TABLES_MAX:
-            break
-    return out
 
 
-def wiki_lookup(keyword):
-    """搜索 + 抽取主流程 → dict(status/title/url/rev/text/tables/thumb/candidates)"""
-    kw = (keyword or "").strip()
-    title = None
-    pg = next(iter((_wiki_get({
-        "action": "query", "prop": "extracts|pageimages|info", "titles": kw,
-        "explaintext": 1, "exsectionformat": "plain", "piprop": "thumbnail",
-        "pithumbsize": 600, "inprop": "url", "redirects": 1,
-    }).get("query") or {}).get("pages", {}).values()), None)
-    if pg and pg.get("missing") is None:
-        title = pg
-    candidates = []
-    # 直取失败 → 搜索（重定向/消歧义过滤，mediawiki.js search 同款两步）
-    if title is None:
-        s = _wiki_get({"action": "query", "list": "search", "srsearch": kw,
-                       "srlimit": 6, "srnamespace": 0})
-        hits = [h["title"] for h in (s.get("query") or {}).get("search", [])]
-        if hits:
-            info = _wiki_get({"action": "query", "prop": "info|pageprops",
-                              "pprop": "disambiguation",
-                              "titles": "|".join(hits)})
-            bad = set()
-            for p in (info.get("query") or {}).get("pages", {}).values():
-                if p.get("redirect") is not None or \
-                        (p.get("pageprops") or {}).get("disambiguation") is not None:
-                    bad.add(p.get("title"))
-            good = [h for h in hits if h not in bad]
-            candidates = good[1:5]
-            if good:
-                pg = next(iter((_page_query(good[0]).get("query") or {})
-                               .get("pages", {}).values()), None)
-                if pg and pg.get("missing") is None:
-                    title = pg
-    if title is None:
-        return {"status": "not_found", "title": kw, "url": WIKI_HOME,
-                "rev": "none", "text": "", "tables": [], "thumb": None,
-                "candidates": candidates}
-    text, truncated = _clean_extract(title.get("extract"))
-    # 表格：action=parse（重定向跟随），revid 用 parse 的（同一次页面版本）
-    tables, revid = [], str(title.get("lastrevid") or "0")
-    try:
-        pr = _wiki_get({"action": "parse", "page": title.get("title") or kw,
-                        "prop": "text", "formatversion": 2, "redirects": 1})
-        pp = pr.get("parse") or {}
-        revid = str(pp.get("revid") or revid)
-        t = pp.get("text") or ""
-        if isinstance(t, list):        # formatversion=2 下 text 是字符串数组
-            t = "".join(t)
-        tables = _extract_tables(t)
-    except Exception as e:
-        logger.warning(f"[HD2-Wiki] 表格抽取失败（仅出正文）: {e}")
-    return {
-        "status": "ok",
-        "title": title.get("title") or kw,
-        "url": title.get("fullurl") or WIKI_HOME,
-        "rev": revid,
-        "text": text,
-        "tables": tables,
-        "thumb": _fetch_thumb((title.get("thumbnail") or {}).get("source")),
-        "candidates": candidates,
-        "truncated": truncated,
-    }
 
 
-def _page_query(title):
-    """词条直取（redirects=1 跟随重定向）：extract + 主图缩略 + url + revid。"""
-    return _wiki_get({
-        "action": "query",
-        "prop": "extracts|pageimages|info",
-        "titles": title,
-        "explaintext": 1,
-        "exsectionformat": "plain",
-        "piprop": "thumbnail",
-        "pithumbsize": 600,
-        "inprop": "url",
-        "redirects": 1,
-    })
 
 
 def _slug(s):
@@ -266,32 +79,7 @@ def _slug(s):
 
 
 def _render_wiki_cached(out_path, meta_path, rev, draw_fn):
-    """wiki 专用缓存外壳：长图画布（WIKI_TALL），其余与 report_card._render_cached 同款。"""
-    try:
-        if os.path.exists(out_path) and os.path.exists(meta_path):
-            if json.loads(open(meta_path, encoding="utf-8").read()).get("rev") == rev:
-                return out_path
-    except Exception:
-        pass
-    try:
-        from PIL import Image, ImageDraw
-        img = Image.new("RGB", (W, WIKI_TALL), BG)
-        dr = ImageDraw.Draw(img)
-        y = draw_fn(dr, img)
-        img = img.crop((0, 0, W, min(WIKI_TALL, y + 20)))
-        tmp = out_path + ".tmp"
-        img.save(tmp, format="PNG")
-        os.replace(tmp, out_path)
-        try:
-            open(meta_path, "w", encoding="utf-8").write(
-                json.dumps({"rev": rev, "ts": __import__("time").time()}))
-        except Exception:
-            pass
-        return out_path
-    except Exception:
-        import traceback
-        traceback.print_exc()
-        return None
+    return _render_cached(out_path, meta_path, rev, draw_fn)
 
 
 def _draw_table_block(dr, y, tb):
@@ -323,6 +111,9 @@ def _draw_table_block(dr, y, tb):
                     vx = PAD + 12 + col_w * ci + (col_w - vw) / 2
                     dr.text((vx, y + 6), r[ci], font=F(15), fill=TEXT)
         y += 30
+        for ln in _help_wrap("正文与表格为摘要；最多8表、每表26行，完整内容见原文链接。", F(16), W - PAD*2, dr):
+            dr.text((PAD, y), ln, font=F(16), fill=MUTE)
+            y += 24
     return y + 8
 
 
@@ -416,8 +207,6 @@ def _draw_wiki(kw, data):
             y += 14
             for tb in data["tables"]:
                 y = _draw_table_block(dr, y, tb)
-                if y > WIKI_TALL - 400:
-                    break
             y += 4
 
         if data.get("candidates"):
@@ -436,12 +225,14 @@ def _draw_wiki(kw, data):
     return draw
 
 
-def render_wiki_card(keyword, out_dir=None):
+def render_wiki_card(keyword, out_dir=None, data=None):
     """/wiki 长图卡：搜索→抽取正文与表格→渲染。失败返回 None（调用方回退文本）。"""
     out_dir = out_dir or CACHE_DIR
     try:
         os.makedirs(out_dir, exist_ok=True)
-        data = wiki_lookup(keyword)
+        data = dict(data) if data is not None else wiki_lookup(keyword)
+        if data.get("thumb") and str(data["thumb"]).startswith("http"):
+            data["thumb"] = _fetch_thumb(data["thumb"])
         out_path = os.path.join(out_dir, "wiki_%s.png" % _slug(data["title"]))
         meta_path = out_path + ".meta.json"
         # rev = 词条标题 + 页面修订号：wiki 一编辑，缓存自动失效重渲染

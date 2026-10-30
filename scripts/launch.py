@@ -20,6 +20,7 @@ if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
 import hd2_config as cfg
+from scripts import instance
 
 
 def _g(*keys, default=None):
@@ -61,18 +62,22 @@ def wait_port(port: int, timeout: int = 90) -> bool:
 
 def start_astrbot() -> str:
     if port_listen(int(_g("astrbot", "webui_port", default=6185))):
-        return "✅ AstrBot 已在运行"
+        instance.verified_pids("astrbot")
+        return "✅ 已配置实例的 Dashboard 正在监听"
     exe = _g("astrbot", "exe", default="")
     if not exe or not os.path.exists(exe):
         return "⚠️ 未找到 AstrBot（config.json 的 astrbot.exe），跳过"
     subprocess.Popen([exe])
     if wait_port(int(_g("astrbot", "webui_port", default=6185)), 90):
-        return "✅ AstrBot 已启动"
+        return "ℹ️ Dashboard 已监听，平台认证请在 AstrBot 中确认"
     return "⚠️ AstrBot 启动中，WebUI 尚未就绪（稍后可用）"
 
 
 def start_napcat() -> str:
-    if any(n.startswith("NapCat") for n in proc_names()):
+    if instance.platform() != "napcat":
+        return "ℹ️ 官方平台模式，跳过 NapCat"
+    if port_listen(instance.port("napcat")):
+        instance.verified_pids("napcat")
         return "✅ NapCat 已在运行"
     ndir = _g("napcat", "dir", default="")
     qq_exe = _g("napcat", "qq_exe", default="")
@@ -84,8 +89,14 @@ def start_napcat() -> str:
     env["NAPCAT_INJECT_PATH"] = os.path.join(ndir, "NapCatWinBootHook.dll")
     env["NAPCAT_LAUNCHER_PATH"] = os.path.join(ndir, "NapCatWinBootMain.exe")
     env["NAPCAT_MAIN_PATH"] = os.path.join(ndir, "napcat.mjs")
-    with open(os.path.join(ndir, "loadNapCat.js"), "w", encoding="utf-8") as f:
-        f.write(f'(async () => {{await import("file:///{ndir.replace(os.sep, "/")}/napcat.mjs")}})()')
+    loader = os.path.join(ndir,"loadNapCat.js")
+    from pathlib import Path
+    from urllib.parse import urljoin
+    text = '(async () => {await import(' + __import__('json').dumps(Path(ndir,"napcat.mjs").resolve().as_uri()) + ')})()'
+    if os.path.exists(loader) and Path(loader).read_text(encoding="utf-8") != text:
+        return "⚠️ 已有自定义 NapCat loader，请使用原启动方式或明确配置专用目录"
+    if not os.path.exists(loader):
+        Path(loader).write_text(text,encoding="utf-8")
     subprocess.Popen(
         [os.path.join(ndir, "NapCatWinBootMain.exe"), qq_exe, os.path.join(ndir, "NapCatWinBootHook.dll")],
         env=env, cwd=ndir,
@@ -95,7 +106,8 @@ def start_napcat() -> str:
 
 def start_webui() -> str:
     if port_listen(int(_g("webui", "port", default=8630))):
-        return "✅ Web 控制台已在运行"
+        instance.verified_pids("webui")
+        return "✅ 当前 Web 控制台已在运行"
     py = _g("astrbot", "python", default="python")
     pyw = py.replace("python.exe", "pythonw.exe") if py.lower().endswith("python.exe") else py
     webui = os.path.join(_ROOT, "scripts", "hd2_webui.py")
@@ -128,47 +140,13 @@ def main():
     print("\n[1/4] AstrBot ...")
     print("  " + start_astrbot())
 
-    # 2. NapCat
-    print("\n[2/4] NapCat / QQ ...")
-    print("  " + start_napcat())
-    time.sleep(8)
-
-    # 3. 二维码 / 连接
-    print("\n[3/4] 二维码 / 连接 ...")
-    qr = cfg.resolve_napcat(_g("napcat", "qrcode_rel", default="cache/qrcode.png"))
-    ws_port = int(_g("astrbot", "ws_port", default=6199))
-    connected = False
-    for _ in range(30):
-        time.sleep(3)
-        out = subprocess.run(
-            ["powershell", "-NoProfile", "-Command",
-             f"(Get-NetTCPConnection -LocalPort {ws_port} -State Established -ErrorAction SilentlyContinue | Measure-Object).Count"],
-            capture_output=True, text=True, timeout=15,
-        )
-        if out.stdout.strip() not in ("", "0"):
-            connected = True
-            break
-    if connected:
-        print("  ✅ WS 已连接（机器人上线，登录态自动恢复）")
+    qr = ""
+    if instance.platform() == "napcat":
+        print(start_napcat())
+        qr = cfg.resolve_napcat(_g("napcat","qrcode_rel",default="cache/qrcode.png"))
+        print("请在 NapCat 完成登录；状态和发送结果需分别确认。")
     else:
-        if os.path.exists(qr):
-            print(f"  📱 请扫码登录（已打开二维码）：{qr}")
-            try:
-                os.startfile(qr)
-            except Exception:
-                pass
-            # 再等 60 秒
-            for _ in range(20):
-                time.sleep(3)
-                out = subprocess.run(
-                    ["powershell", "-NoProfile", "-Command",
-                     f"(Get-NetTCPConnection -LocalPort {ws_port} -State Established -ErrorAction SilentlyContinue | Measure-Object).Count"],
-                    capture_output=True, text=True, timeout=15,
-                )
-                if out.stdout.strip() not in ("", "0"):
-                    connected = True
-                    break
-            print("  ✅ WS 已连接" if connected else "  ⚠️ 尚未连接，请扫码后查看 Web 控制台「状态」")
+        print("官方平台模式：请在 AstrBot 适配器中配置凭据；跳过 NapCat 和 OneBot 等待。")
 
     # 4. WebUI + 浏览器
     print("\n[4/4] Web 控制台 ...")

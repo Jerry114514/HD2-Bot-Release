@@ -1,4 +1,5 @@
 import io
+import os
 import re
 import time
 import asyncio
@@ -77,17 +78,11 @@ from astrbot_plugin_hd2_common.main import (
 
 
 def _gid(event):
-    try:
-        return int(getattr(event.message_obj, "group_id", 0) or 0)
-    except Exception:
-        return 0
+    return str(getattr(event.message_obj, "group_id", "") or "")
 
 
 def _uid(event):
-    try:
-        return int(event.get_sender_id() or 0)
-    except Exception:
-        return 0
+    return str(event.get_sender_id() or "")
 
 
 def _uname(event):
@@ -134,103 +129,64 @@ def _load_planet_cn_map() -> dict:
     return m
 
 
-async def _scan_all_variants() -> dict:
-    """扫描战役星球行动变量（官方 planetActiveEffects 优先，Playwright 兜底）
-    返回 {英文变种关键词: [星球名, ...]}，结果缓存 300 秒。"""
+async def _scan_all_variants():
     now = time.time()
     if _scan_cache["data"] and now - _scan_cache["ts"] < 300:
         return _scan_cache["data"]
-
     result = {kw: [] for kw in VARIANT_CN}
+    effects = await blocking(_load_effect_id_cn)
+    if not effects:
+        raise RuntimeError("变种效果映射不可用，无法判断当前变种")
     try:
-        # ---- 官方源 ----
-        st = _fetch_official(f"/api/WarSeason/{OFFICIAL_WAR_ID}/Status")
-        camps = st.get("campaigns") or []
-        camp_idx = list(dict.fromkeys(c.get("planetIndex") for c in camps))
-        camp_set = set(camp_idx)
-        eff_cn = _load_effect_id_cn()
-        # 中文词条 -> VARIANT_CN key（忽略空格差异）
-        cn2key = {v.replace(" ", "").upper(): k for k, v in VARIANT_CN.items()}
-        # 星球名
-        try:
-            planets = _fetch_json(PLANETS_URL, extra_headers={
-                "X-Super-Client": "astrbot-hd2-plugin", "X-Super-Contact": "https://github.com/astrbot"})
-            name_map = {p["index"]: p["name"] for p in planets}
-        except Exception:
-            name_map = {}
-        # 官方 planetActiveEffects：战役星球上的效果 -> 变种
-        for p in st.get("planetActiveEffects") or []:
-            idx = p.get("index")
-            if idx not in camp_set:
-                continue
-            eid = p.get("galacticEffectId")
-            cn = eff_cn.get(eid)
-            if not cn:
-                continue
-            key = cn2key.get(cn.replace(" ", "").upper())
-            if key:
-                nm = name_map.get(idx, f"星球{idx}")
-                if nm not in result[key]:
-                    result[key].append(nm)
-        _scan_cache["ts"] = now
-        _scan_cache["data"] = result
-        return result
-    except Exception as e:
-        logger.warning(f"[HD2-变种] 官方扫描失败，回退页面抓取: {e}")
-
-    # ---- 社区备选（Playwright 页面抓取）----
-    from playwright.async_api import async_playwright
-
-    planets = _fetch_json("https://api.helldivers2.dev/api/v1/planets", extra_headers={
-        "X-Super-Client": "astrbot-hd2-plugin", "X-Super-Contact": "https://github.com/astrbot"})
-    name_map = {p["index"]: p["name"] for p in planets}
-
-    live = _fetch_json(LIVE_API_URL)
-    camps = live["warStatus"].get("campaigns") or []
-    camp_idx = list(dict.fromkeys(c.get("planetIndex") for c in camps))
-
-    async def check_one(idx):
-        slug = name_map.get(idx, "").lower().replace(" ", "_")
-        if not slug:
-            return
-        try:
-            async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=True)
+        status = await blocking(_fetch_official, f"/api/WarSeason/{OFFICIAL_WAR_ID}/Status")
+        planets = await blocking(_fetch_json, PLANETS_URL)
+        names = {p["index"]: p["name"] for p in planets}
+        camps = {c.get("planetIndex") for c in status.get("campaigns") or []}
+        known = {v.replace(" ", "").upper(): k for k,v in VARIANT_CN.items()}
+        for effect in status.get("planetActiveEffects") or []:
+            idx = effect.get("index")
+            key = known.get(str(effects.get(effect.get("galacticEffectId"), "")).replace(" ", "").upper())
+            if idx in camps and key:
+                name = names.get(idx, str(idx))
+                if name not in result[key]:
+                    result[key].append(name)
+    except (OSError, ValueError) as error:
+        logger.warning(f"[HD2] 结构化变种源不可用：{error}")
+        planets = await blocking(_fetch_json, PLANETS_URL)
+        names = {p["index"]: p["name"] for p in planets}
+        live = await blocking(_fetch_json, LIVE_API_URL)
+        indices = {c.get("planetIndex") for c in (live.get("warStatus") or {}).get("campaigns") or []}
+        if indices:
+            try:
+                from playwright.async_api import async_playwright
+            except ImportError as missing:
+                raise RuntimeError("变种备用查询需要可选浏览器依赖，目前数据不可用") from missing
+            sem = asyncio.Semaphore(3)
+            async with async_playwright() as playwright:
+                browser = await playwright.chromium.launch(headless=True)
                 try:
-                    page = await browser.new_page()
-                    await page.goto(f"https://helldiverscompanion.com/#hellpad/planets/{slug}", wait_until="domcontentloaded", timeout=45000)
-                    try:
-                        await page.wait_for_function("() => document.body.innerText.includes('OPERATIONAL PARAMETERS')", timeout=20000)
-                    except Exception:
-                        pass
-                    await page.wait_for_timeout(600)
-                    body = await page.evaluate("() => document.body.innerText")
+                    async def check(idx):
+                        async with sem:
+                            page = await browser.new_page()
+                            try:
+                                slug = names.get(idx, "").lower().replace(" ", "_")
+                                await page.goto(f"https://helldiverscompanion.com/#hellpad/planets/{slug}", timeout=30000)
+                                await page.wait_for_function("() => document.body.innerText.includes('OPERATIONAL PARAMETERS')",timeout=15000)
+                                body = (await page.inner_text("body")).upper()
+                                section = body.split("OPERATIONAL PARAMETERS",1)[1].split("POINTS OF INTEREST",1)[0]
+                                for key in VARIANT_CN:
+                                    if key in section:
+                                        result[key].append(names.get(idx,str(idx)))
+                            finally:
+                                await page.close()
+                    await asyncio.gather(*(check(idx) for idx in indices))
                 finally:
                     await browser.close()
-            up = body.upper()
-            op_start = up.find("OPERATIONAL PARAMETERS")
-            poi_start = up.find("POINTS OF INTEREST", op_start)
-            if op_start == -1:
-                return
-            end = poi_start if poi_start > op_start else op_start + 800
-            op_zone = up[op_start:end]
-            for kw in VARIANT_CN:
-                if kw in op_zone:
-                    result[kw].append(name_map.get(idx, slug))
-        except Exception:
-            pass
-
-    sem = asyncio.Semaphore(3)
-
-    async def limited(i):
-        async with sem:
-            await check_one(i)
-
-    asyncio.run(asyncio.gather(*[limited(i) for i in camp_idx]))
-
-    _scan_cache["ts"] = now
-    _scan_cache["data"] = result
+    _scan_cache.update({"ts":now,"data":result})
     return result
+
+from astrbot_plugin_hd2_common import commands
+from astrbot_plugin_hd2_common.runtime import blocking
 
 class Hd2VariantQueryPlugin(Star):
     def __init__(self, context: Context) -> None:
@@ -258,52 +214,20 @@ class Hd2VariantQueryPlugin(Star):
 
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def keyword_trigger(self, event: AstrMessageEvent):
-        """变种查询触发：@ + 变种名"""
-        text = (event.message_str or "").strip().lower()
-        if not text:
+        parsed = commands.parse(event.message_str)
+        if not parsed or parsed[0] != "variant":
             return
-        # 清洗 @ 前缀
-        text_clean = re.sub(r"^@[\w.\-]+\s*", "", text).strip()
-        if not text_clean:
+        query = parsed[1].strip()
+        key = next((key for key,cn in VARIANT_CN.items() if query.upper() == key or query == cn), None)
+        if key is None:
+            yield event.plain_result("请使用 /变种 名称，支持：" + "、".join(VARIANT_CN.values()))
+            event.stop_event()
             return
-        # 仅响应 / 指令
-        if not text_clean.startswith("/"):
-            return
-        text_clean = text_clean[1:].strip()
-        if not text_clean:
-            return
-        # 匹配变种中文名（支持 变种名 / 变种名信息 / 查xx变种）
-        matched_kw = None
-        for kw, cn in VARIANT_CN.items():
-            if cn in text_clean:
-                matched_kw = kw
-                break
-        if not matched_kw:
-            # 可能是查询词含「变种」但没匹配到词库 -> 未查询到
-            if "变种" in text_clean or "变异" in text_clean:
-                _log("done", plugin="variant_query", text=text_clean, group=_gid(event), user=_uid(event), detail="未匹配到词库")
-                yield event.plain_result("未查询到该变种信息。切莫粗心大意。")
-                event.stop_event()
-            return
-        _t0 = time.time()
-        _log("matched", plugin="variant_query", text=text_clean, group=_gid(event), user=_uid(event), name=_uname(event))
         try:
             scan = await _scan_all_variants()
-            planets = scan.get(matched_kw, [])
-            cn_name = VARIANT_CN[matched_kw]
-            if not planets:
-                yield event.plain_result("未查询到该变种信息。切莫粗心大意。")
-            else:
-                # 星球名经星图对照表替换为中文
-                cn_map = _load_planet_cn_map()
-                lines = ["目前的变种信息："]
-                for p in planets:
-                    p_cn = cn_map.get(p.upper(), p)
-                    lines.append(f"{p_cn}——{cn_name}")
-                yield event.plain_result("\n".join(lines))
-            _log("done", plugin="variant_query", text=text_clean, group=_gid(event), user=_uid(event), cost=time.time() - _t0, detail=f"{cn_name}: {len(planets)} 颗星球")
-        except Exception as e:
-            logger.warning(f"[HD2-VariantQuery] 查询失败: {e}")
-            _log("failed", plugin="variant_query", text=text_clean, group=_gid(event), user=_uid(event), cost=time.time() - _t0, detail=str(e)[:200])
-            yield event.plain_result(f"⚠️ 查询失败：{e}")
+            name_map = await blocking(_load_planet_cn_map)
+            rows = scan[key]
+            yield event.plain_result("目前无该变种的活动战役。" if not rows else "\n".join(name_map.get(p.upper(),p) + "——" + VARIANT_CN[key] for p in rows))
+        except Exception as error:
+            yield event.plain_result("⚠️ 变种数据不可用：" + str(error))
         event.stop_event()

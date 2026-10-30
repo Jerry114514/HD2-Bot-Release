@@ -1,6 +1,10 @@
 # 隐私与本地文件（勿提交）
 config.json
 *.local.json
+*.bak_webui_*
+*.tmp_webui*
+.qa-artifacts/
+.venv*/
 
 # Python
 __pycache__/

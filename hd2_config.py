@@ -14,9 +14,13 @@ QQ 号 / 群号 / NapCat token / 路径即可，所有代码零硬编码。
 """
 import json
 import os
+import copy
 
 DEFAULTS = {
     "bot": {
+        "platform": "napcat",     # napcat / qq_official; official credentials are configured in AstrBot
+        "platform_id": "",        # exact AstrBot adapter id for per-platform management
+        "allow_chat": False,
         "self_id": "",          # 机器人 QQ 号（NapCat 登录号）
         "admin_qq": "",         # 管理员 QQ（可选）
         "groups": [],           # 允许的群号列表（白名单）
@@ -31,6 +35,7 @@ DEFAULTS = {
         "ws_url": "ws://127.0.0.1:6199/ws",     # AstrBot OneBot 反向 WS
     },
     "astrbot": {
+        "data_dir": "",           # explicitly selected instance; never scan other profiles
         "exe": "D:/AstrBot/astrbot-desktop-tauri.exe",
         "python": "D:/AstrBot/backend/python/python.exe",
         "webui_port": 6185,
@@ -50,6 +55,8 @@ DEFAULTS = {
         "fake_name": "绝地潜兵·测试员",
     },
     "data": {
+        "site_base": "https://jerry114514.github.io/HD2-Galatic_war-Map",
+        "max_stale_seconds": 3600,
         "translate_url": "https://api.mymemory.translated.net/get",
         "assignments_url": "https://cdn.helldiverscompanion.com/live/assignments/recent.json",
         "live_api_url": "https://helldiverscompanion.com/api/hell-divers-2-api/get-api-data-live",
@@ -66,6 +73,7 @@ DEFAULTS = {
 }
 
 _cache = None
+_cache_signature = None
 
 
 def project_dir() -> str:
@@ -81,7 +89,7 @@ def config_path() -> str:
 
 
 def _deep_merge(base: dict, override: dict) -> dict:
-    out = dict(base)
+    out = copy.deepcopy(base)
     for k, v in (override or {}).items():
         if isinstance(v, dict) and isinstance(out.get(k), dict):
             out[k] = _deep_merge(out[k], v)
@@ -92,18 +100,21 @@ def _deep_merge(base: dict, override: dict) -> dict:
 
 def load_config(force: bool = False) -> dict:
     """加载配置（合并 DEFAULTS + config.json），结果缓存"""
-    global _cache
-    if _cache is not None and not force:
+    global _cache, _cache_signature
+    path = config_path()
+    stat = os.stat(path) if os.path.exists(path) else None
+    signature = (path, stat.st_mtime_ns, stat.st_size) if stat else (path, None, None)
+    if _cache is not None and not force and signature == _cache_signature:
         return _cache
     cfg = _deep_merge(DEFAULTS, {})
-    path = config_path()
     if os.path.exists(path):
         try:
             with open(path, encoding="utf-8") as f:
                 cfg = _deep_merge(cfg, json.load(f))
-        except Exception as e:
-            print(f"[hd2_config] 读取配置失败 {path}: {e}")
+        except (ValueError, OSError) as e:
+            raise RuntimeError(f"配置文件不可用：{path}") from e
     _cache = cfg
+    _cache_signature = signature
     return cfg
 
 

@@ -37,7 +37,7 @@ WELCOME_TEXT = (
     "🎯 /roll — 随机抽取一套七格战术配装\n"
     "📡 /api — 游戏 API 变动监测\n"
     "📖 /wiki 关键词 — Wiki 词条查询（helldivers.wiki.gg 中文站）\n\n"
-    "以上指令均输出战术 HUD 风格图片卡，数据每 5 分钟与前线同步。\n"
+    "指令支持战术 HUD 图片与文字回退；数据时间见输出。\n"
     "民主需要你，士兵——上去给他们点颜色看看！✊"
 )
 
@@ -67,6 +67,9 @@ class Hd2WelcomePlugin(Star):
     @filter.event_message_type(filter.EventMessageType.GROUP_MESSAGE)
     async def on_group_message(self, event: AstrMessageEvent):
         """群消息统一入口：快速过滤，只处理进群通知。"""
+        from astrbot_plugin_hd2_common.data import setting
+        if setting("bot", "platform", default="napcat") != "napcat":
+            return
         raw = getattr(event.message_obj, "raw_message", None)
         if raw is None:
             return
