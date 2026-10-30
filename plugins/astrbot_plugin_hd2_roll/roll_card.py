@@ -11,11 +11,13 @@
 """
 import json
 import os
-import random
+from uuid import uuid4
 import sys
 import time
 import urllib.request
 from PIL import Image, ImageDraw, ImageFont
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from astrbot_plugin_hd2_roll.loadout import draw, catalog
 
 CATALOG_URL = "https://jerry114514.github.io/shared/hd2-loadout/data/catalog.json"
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -31,63 +33,17 @@ W = 1080; PAD = 36; TALL = 1800
 FZ = r"C:\Windows\Fonts\msyh.ttc"
 FZB = r"C:\Windows\Fonts\msyhbd.ttc"
 _f = {}
-def F(sz, bold=False):
-    k = (sz, bold)
-    if k not in _f:
-        _f[k] = ImageFont.truetype(FZB if bold else FZ, sz, index=0)
-    return _f[k]
+from astrbot_plugin_hd2_war_report.report_card import F
 
 SLOT_LABEL = {"primary": "主手 · PRIMARY", "secondary": "副手 · SECONDARY",
               "grenade": "手雷 · GRENADE"}
 SITE_CACHE = {}
 
-def _site_get(url, ttl=240):
-    hit = SITE_CACHE.get(url)
-    if hit and time.time() - hit[0] < ttl:
-        return hit[1]
-    req = urllib.request.Request(url, headers={"User-Agent": "HD2Bot/1.0 (roll-card)"})
-    with urllib.request.urlopen(req, timeout=20) as r:
-        obj = json.load(r)
-    SITE_CACHE[url] = (time.time(), obj)
-    return obj
-
 def _catalog():
-    """装备目录：240s 站点缓存 + 磁盘兜底（静态目录，离线可用）。"""
-    cache_file = os.path.join(CACHE_DIR, "catalog.json")
-    try:
-        cat = _site_get(CATALOG_URL)
-        if cat.get("equipment"):
-            try:
-                json.dump(cat, open(cache_file, "w", encoding="utf-8"))
-            except Exception:
-                pass
-            return cat
-    except Exception:
-        pass
-    try:
-        return json.load(open(cache_file, encoding="utf-8"))
-    except Exception:
-        return None
+    return catalog()
 
-def roll_seven(cat):
-    """引擎 pure 模式抽取：各槽均匀抽 1 + 战备互异抽 4；七件互异、机甲 ≤1。"""
-    pools = {s: [e for e in (cat.get("equipment") or []) if e.get("selection_slot") == s]
-             for s in ("primary", "secondary", "grenade", "stratagem")}
-    if any(len(pools[s]) < 1 for s in ("primary", "secondary", "grenade")) or len(pools["stratagem"]) < 4:
-        return None
-    for _ in range(32):
-        lo = {"primary": random.choice(pools["primary"]),
-              "secondary": random.choice(pools["secondary"]),
-              "grenade": random.choice(pools["grenade"]),
-              "stratagems": random.sample(pools["stratagem"], 4)}
-        ids = [lo["primary"].get("id"), lo["secondary"].get("id"), lo["grenade"].get("id")] + \
-              [t.get("id") for t in lo["stratagems"]]
-        if len(set(ids)) != 7:
-            continue
-        exos = sum(1 for i in ids if str(i).startswith("vehicle_exo_"))
-        if exos <= 1:
-            return lo
-    return lo
+def roll_seven(cat=None):
+    return draw("pure")
 
 def paste_contain(img, src, box):
     """icon contain 缩放居中贴入 box=(x,y,w,h)"""
@@ -124,7 +80,7 @@ def section_label(dr, x, y, text, f_label):
     dr.rectangle([x, y + 2, x + 6, y + 2 + 28], fill=GOLD)
     dr.text((x + 16, y), text, font=f_label, fill=TEXT)
 
-def render_roll_card(out_dir=None):
+def render_roll_card(out_dir=None, result=None):
     """七格配装卡 → PNG 路径；失败返回 None（调用方回退文本）。"""
     out_dir = out_dir or CACHE_DIR
     try:
@@ -132,10 +88,9 @@ def render_roll_card(out_dir=None):
         cat = _catalog()
         if not cat:
             return None
-        lo = roll_seven(cat)
+        lo = result if result is not None else draw()
         if not lo:
             return None
-        by_id = {e.get("id"): e for e in (cat.get("equipment") or [])}
 
         now = time.strftime("%Y-%m-%d %H:%M")
         img = Image.new("RGB", (W, TALL), BG)
@@ -146,7 +101,7 @@ def render_roll_card(out_dir=None):
         dr.rectangle([0, 0, 5, 92], fill=GOLD)
         dr.text((PAD, 14), "战术搭配器", font=F(42, True), fill=GOLD)
         dr.text((PAD + dr.textlength("战术搭配器", font=F(42, True)) + 24, 36),
-                "LOADOUT ROLL · 七格纯随机", font=F(15), fill=MUTE)
+                "LOADOUT · 七格配装", font=F(15), fill=MUTE)
         sw = dr.textlength(now, font=F(16))
         dr.text((W - PAD - sw, 16), now, font=F(16), fill=DIM)
         sw2 = dr.textlength("真理部 · MOT", font=F(16))
@@ -211,9 +166,9 @@ def render_roll_card(out_dir=None):
 
         # ══ 页脚 ══
         dr.line([(PAD, y), (W - PAD, y)], fill=LINE)
-        dr.text((PAD, y + 14), "抽取主手、副手、手雷与四个战备 · 纯随机，每格独立抽取",
+        dr.text((PAD, y + 14), "主手 · 副手 · 手雷 · 战略配备 ×4",
                 font=F(14), fill=MUTE)
-        ft = "自由换装与六维评估：主站战术搭配器"
+        ft = "为超级地球而战"
         fw = dr.textlength(ft, font=F(14))
         dr.text((W - PAD - fw, y + 14), ft, font=F(14), fill=MUTE)
         dr.text((PAD, y + 40), "真理部 · 管理式民主 · 与 Arrowhead Game Studios 无隶属关系",
@@ -221,7 +176,7 @@ def render_roll_card(out_dir=None):
         H = min(TALL, y + 88)
 
         img = img.crop((0, 0, W, H))
-        out_path = os.path.join(out_dir, "roll_card.png")
+        out_path = os.path.join(out_dir, "roll_" + uuid4().hex + ".png")
         tmp = out_path + ".tmp"
         img.save(tmp, format="PNG")
         os.replace(tmp, out_path)

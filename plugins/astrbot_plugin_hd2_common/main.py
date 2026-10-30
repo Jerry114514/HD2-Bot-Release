@@ -27,9 +27,9 @@ TRANSLATE_URL = "https://api.mymemory.translated.net/get"
 _OFFICIAL_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AstrBot-HD2-Plugin/1.0",
     "Accept": "application/json",
-    "X-Super-Client": "YOUR_QQ_NUMBER",
-    "X-Super-Contact": "YOUR_QQ_NUMBER@qq.com",
-    "Accept-Language": "en-US",
+    "X-Super-Client": "HD2-Bot",
+    "X-Super-Contact": "https://github.com/Jerry114514/HD2-Bot-Release",
+    "Accept-Language": "zh-Hans",
 }
 
 

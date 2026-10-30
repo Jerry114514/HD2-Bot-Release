@@ -68,17 +68,11 @@ except Exception:
 
 
 def _gid(event):
-    try:
-        return int(getattr(event.message_obj, "group_id", 0) or 0)
-    except Exception:
-        return 0
+    return str(getattr(event.message_obj, "group_id", "") or "")
 
 
 def _uid(event):
-    try:
-        return int(event.get_sender_id() or 0)
-    except Exception:
-        return 0
+    return str(event.get_sender_id() or "")
 
 
 def _uname(event):
@@ -88,6 +82,8 @@ def _uname(event):
     except Exception:
         return ""
 
+
+from astrbot_plugin_hd2_common.runtime import blocking
 
 class Hd2LookupPlugin(Star):
     def __init__(self, context: Context) -> None:
@@ -117,7 +113,7 @@ class Hd2LookupPlugin(Star):
         img_path = None
         if _render_help_card:
             try:
-                img_path = _render_help_card()
+                img_path = await blocking(_render_help_card)
             except Exception as e:
                 logger.warning(f"[HD2] 帮助卡渲染失败，回退文本: {e}")
                 img_path = None

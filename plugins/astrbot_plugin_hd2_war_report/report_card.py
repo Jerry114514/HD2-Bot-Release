@@ -14,6 +14,14 @@ import time
 import urllib.request
 from datetime import datetime, timezone
 from PIL import Image, ImageDraw, ImageFont
+import hashlib
+import tempfile
+import threading
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from astrbot_plugin_hd2_common import data as shared
+from astrbot_plugin_hd2_common.commands import mo_tasks
+_render_locks = {}
+_render_lock_guard = threading.Lock()
 
 DATA_URL = "https://jerry114514.github.io/HD2-Galatic_war-Map/data.json"
 DIST_URL = "https://jerry114514.github.io/HD2-Galatic_war-Map/data/history/player_distribution.json"
@@ -23,6 +31,7 @@ FETCH_TIMEOUT = 20
 FONT_CANDIDATES = [
     (r"C:\Windows\Fonts\msyh.ttc", r"C:\Windows\Fonts\msyhbd.ttc"),
     (r"C:\Windows\Fonts\simhei.ttf", r"C:\Windows\Fonts\simhei.ttf"),
+    (r"C:\Windows\Fonts\arial.ttf", r"C:\Windows\Fonts\arialbd.ttf"),
     ("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",) * 2,
 ]
 
@@ -46,35 +55,30 @@ TALL = 2600
 
 _fcache = {}
 def F(sz, bold=False):
+    if sz <= 24:
+        sz += 2
     key = (sz, bold)
     if key not in _fcache:
-        reg, bold_p = FONT_CANDIDATES[0]
+        reg, bold_p = next((pair for pair in FONT_CANDIDATES if all(os.path.isfile(p) for p in pair)), ("DejaVuSans.ttf", "DejaVuSans.ttf"))
         _fcache[key] = ImageFont.truetype(bold_p if bold else reg, sz, index=0)
     return _fcache[key]
 
+
+def paste_contain(img, src, box):
+    from PIL import ImageOps
+    x, y, width, height = box
+    icon = ImageOps.contain(src.convert("RGBA"), (width, height))
+    img.paste(icon, (x + (width-icon.width)//2, y + (height-icon.height)//2), icon)
+
 def _get(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "HD2Bot/1.0 (report-card)"})
-    last = None
-    for _ in range(2):
-        try:
-            with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT) as r:
-                return json.load(r)
-        except Exception as e:
-            last = e
-            time.sleep(0.6)
-    raise last
+    return shared.get_json(url, ttl=300, timeout=FETCH_TIMEOUT)
 
 
 _site_cache = {}  # url -> (ts, obj)·全卡共享 240s TTL
 
 
 def _site_get(url, ttl=240):
-    hit = _site_cache.get(url)
-    if hit and time.time() - hit[0] < ttl:
-        return hit[1]
-    obj = _get(url)
-    _site_cache[url] = (time.time(), obj)
-    return obj
+    return shared.site_doc() if url == DATA_URL else shared.get_json(url, ttl=ttl)
 
 
 FACTION_CN = {"Humans": "超级地球", "Terminid": "终结族", "Terminids": "终结族",
@@ -184,58 +188,11 @@ def _iso_ts(s):
 
 
 def _region_recent_frames(pidx, ridx):
-    """主站 data/recent/planet_regions.json → 该区域 (首帧, 末帧, 最新 regen)；无帧 None。
-    注意采集器字段拼写就是 regerPerSecond（兼容 regenPerSecond）。"""
-    try:
-        d = _get("https://jerry114514.github.io/HD2-Galatic_war-Map/data/recent/planet_regions.json")
-    except Exception:
-        return None
-    hits = []
-    for fr in d.get("data") or []:
-        ts = str(fr.get("timestampUtc") or "")
-        for rg in fr.get("planetRegions") or []:
-            if rg.get("planetIndex") == pidx and rg.get("regionIndex") == ridx and _iso_ts(ts):
-                hits.append((ts, rg))
-    if not hits:
-        return None
-    hits.sort(key=lambda x: _iso_ts(x[0]) or datetime.min.replace(tzinfo=timezone.utc))
-    regen = None
-    for _, rg in reversed(hits):
-        regen = rg.get("regerPerSecond")
-        if regen is None:
-            regen = rg.get("regenPerSecond")
-        if regen is not None:
-            break
-    return hits[0][1], hits[-1][1], regen
+    return shared.region_frames(pidx, ridx)
 
 
 def _region_rate(pl, lv, impact):
-    """区域净推进 %/h（主站 regionRateOf 口径）：实测帧差分优先
-    （帧距 ≥0.5h、无易主、双满血拒绝），推演兜底
-    gross = 玩家 × 影响系数 × 90 ÷ 区域血量 × 100，res = regen × 3600 ÷ 血量 × 100。
-    己方控制 → None。返回 (net, res, measured) 或 None"""
-    if not isinstance(lv, dict) or not (lv.get("maxHealth") or 0):
-        return None
-    if str(lv.get("owner") or "").lower() in ("humans", "1"):
-        return None
-    maxh = lv["maxHealth"]
-    frames = _region_recent_frames(pl.get("index"), lv.get("regionIndex"))
-    regen = frames[2] if frames else None
-    net, measured = None, False
-    if frames:
-        f0, f1, _ = frames
-        t0, t1 = _iso_ts(f0.get("timestampUtc")), _iso_ts(f1.get("timestampUtc"))
-        dh = (t1 - t0).total_seconds() / 3600 if (t0 and t1) else 0
-        both_full = ((f0.get("health") or 0) >= maxh * 0.9995
-                     and (f1.get("health") or 0) >= maxh * 0.9995)
-        if dh >= 0.5 and f0.get("owner") == f1.get("owner") and not both_full:
-            net = -((f1.get("health") or 0) - (f0.get("health") or 0)) / maxh * 100 / dh
-            measured = True
-    if net is None:
-        gross = (lv.get("players") or 0) * (impact or 0) * 90 / maxh * 100
-        net = gross - (regen or 0) * 3600 / maxh * 100
-    res = (regen or 0) * 3600 / maxh * 100
-    return (net, res, measured)
+    return shared.region_rate(pl, lv, impact)
 
 def fmt(n):
     return f"{int(n or 0):,}"
@@ -307,46 +264,21 @@ def section_label(dr, x, y, text, f_label):
     dr.text((x + 16, y), text, font=f_label, fill=TEXT)
 
 def render_report_card(out_dir=None):
-    """渲染 /战报 图片卡 → 返回 PNG 绝对路径；任何失败返回 None（调用方回退文本）。"""
     out_dir = out_dir or CACHE_DIR
-    try:
-        os.makedirs(out_dir, exist_ok=True)
-        out_path = os.path.join(out_dir, OUT_NAME)
-
-        meta_path = os.path.join(out_dir, OUT_NAME + ".meta")
-        # 时间快路径：站内数据 5 分钟一更新，240s 内的成品直接复用（零网络）
-        try:
-            if os.path.exists(out_path) and os.path.exists(meta_path):
-                meta = json.loads(open(meta_path, encoding="utf-8").read())
-                if meta.get("rev") and time.time() - meta.get("ts", 0) < 240:
-                    return out_path
-        except Exception:
-            pass
-
-        data = _site_get(DATA_URL)
-        try:
-            dist_hist = _site_get(DIST_URL).get("history") or []
-        except Exception:
-            dist_hist = []
-
-        rev = str(data.get("fetchedAt") or "")
-        # 同版本缓存：站内数据 5 分钟一更新，重复触发直接复用成品
-        try:
-            if os.path.exists(out_path) and os.path.exists(meta_path):
-                meta = json.loads(open(meta_path, encoding="utf-8").read())
-                if meta.get("rev") == rev:
-                    return out_path
-        except Exception:
-            pass
-
+    data = _site_get(DATA_URL)
+    distribution = shared.player_distribution(data)
+    dist_hist = [{"totalPlayers":distribution["total"], "timestamp":distribution["updatedAt"],
+                  "factions":dict(zip(("Humans","Terminids","Automatons","Illuminate"),
+                                      (distribution[k] for k in ("humans","terminids","automatons","illuminate"))))}] if distribution["total"] is not None else []
+    def draw(dr, img):
         now = datetime.now(timezone.utc).astimezone()
         a = data.get("assignments") or {}
         mo = data.get("major_order") or {}
         mtask = mo.get("tasks") or {}
-        tasks = (mtask.get("items") if isinstance(mtask, dict) else mtask) or []
+        tasks = mo_tasks(data)
         brief = (mo.get("translated_brief") or a.get("briefing") or "").strip()
         war = data.get("war") or {}
-        online = ((war.get("statistics") or {}).get("playerCount")) or 0
+        online = distribution["total"]
         campaigns = data.get("campaigns") or []
         news = data.get("news") or []
 
@@ -354,15 +286,13 @@ def render_report_card(out_dir=None):
         f_body = F(19); f_small = F(16); f_tiny = F(14)
         f_kpi = F(32, True); f_kpi_l = F(15)
 
-        img = Image.new("RGB", (W, TALL), BG)
-        dr = ImageDraw.Draw(img)
 
         # ══ HUD 头 ══
         stripe_band(img, 0, 92, alpha=22)
         dr.rectangle([0, 0, 5, 92], fill=GOLD)
         dr.text((PAD, 14), "银河战争速报", font=f_title, fill=GOLD)
         dr.text((PAD + 266, 36), "GALACTIC WAR REPORT", font=F(15), fill=MUTE)
-        ts = now.strftime("%Y-%m-%d %H:%M")
+        ts = str(data.get("fetchedAt") or "未知")[:16].replace("T", " ")
         tw = dr.textlength(ts, font=f_small)
         dr.text((W - PAD - tw, 16), ts, font=f_small, fill=DIM)
         sw = dr.textlength("真理部 · MOT", font=f_small)
@@ -371,12 +301,11 @@ def render_report_card(out_dir=None):
 
         # ══ KPI 行 ══
         KPI_H = 86
-        kpis = [("在线指挥官", fmt(online)),
+        kpis = [("在线指挥官", fmt(online) if online is not None else "未知"),
                 ("进行中战役", str(len(campaigns)) if campaigns else "—")]
         if tasks:
             kpis.append(("指令任务", f"{len(tasks)} 项"))
-            kpis.append(("指令总进度",
-                         f"{pct(sum(t.get('progress') or 0 for t in tasks), sum(t.get('goal') or 1 for t in tasks)):.1f}%"))
+            kpis.append(("已完成任务", str(sum(1 for t in tasks if shared.percent(t.get("progress"), t.get("goal")) == 100)) + " 项"))
         else:
             kpis.append(("指令", "当前无"))
             kpis.append(("状态", "待命中"))
@@ -391,7 +320,7 @@ def render_report_card(out_dir=None):
 
         # ══ 重要指令面板 ══
         if tasks:
-            brief_lines = wrap(brief, 46)[:8]
+            brief_lines = wrap(brief, 46)
             head_h = 52
             brief_h = (16 + 25 * len(brief_lines) + 10) if brief_lines else 0
             task_h = sum(100 for _ in tasks)
@@ -418,7 +347,7 @@ def render_report_card(out_dir=None):
                 dr.line([(PAD + 18, yy), (W - PAD - 18, yy)], fill=LINE)
                 yy += 6
             for i, t in enumerate(tasks):
-                name = f"任务 {i + 1}：{t.get('action') or ''}{(' · ' + t['faction_name']) if t.get('faction_name') else ''}"
+                name = f"任务 {i + 1}：{t.get('name') or t.get('action') or ''}"
                 dr.text((PAD + 18, yy), name, font=f_h3, fill=TEXT)
                 req = t.get("requirement") or {}
                 if req.get("type") == "equipment" and (req.get("name") or req.get("en")):
@@ -428,14 +357,15 @@ def render_report_card(out_dir=None):
                                  fill=(26, 20, 10), outline=BRASS)
                     dr.text((W - PAD - 18 - ew - 10, yy + 1), equip, font=f_small, fill=GOLD2)
                 yy += 38
-                goal, prog = t.get("goal") or 0, t.get("progress") or 0
-                r = pct(prog, goal) / 100.0
-                done = prog >= goal and goal > 0
+                goal, prog = t.get("goal"), t.get("progress")
+                percentage = shared.percent(prog, goal)
+                r = (percentage or 0) / 100.0
+                done = percentage == 100
                 progress_bar(dr, PAD + 18, yy, W - PAD * 2 - 36, 14, r, fill=GREEN if done else GOLD)
                 yy += 24
-                pt = ("已完成" if done else f"{r * 100:.1f}%")
+                pt = ("未知" if percentage is None else "已完成" if done else f"{r * 100:.1f}%")
                 dr.text((PAD + 18, yy), pt, font=f_h3, fill=GREEN if done else GOLD)
-                sub = f"进度 {fmt(prog)} / 目标 {fmt(goal)}"
+                sub = f"进度 {shared.fmt_big_num(prog)} / 目标 {shared.fmt_big_num(goal)}"
                 sw2 = dr.textlength(sub, font=f_small)
                 dr.text((W - PAD - 18 - sw2, yy + 6), sub, font=f_small, fill=MUTE)
                 yy += 62
@@ -446,10 +376,10 @@ def render_report_card(out_dir=None):
             latest = dist_hist[-1]
             total = latest.get("totalPlayers") or 0
             fac = latest.get("factions") or {}
-            rows = [("超级地球", fac.get("Humans") or 0, BLUE),
-                    ("终结族", fac.get("Terminids") or 0, (245, 197, 24)),
-                    ("机器人", fac.get("Automatons") or 0, (214, 128, 109)),
-                    ("光能者", fac.get("Illuminate") or 0, (207, 100, 248))]
+            rows = [("超级地球", fac.get("Humans"), BLUE),
+                    ("终结族", fac.get("Terminids"), (245, 197, 24)),
+                    ("机器人", fac.get("Automatons"), (214, 128, 109)),
+                    ("光能者", fac.get("Illuminate"), (207, 100, 248))]
             panel_h = 60 + 54 * len(rows) + 44
             dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
             dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
@@ -460,10 +390,11 @@ def render_report_card(out_dir=None):
                 dr.text((W - PAD - 18 - uw, y + 16), u, font=f_small, fill=MUTE)
             yy = y + 58
             for name, cnt, color in rows:
-                r = (cnt / total * 100) if total else 0
+                measured_pct = shared.percent(cnt,total)
+                r = measured_pct or 0
                 dr.text((PAD + 18, yy), name, font=f_body, fill=TEXT)
                 progress_bar(dr, PAD + 140, yy + 3, W - PAD * 2 - 330, 16, r / 100.0, fill=color)
-                vt = f"{fmt(cnt)}（{r:.1f}%）"
+                vt = (f"{fmt(cnt)}（{r:.1f}%）" if measured_pct is not None else "未知")
                 vw = dr.textlength(vt, font=f_body)
                 dr.text((W - PAD - 18 - vw, yy), vt, font=f_body, fill=TEXT)
                 yy += 54
@@ -473,12 +404,12 @@ def render_report_card(out_dir=None):
             y += panel_h + 18
 
         # ══ 最新要闻 ══
-        news_show = [n for n in news if (n.get("translated") or n.get("original"))][:2]
+        news_show = [n for n in news if (n.get("translated") or n.get("original") or n.get("message"))][:3]
         y_after_news = None
         if news_show:
             blocks = []
             for n in news_show:
-                blocks.append(wrap(n.get("translated") or n.get("original") or "", 48)[:6])
+                blocks.append(wrap(n.get("translated") or n.get("original") or n.get("message") or "", 48))
             panel_h = 52 + sum(24 + 24 * len(ls) + 14 for ls in blocks) + 4
             dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
             dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
@@ -500,29 +431,14 @@ def render_report_card(out_dir=None):
         # ══ 页脚 ══
         y = (y_after_news if y_after_news else y) + 8
         dr.line([(PAD, y), (W - PAD, y)], fill=LINE)
-        dr.text((PAD, y + 16), "数据来源：官方战况 API · 每 5 分钟自动更新", font=f_tiny, fill=MUTE)
-        ft = "发送 /查表 /dss /战役 /查询 查看更多"
+        dr.text((PAD, y + 16), "数据来源：主站战况快照 · 源时间见页脚", font=f_tiny, fill=MUTE)
+        ft = "发送 /帮助 /dss /战役 /查询 查看更多"
         fw = dr.textlength(ft, font=f_tiny)
         dr.text((W - PAD - fw, y + 16), ft, font=f_tiny, fill=MUTE)
         dr.text((PAD, y + 42), "真理部 · 管理式民主 · 本站与 Arrowhead Game Studios 无隶属关系",
                 font=f_tiny, fill=(80, 80, 80))
-        H = min(TALL, y + 88)
-
-        img = img.crop((0, 0, W, H))
-        tmp = out_path + ".tmp"
-        img.save(tmp, format="PNG")
-        os.replace(tmp, out_path)
-        try:
-            open(meta_path, "w", encoding="utf-8").write(
-                json.dumps({"rev": rev, "ts": time.time()}))
-        except Exception:
-            pass
-        return out_path
-    except Exception:
-        if os.environ.get("HD2_CARD_DEBUG"):
-            import traceback
-            traceback.print_exc()
-        return None
+        return y + 88
+    return _render_cached(os.path.join(out_dir, OUT_NAME), "", str(data.get("fetchedAt")), draw)
 
 # ═══════════════════════════════════════════════════════════════
 # 其他板块图片卡（/战线 · /dss · /查询）——数据一律从主站抓取
@@ -543,33 +459,32 @@ def _hud_head(dr, img, title, sub_en):
     return 92 + 16
 
 
-def _render_cached(out_path, meta_path, rev, draw_fn):
-    """通用缓存外壳：rev 未变 → 直接复用成品"""
-    try:
-        if os.path.exists(out_path) and os.path.exists(meta_path):
-            if json.loads(open(meta_path, encoding="utf-8").read()).get("rev") == rev:
-                return out_path
-    except Exception:
-        pass
-    try:
-        img = Image.new("RGB", (W, TALL), BG)
-        dr = ImageDraw.Draw(img)
-        y = draw_fn(dr, img)
-        H = min(TALL, y + 20)
-        img = img.crop((0, 0, W, H))
-        tmp = out_path + ".tmp"
-        img.save(tmp, format="PNG")
-        os.replace(tmp, out_path)
+def _render_cached(out_path, meta_path, rev, draw_fn, page_info=None):
+    meta = shared._snapshot.get() or {}
+    digest = hashlib.sha256((str(rev) + json.dumps(meta.get("_hd2", {}), sort_keys=True) + "layout-v3" + (str(page_info) if page_info else "")).encode()).hexdigest()[:16]
+    stem, _ = os.path.splitext(out_path)
+    out_path = stem + "_" + digest + ".png"
+    meta_path = out_path + ".meta"
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with _render_lock_guard:
+        lock = _render_locks.setdefault(out_path, threading.Lock())
+    with lock:
         try:
-            open(meta_path, "w", encoding="utf-8").write(json.dumps({"rev": rev, "ts": time.time()}))
-        except Exception:
+            paths = json.load(open(meta_path, encoding="utf-8"))["pages"]
+            if paths and all(os.path.isfile(p) for p in paths):
+                return paths[0] if len(paths) == 1 else paths
+        except (OSError, ValueError, KeyError):
             pass
-        return out_path
-    except Exception:
-        if os.environ.get("HD2_CARD_DEBUG"):
-            import traceback
-            traceback.print_exc()
-        return None
+        img = Image.new("RGB", (W, TALL), BG)
+        y = draw_fn(ImageDraw.Draw(img), img)
+        if y + 20 > TALL:
+            if y > 60000:
+                raise ValueError("内容过长，请使用文字查询或原文链接")
+            img = Image.new("RGB", (W, y + 40), BG)
+            y = draw_fn(ImageDraw.Draw(img), img)
+        paths = save_pages(img, y + 20, out_path, meta, page_info=page_info)
+        shared.atomic_json(meta_path, {"pages": paths})
+        return paths[0] if len(paths) == 1 else paths
 
 
 def render_campaigns_card(out_dir=None):
@@ -596,19 +511,17 @@ def render_campaigns_card(out_dir=None):
                 cn = smcn.get(en) or cp.get("name") or en
                 fac_en = c.get("faction") or pl.get("currentOwner") or ""
                 fac = FACTION_CN.get(fac_en, fac_en)
-                if pl.get("currentOwner") == "Humans":
-                    ratio = 100.0
-                else:
-                    ratio = (1 - (pl.get("health") or 0) / (pl.get("maxHealth") or 1)) * 100.0
-                rows.append((cn, pl.get("sector") or "", fac, ratio,
-                             pl.get("players") or 0, True))
+                state = shared.campaign_state(data, pl)
+                fac = FACTION_CN.get(state["faction"], str(state["faction"] or "未知"))
+                rows.append((cn, pl.get("sector") or "", fac, state["progress"],
+                             pl.get("players") or 0, state))
             rows.sort(key=lambda x: -x[4])
             players_sum = sum(r[4] for r in rows)
-            top_lib = max((r[3] for r in rows), default=0.0)
+            top_lib = max((r[3] for r in rows if r[3] is not None), default=0.0)
             y = _hud_head(dr, img, "战线总览", "CAMPAIGN LINES")
             KPI_H = 78
             kpis = [("进行中战线", str(len(rows)) + " 条"),
-                    ("最高解放度", str(round(top_lib, 1)) + "%"),
+                    ("最高战役进度", str(round(top_lib, 1)) + "%"),
                     ("战线在线", fmt(players_sum))]
             kw = (W - PAD * 2 - 12 * 2) // 3
             for i, (lab, val) in enumerate(kpis):
@@ -625,23 +538,23 @@ def render_campaigns_card(out_dir=None):
             section_label(dr, PAD + 18, y + 13, "全部战线（按在线人数排序）", F(25, True))
             yy = y + 54
             bw_x, bw_w = PAD + 320, W - PAD * 2 - 610
-            for cn, sector, fac, ratio, players, attacking in rows:
+            for cn, sector, fac, ratio, players, state in rows:
                 color = FACTION_COLOR.get(fac, GOLD)
                 dr.rectangle([PAD + 18, yy + 6, PAD + 22, yy + 30], fill=color)
                 dr.text((PAD + 32, yy), cn, font=F(20, True), fill=TEXT)
                 sw = dr.textlength(sector, font=F(14))
                 dr.text((W - PAD - 18 - sw, yy + 8), sector, font=F(14), fill=MUTE)
-                progress_bar(dr, bw_x, yy + 2, bw_w, 12, ratio / 100.0,
-                             fill=GOLD if attacking else (60, 60, 60))
-                pt = str(round(ratio, 1)) + "%"
+                progress_bar(dr, bw_x, yy + 2, bw_w, 12, (ratio or 0) / 100.0,
+                             fill=BLUE if state["defending"] else GOLD)
+                pt = (str(round(ratio, 1)) + "%") if ratio is not None else "未知"
                 dr.text((bw_x + bw_w + 12, yy - 4), pt, font=F(18, True),
-                        fill=GOLD if attacking else MUTE)
+                        fill=BLUE if state["defending"] else GOLD)
                 pw = dr.textlength(fmt(players) + " 人", font=F(15))
                 dr.text((W - PAD - 18 - pw, yy - 2), fmt(players) + " 人", font=F(15), fill=DIM)
-                dr.text((PAD + 32, yy + 24), fac + " · 解放战役", font=F(14), fill=color)
+                dr.text((PAD + 32, yy + 24), fac + " · " + state["status"] + (" · 截止 " + str(state["deadline"])[:16] if state["defending"] and state["deadline"] else ""), font=F(14), fill=color)
                 yy += 46
             dr.text((PAD + 18, y + panel_h - 26),
-                    "解放度 = 1 − 当前血量占比 · 己方星球按 100% 显示（官方报满血）",
+                    "解放/防御使用对应战役进度 · 数据不足显示未知",
                     font=F(13), fill=(80, 80, 80))
             return y + panel_h + 12
 
@@ -715,8 +628,9 @@ def render_dss_card(out_dir=None):
                     if isinstance(md, (int, float)) and md > 0 and mps:
                         quota = "每人每 " + str(int(mps // 3600)) + " 小时限捐 " + fmt(md) + " " + res
                     ids = set(act.get("effectIds") or [])
-                    is_active = bool(ids & active_ids)
-                    is_cool = (act.get("status") == 3) and not is_active
+                    shared_phase = shared.dss_phase(dss, act)
+                    is_active = shared_phase == "已激活"
+                    is_cool = shared_phase == "冷却中"
                     exp = act.get("expireAtWarTime") or 0
                     remain_ms = max(0, (exp - cur_war) * 1000) if (exp and cur_war) else None
                     if is_active:
@@ -928,12 +842,12 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
     out_dir = out_dir or CACHE_DIR
     try:
         os.makedirs(out_dir, exist_ok=True)
-        en = (slug or "").replace("_", " ").replace("-", " ").upper().strip()
+        en = shared.planet_key(slug)
         out_path = os.path.join(out_dir, "planet_" + en.replace(" ", "_") + ".png")
         meta_path = out_path + ".meta"
         data = _site_get(DATA_URL)
         pl = next((x for x in (data.get("planets") or [])
-                   if (x.get("name") or "").upper() == en), None)
+                   if shared.planet_key(x.get("name")) == en), None)
         if not pl:
             return None
         rev = "planet:" + str(data.get("fetchedAt") or "") + ":" + en
@@ -944,27 +858,26 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
             owner_en = pl.get("currentOwner") or ""
             owner = FACTION_CN.get(owner_en, owner_en)
             ocolor = FACTION_COLOR.get(owner, GOLD)
-            maxh = pl.get("maxHealth") or 1
+            state = shared.campaign_state(data, pl)
+            maxh = state["max_health"] or 1
             players = pl.get("players") or 0
-            res = pl.get("resistance") or 0
+            res = state["resistance"] or 0
             impact = data.get("impactMultiplier") or 0
-            attacking = bool(pl.get("attacking"))
-            lib = 100.0 if owner == "超级地球" else max(0.0, min(100.0, (1 - (pl.get("health") or 0) / maxh) * 100))
+            attacking = state["defending"]
+            lib = state["progress"] or 0
             gross = players * impact * 90 / maxh * 100
-            net = gross - res
+            net = state["rate"] or 0
+            rate_txt = f"{net:+.3f} %/h" if state["rate"] is not None else "未知"
+            rate_source = "实测" if state["measured"] else "推演" if state["rate"] is not None else "未知"
             hp_ratio = maxh / 1000000.0
             eq_rate = net * hp_ratio
             heal_h = res / 100 * maxh
-            eta_h = None
-            if net > 0.0005:
-                h = (100 - lib) / net
-                eta_h = h if h <= 720 else None
-            eta_txt = ("—" if (net <= 0.0005 or lib >= 99.9) else
-                       (f"{int(eta_h // 24)} 天 {int(eta_h % 24)} 时" if eta_h is not None else "超出 30 天"))
+            eta_h = (100 - lib) / net if net > .0005 else None
+            eta_txt = "—" if eta_h is None else (f"{int(eta_h // 24)} 天 {int(eta_h % 24)} 时" if eta_h <= 720 else "超出 30 天")
             online_all = ((data.get("war") or {}).get("statistics") or {}).get("playerCount") or 0
-            share = (players / online_all * 100) if online_all else 0
-            status_cn = ("已解放" if owner == "超级地球" else
-                         ("解放战役中" if attacking else "敌方控制"))
+            share = players / online_all * 100 if online_all else 0
+            status_cn = state["status"]
+            progress_label = "防御进度" if attacking else "解放进度"
             updated = (data.get("fetchedAt") or "")[:16].replace("T", " ")
             y = _hud_head(dr, img, "星球指挥台", "PLANET COMMAND")
 
@@ -1037,24 +950,24 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
             if lib > 0.05:
                 dr.arc([ring_x, ring_y, ring_x + SZ, ring_y + SZ], -90,
                        -90 + 360 * min(100, lib) / 100, fill=ring_col, width=sw_c)
-            ltxt = f"{lib:.1f}%"
+            ltxt = f"{lib:.1f}%" if state["progress"] is not None else "未知"
             lw = dr.textlength(ltxt, font=F(28, True))
             dr.text((ring_x + (SZ - lw) / 2, ring_y + SZ / 2 - 26), ltxt, font=F(28, True), fill=TEXT)
-            lbl = "已解放" if lib >= 99.9 else ("防守进度" if attacking else "解放进度")
+            lbl = progress_label
             lbw = dr.textlength(lbl, font=F(13))
             dr.text((ring_x + (SZ - lbw) / 2, ring_y + SZ / 2 + 10), lbl, font=F(13), fill=DIM)
-            hpv = f"{fmt(pl.get('health') or 0)} / {fmt(maxh)} · ×{hp_ratio:.2f}"
+            hpv = f"{fmt(state['health'] or 0)} / {fmt(maxh)} · ×{hp_ratio:.2f}"
             hw = dr.textlength(hpv, font=F(12))
             dr.text((ring_x + (SZ - hw) / 2, ring_y + SZ + 4), hpv, font=F(12), fill=MUTE)
             # Quick Intel（右列 6 行）
             qx = PAD + 700
             qy = y + 14
             qis = [("在线玩家", f"{fmt(players)}（占全服 {share:.2f}%）"),
-                   ("解放进度", f"{lib:.2f}%"),
+                   (progress_label, f"{lib:.2f}%" if state["progress"] is not None else "未知"),
                    ("血量倍数", f"×{hp_ratio:.2f}（100 万血基准）"),
-                   ("净速率", ("+" if net >= 0 else "") + f"{net:.3f} %/h（推演）"),
+                   ("净速率", rate_txt + "（" + rate_source + "）"),
                    ("当前生态", _planet_biome_name(pl) or "—"),
-                   ("预计解放", eta_txt)]
+                   ("防御截止" if attacking else "预计解放", str(state["deadline"] or "未知")[:16] if attacking else eta_txt)]
             for k, v in qis:
                 dr.text((qx, qy), k, font=F(14), fill=MUTE)
                 vw = dr.textlength(v, font=F(17, True))
@@ -1071,12 +984,12 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
             dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
             dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
             section_label(dr, PAD + 18, y + 13, "战略态势", F(23, True))
-            situation = [("终点线（解放进度）", f"{lib:.2f}%", f"血量 {fmt(pl.get('health') or 0)} / {fmt(maxh)}"),
-                         ("净速率", ("+" if net >= 0 else "") + f"{net:.3f} %/h", "推演（玩家 × 影响系数 × 90 ÷ 血量 − 抵抗度）"),
+            situation = [(progress_label, f"{lib:.2f}%" if state["progress"] is not None else "未知", f"血量 {fmt(state['health'] or 0)} / {fmt(maxh)}"),
+                         ("净速率", rate_txt, rate_source),
                          ("每小时回血", f"{heal_h:,.0f} HP/h", "抵抗度% × 血量"),
                          ("等效推进（基准球）", ("+" if eq_rate >= 0 else "") + f"{eq_rate:.2f} %/h", f"血量为基准球的 {hp_ratio:.2f} 倍"),
-                         ("预计解放", eta_txt, "净速率 ≤ 0 时无法推演"),
-                         ("敌方抵抗", f"{res:.2f} %/h", "无战役时仍存在的回血能力")]
+                         ("预计防御完成" if attacking else "预计解放", eta_txt, "推演时间，不代表能在防御截止前完成" if attacking else "净速率 ≤ 0 时无法推演"),
+                         ("敌方抵抗", f"{res:.2f} %/h" if state["resistance"] is not None else "未知", "解放战的回血能力；防御使用事件数据")]
             colw = (W - PAD * 2 - 36) // 2
             for i, (k, v, note) in enumerate(situation):
                 kx = PAD + 18 + (i % 2) * (colw + 18)
@@ -1178,7 +1091,7 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
                     rate = _region_rate(pl, lv, impact)
                     if rate:
                         net, _res, _measured = rate
-                        if p is None:
+                        if p is None or net is None:
                             rate_txt, eta_r = "—", "—"
                         else:
                             left = max(0.0, 100.0 - p)
@@ -1289,6 +1202,9 @@ _github_cache = {"etag": None, "body": None, "ts": 0}
 
 
 def _fetch_issue60():
+    active = shared._snapshot.get() or {}
+    if "_issue_body" in active:
+        return active["_issue_body"]
     """抓主仓 Issue #60（ETag 条件请求，304 不计 API 限额）+ 300s 进程缓存。"""
     if time.time() - _github_cache["ts"] < 300 and _github_cache["body"]:
         return _github_cache["body"]
@@ -1341,7 +1257,7 @@ def render_api_card(out_dir=None):
         info = _parse_issue60(body)
         out_path = os.path.join(out_dir, "api_card.png")
         meta_path = out_path + ".meta"
-        rev = str(info.get("detected") or "") + ":" + str(len(info.get("groups") or []))
+        rev = hashlib.sha256(body.encode("utf-8")).hexdigest()
 
         def draw(dr, img):
             changed = not info["no_change"]
@@ -1483,7 +1399,7 @@ def render_briefing_card(out_dir=None):
             y += panel_h + 14
 
             # 【战役概述】
-            desc_lines = wrap(ac.get("description_cn") or "", 46)[:10]
+            desc_lines = wrap(ac.get("description_cn") or "", 46)
             if desc_lines:
                 section_label(dr, PAD + 18, y + 6, "战役概述", F(23, True))
                 yy = y + 42
@@ -1494,12 +1410,12 @@ def render_briefing_card(out_dir=None):
 
             # 【当前阶段简报】
             ph = ac.get("phases") or []
-            cur = next((x for x in ph if x.get("id") == ac.get("current_phase_id")), None) or (ph[0] if ph else None)
+            cur = shared.current_phase(ac)
             if cur:
                 section_label(dr, PAD + 18, y + 6, "当前阶段 · " + (cur.get("title_cn") or cur.get("title") or ""),
                               F(23, True))
                 yy = y + 42
-                for ln in wrap(cur.get("briefing_cn") or cur.get("briefing") or "", 46)[:12]:
+                for ln in wrap(cur.get("briefing_cn") or cur.get("briefing") or "", 46):
                     dr.text((PAD + 18, yy), ln, font=F(19), fill=TEXT)
                     yy += 26
                 y = yy + 12
@@ -1545,14 +1461,14 @@ HELP_SECTIONS = [
     ("星球情报", "PLANET INTEL", [
         ("/查询 星球名", "星球指挥台卡：解放环、兵力趋势、区域战况、环境词条"
                        "（中英文均可；/星球 名 同效）"),
-        ("/银河星图", "快捷指令直达线上中文星图（浏览器打开：273 星球实时战况 + 补给线）"),
+        ("/银河星图", "快捷指令直达线上中文星图（浏览器打开：星球战况与补给线）"),
     ]),
     ("配装与变种", "LOADOUT & VARIANTS", [
-        ("/roll", "随机抽取七格战术配装：主武器/副武器/手雷 + 四战备，带总评与装备图标"),
+        ("/roll", "整套七槽配装：主手/副手/手雷 + 四战备，只显示结果与装备图标"),
         ("/变种名", "该变种当前出没星球（如 /孢裂变种）"),
     ]),
     ("AI 增强", "AUGMENT", [
-        ("/分析", "AI 战局分析：威胁评估与目标建议（需 LLM 连通，断连自动回退常规播报）"),
+        ("/分析", "AI 战局分析：威胁评估与目标建议（需配置 LLM，失败时明确提示）"),
     ]),
     ("资料库", "WIKI", [
         ("/wiki 关键词", "Helldivers 中文 Wiki 词条查询长图：数据表 + 正文摘要 + 主图"
@@ -1561,9 +1477,9 @@ HELP_SECTIONS = [
 ]
 
 HELP_NOTES = [
-    "指令无需 @，以 / 开头；星球与变种名称中英文均可",
+    "官方平台需 @机器人；NapCat 可直接 /指令；名称支持中英文",
     "默认输出战术 HUD 图片卡，渲染失败自动回退文本；指令后加 t 可要纯文本",
-    "新成员进群自动播报欢迎与指令速查 · 数据每 5 分钟与前线同步",
+    "进群欢迎仅 NapCat；战况以源数据时间与陈旧提示为准",
 ]
 
 HELP_TAGLINE = "为超级地球而战！"
@@ -1668,3 +1584,42 @@ def render_help_card(out_dir=None):
             import traceback
             traceback.print_exc()
         return None
+
+
+def save_pages(img, height, out_path, document=None, page_info=None):
+    """Split only near quiet rows, preserving text and adding page/source labels."""
+    spans, start = [], 0
+    while start < height:
+        end = min(height, start + 2100)
+        if end < height:
+            for row in range(end, max(start + 1000, end - 100), -1):
+                band = img.crop((PAD + 28, row, W - PAD - 28, row + 2)).convert("L")
+                if band.point(lambda p: 255 if p > 100 else 0).getbbox() is None:
+                    end = row
+                    break
+        spans.append((start, end))
+        start = end
+    paths = []
+    if page_info and len(spans) != 1:
+        raise ValueError("预分页内容超出单页高度")
+    doc = document or {}
+    quality = " · 缓存/数据陈旧" if (doc.get("_hd2") or {}).get("stale") else ""
+    for i, (start, end) in enumerate(spans):
+        page = Image.new("RGB", (W, end - start + 64), BG)
+        page.paste(img.crop((0, start, W, end)), (0, 0))
+        dr = ImageDraw.Draw(page)
+        caption = f"第 {i+1}/{len(spans)} 页 · 数据时间 {doc.get('fetchedAt', '见正文')}" + quality
+        if page_info:
+            caption = f"第 {page_info[0]}/{page_info[1]} 页 · {page_info[2]}"
+        dr.text((PAD, end - start + 14), caption, font=F(18), fill=DIM)
+        path = os.path.splitext(out_path)[0] + f"_{i+1}.png"
+        fd, tmp = tempfile.mkstemp(prefix=".card_", dir=os.path.dirname(path))
+        os.close(fd)
+        try:
+            page.save(tmp, format="PNG")
+            os.replace(tmp, path)
+        finally:
+            if os.path.exists(tmp):
+                os.unlink(tmp)
+        paths.append(path)
+    return paths

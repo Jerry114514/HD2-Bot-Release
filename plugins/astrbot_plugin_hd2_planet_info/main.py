@@ -1,4 +1,5 @@
 import io
+import os
 import re
 import time
 
@@ -18,7 +19,10 @@ except Exception:
         pass
 
 # 公共库（hd2_common）：共享常量/抓取/表加载/译名映射
+from astrbot_plugin_hd2_common import commands
+from astrbot_plugin_hd2_common.runtime import blocking, new_request, request_id
 from astrbot_plugin_hd2_common.main import (
+    fetch_json as _fetch_json,
     fetch_official as _fetch_official,
     load_effect_id_cn as _load_effect_id_cn,
     PLANET_NAME_CN,
@@ -27,18 +31,16 @@ from astrbot_plugin_hd2_common.main import (
 )
 
 
+def _to_slug(name):
+    return str(name).strip().lower().replace(" ", "_")
+
+
 def _gid(event):
-    try:
-        return int(getattr(event.message_obj, "group_id", 0) or 0)
-    except Exception:
-        return 0
+    return str(getattr(event.message_obj, "group_id", "") or "")
 
 
 def _uid(event):
-    try:
-        return int(event.get_sender_id() or 0)
-    except Exception:
-        return 0
+    return str(event.get_sender_id() or "")
 
 
 def _uname(event):
@@ -385,7 +387,7 @@ def _slug_to_index(slug: str):
         try:
             planets = _fetch_json(
                 "https://api.helldivers2.dev/api/v1/planets",
-                {"X-Super-Client": "astrbot-hd2-plugin", "X-Super-Contact": "https://github.com/astrbot"},
+                extra_headers={"X-Super-Client": "astrbot-hd2-plugin", "X-Super-Contact": "https://github.com/astrbot"},
             )
             _INDEX_CACHE["map"] = {p["name"].lower().replace(" ", "_").replace("-", "_"): p["index"] for p in planets}
             _INDEX_CACHE["ts"] = now
@@ -828,83 +830,34 @@ class Hd2PlanetInfoPlugin(Star):
         return False
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def keyword_trigger(self, event: AstrMessageEvent):
-        """星球信息触发：@ + 星球名 + 信息/情报/详情"""
-        text = (event.message_str or "").strip().lower()
-        logger.info(f"[HD2-PlanetInfo] HANDLER CALLED text={text!r} self_id={event.get_self_id()!r} wake={event.is_wake_up()}")
-        if not text:
+        parsed = commands.parse(event.message_str)
+        if not parsed or parsed[0] != "planet":
             return
-        # 清洗：去掉开头的 @昵称 前缀（如 @retune. 奥密克戎信息 -> 奥密克戎信息）
-        text_clean = re.sub(r"^@[\w.\-]+\s*", "", text).strip()
-        # 仅响应 / 指令
-        if not text_clean.startswith("/"):
+        _, query, plain = parsed
+        if not query:
+            yield event.plain_result("用法：/查询 星球名，例 /查询 X-45")
+            event.stop_event()
             return
-        text_clean = text_clean[1:].strip()
-        # 支持 /查询 星球名 格式（等价于 /星球名信息）
-        if text_clean.startswith("星球"):
-            text_clean = re.sub(r"^星球\s*", "", text_clean).strip()
-            # /星球 后直接是星球名（无需 信息 后缀）
-            slug = _planet_slug_from_query(text_clean)
-            has_kw = slug is not None
-        elif text_clean.startswith("查询") or text_clean.startswith("查"):
-            text_clean = re.sub(r"^(查询|查)\s*", "", text_clean).strip()
-            # 查询后直接是星球名（无需 信息 后缀）
-            slug = _planet_slug_from_query(text_clean)
-            has_kw = slug is not None
-        else:
-            has_kw = ("信息" in text_clean or "情报" in text_clean or "详情" in text_clean or text_clean.endswith("info"))
-            slug = _planet_slug_from_query(text_clean) if has_kw else None
-        is_at = self._is_at_me(event)
-        logger.info(f"[HD2-PlanetInfo] has_kw={has_kw} is_at={is_at} slug={slug} text_clean={text_clean!r}")
-        if not has_kw:
-            return
-        if not slug:
-            return
-        _t0 = time.time()
-        _log("matched", plugin="planet_info", text=text_clean, group=_gid(event), user=_uid(event), name=_uname(event))
+        token = new_request(event)
         try:
-            # 星球中文名标题（经星图对照表查验替换）
-            title_cn = None
-            for en, cn in _get_planet_name_map().items():
-                if cn and en.lower().replace(" ", "_") == slug:
-                    title_cn = cn
-                    break
-            if not title_cn and slug in ("super-earth", "superearth", "super_earth"):
-                title_cn = "超级地球"
-            # 图片卡优先：主站黑金 HUD 星球档案（超级地球同主站标准页，不再特判文本；
-            # 渲染失败统一回退文本管线）
-            try:
-                from astrbot_plugin_hd2_war_report.report_card import render_planet_card as _rpc
-                _card = _rpc(slug, title_cn=title_cn)
-                if _card:
-                    yield event.image_result(_card)
-                    _log("done", plugin="planet_info", text=text_clean, group=_gid(event),
-                         user=_uid(event), cost=time.time() - _t0, detail=f"planet-card {_card}")
-                    event.stop_event()
-                    return
-            except Exception as e:
-                logger.warning(f"[HD2-PlanetInfo] 星球图片卡失败，回退文本: {e}")
-            # 文本回退：官方源优先（planetStatus/planetActiveEffects/planetEvents），页面抓取兜底
-            info = None
-            idx = _slug_to_index(slug)
-            if idx is not None:
+            view = await blocking(commands.result, "planet", query)
+            images = None
+            if not plain:
                 try:
-                    info = _fetch_planet_official(idx)
-                except Exception as e:
-                    logger.warning(f"[HD2-PlanetInfo] 官方详情失败({slug}): {type(e).__name__}: {e}")
-                    info = None
-            if info:
-                result = _translate_planet_info(info)
+                    images = await blocking(commands.render_result, view)
+                except Exception as error:
+                    logger.warning(f"[HD2] 星球图片不可用：{type(error).__name__}")
+            if images:
+                for image in images if isinstance(images,list) else [images]:
+                    yield event.image_result(image)
             else:
-                body = await _fetch_planet_page_text(slug)
-                info = _parse_planet_info(body)
-                result = _translate_planet_info(info)
-            # 输出开头加中文星球名
-            if title_cn:
-                result = f"🪐 {title_cn}\n\n" + result
-            yield event.plain_result(result)
-            _log("done", plugin="planet_info", text=text_clean, group=_gid(event), user=_uid(event), cost=time.time() - _t0, detail=result[:60])
-        except Exception as e:
-            logger.warning(f"[HD2] 星球信息抓取失败: {e}")
-            _log("failed", plugin="planet_info", text=text_clean, group=_gid(event), user=_uid(event), cost=time.time() - _t0, detail=str(e)[:200])
-            yield event.plain_result(f"⚠️ 暂时无法获取该星球信息：{e}")
-        event.stop_event()
+                yield event.plain_result(view.text)
+            _log("generated", plugin="planet_info", group=_gid(event), user=_uid(event),
+                 source=(view.document.get("_hd2") or {}).get("source", ""),data_version=view.document.get("fetchedAt", ""),
+                 source_time=view.document.get("fetchedAt"), output_mode="image" if images else "text",
+                 stale=(view.document.get("_hd2") or {}).get("stale"))
+        except Exception as error:
+            yield event.plain_result("⚠️ " + str(error))
+        finally:
+            request_id.reset(token)
+            event.stop_event()
