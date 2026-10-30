@@ -101,6 +101,7 @@ def _uname(event):
 # 触发关键词（消息里包含任一即触发）
 TRIGGER_KEYWORDS = [
     "api",
+    "银河星图",
     "目前战况如何",
     "现在在打哪里",
     "重要指令是什么",
@@ -115,6 +116,18 @@ TRIGGER_KEYWORDS = [
     "战线",
     "分析",
 ]
+
+# /银河星图（快捷指令）回复：线上中文星图入口
+GALAXY_MAP_REPLY = (
+    "🌌 银河星图 · 线上中文版\n"
+    "https://jerry114514.github.io/HD2-Galatic_war-Map/galaxy-map-v2.html\n\n"
+    "· 273 颗星球实时战况：阵营配色 / 在线人数 / 解放进度\n"
+    "· 补给线连线、归属变化追踪、战区分布\n"
+    "· 点任意星球直达「星球指挥台」详情页\n"
+    "· 手机 / 电脑浏览器均可打开，数据每 5 分钟与前线同步\n\n"
+    "建议收藏链接——出击部署前先看一眼前线！\n"
+    "为超级地球而战！🫡"
+)
 
 # 阵营中文名
 FACTION_CN = {
@@ -1815,6 +1828,13 @@ class Hd2WarReportPlugin(Star):
                 yield event.plain_result(report)
                 _log("done", plugin="war_report", text=text, group=_gid(event), user=_uid(event),
                      cost=time.time() - _t0, detail="api-text")
+                event.stop_event()
+                return
+            # /银河星图（QQ 快捷指令）：线上中文星图入口
+            if text.startswith("银河星图") or text == "星图":
+                yield event.plain_result(GALAXY_MAP_REPLY)
+                _log("done", plugin="war_report", text=text, group=_gid(event), user=_uid(event),
+                     cost=time.time() - _t0, detail="galaxy-map")
                 event.stop_event()
                 return
             if "dss" in text:

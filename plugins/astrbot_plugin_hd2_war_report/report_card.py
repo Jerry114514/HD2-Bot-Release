@@ -1545,6 +1545,7 @@ HELP_SECTIONS = [
     ("星球情报", "PLANET INTEL", [
         ("/查询 星球名", "星球指挥台卡：解放环、兵力趋势、区域战况、环境词条"
                        "（中英文均可；/星球 名 同效）"),
+        ("/银河星图", "快捷指令直达线上中文星图（浏览器打开：273 星球实时战况 + 补给线）"),
     ]),
     ("配装与变种", "LOADOUT & VARIANTS", [
         ("/roll", "随机抽取七格战术配装：主武器/副武器/手雷 + 四战备，带总评与装备图标"),
@@ -1661,7 +1662,7 @@ def render_help_card(out_dir=None):
         return _render_cached(
             os.path.join(out_dir, "help_card.png"),
             os.path.join(out_dir, "help_card.meta.json"),
-            "help-v4", _draw_help)
+            "help-v5", _draw_help)
     except Exception:
         if os.environ.get("HD2_CARD_DEBUG"):
             import traceback
