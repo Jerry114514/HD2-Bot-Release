@@ -7,6 +7,29 @@ from uuid import uuid4
 
 request_id = contextvars.ContextVar("hd2_request_id", default="")
 _limits = weakref.WeakKeyDictionary()
+_shared = weakref.WeakKeyDictionary()
+_wiki_limits = weakref.WeakKeyDictionary()
+
+
+async def singleflight(key, factory):
+    """Share in-flight work only; a waiter cancellation never cancels its producer."""
+    jobs = _shared.setdefault(asyncio.get_running_loop(), {})
+    task = jobs.get(key)
+    if task is None:
+        task = jobs[key] = asyncio.create_task(factory())
+        def finished(done):
+            if jobs.get(key) is done:
+                jobs.pop(key, None)
+            if not done.cancelled():
+                done.exception()  # retrieve errors even when every waiter has left
+        task.add_done_callback(finished)
+    return await asyncio.shield(task)
+
+
+async def wiki_blocking(fn, *args, **kwargs):
+    limit = _wiki_limits.setdefault(asyncio.get_running_loop(), asyncio.Semaphore(2))
+    async with limit:
+        return await blocking(fn, *args, **kwargs)
 
 
 async def blocking(fn, *args, **kwargs):

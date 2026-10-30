@@ -45,6 +45,9 @@ def hd2_log(stage, plugin="", text="", group="", user="", name="", detail="", co
               "cost": round(cost, 3) if isinstance(cost, (int, float)) else None, "wake": bool(wake),
               "platform": str(platform or ""), "source_time": source_time, "stale": stale,
               "output_mode": output_mode, "source":source, "data_version":data_version}
+    if isinstance(extra.get("search"), dict):
+        record["search"] = {k:extra["search"][k] for k in ("status","table_status","candidate_count",
+            "complete","requests","cache_hits","coalesced","elapsed_ms","warnings","stages","resolution_cache") if k in extra["search"]}
     try:
         with _lock:
             path = Path(LOG_FILE)

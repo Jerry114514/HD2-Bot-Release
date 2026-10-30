@@ -459,9 +459,9 @@ def _hud_head(dr, img, title, sub_en):
     return 92 + 16
 
 
-def _render_cached(out_path, meta_path, rev, draw_fn):
+def _render_cached(out_path, meta_path, rev, draw_fn, page_info=None):
     meta = shared._snapshot.get() or {}
-    digest = hashlib.sha256((str(rev) + json.dumps(meta.get("_hd2", {}), sort_keys=True) + "layout-v3").encode()).hexdigest()[:16]
+    digest = hashlib.sha256((str(rev) + json.dumps(meta.get("_hd2", {}), sort_keys=True) + "layout-v3" + (str(page_info) if page_info else "")).encode()).hexdigest()[:16]
     stem, _ = os.path.splitext(out_path)
     out_path = stem + "_" + digest + ".png"
     meta_path = out_path + ".meta"
@@ -482,7 +482,7 @@ def _render_cached(out_path, meta_path, rev, draw_fn):
                 raise ValueError("内容过长，请使用文字查询或原文链接")
             img = Image.new("RGB", (W, y + 40), BG)
             y = draw_fn(ImageDraw.Draw(img), img)
-        paths = save_pages(img, y + 20, out_path, meta)
+        paths = save_pages(img, y + 20, out_path, meta, page_info=page_info)
         shared.atomic_json(meta_path, {"pages": paths})
         return paths[0] if len(paths) == 1 else paths
 
@@ -1586,7 +1586,7 @@ def render_help_card(out_dir=None):
         return None
 
 
-def save_pages(img, height, out_path, document=None):
+def save_pages(img, height, out_path, document=None, page_info=None):
     """Split only near quiet rows, preserving text and adding page/source labels."""
     spans, start = [], 0
     while start < height:
@@ -1600,6 +1600,8 @@ def save_pages(img, height, out_path, document=None):
         spans.append((start, end))
         start = end
     paths = []
+    if page_info and len(spans) != 1:
+        raise ValueError("预分页内容超出单页高度")
     doc = document or {}
     quality = " · 缓存/数据陈旧" if (doc.get("_hd2") or {}).get("stale") else ""
     for i, (start, end) in enumerate(spans):
@@ -1607,6 +1609,8 @@ def save_pages(img, height, out_path, document=None):
         page.paste(img.crop((0, start, W, end)), (0, 0))
         dr = ImageDraw.Draw(page)
         caption = f"第 {i+1}/{len(spans)} 页 · 数据时间 {doc.get('fetchedAt', '见正文')}" + quality
+        if page_info:
+            caption = f"第 {page_info[0]}/{page_info[1]} 页 · {page_info[2]}"
         dr.text((PAD, end - start + 14), caption, font=F(18), fill=DIM)
         path = os.path.splitext(out_path)[0] + f"_{i+1}.png"
         fd, tmp = tempfile.mkstemp(prefix=".card_", dir=os.path.dirname(path))

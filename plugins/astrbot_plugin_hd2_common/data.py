@@ -5,6 +5,7 @@ Missing observations remain unknown; source time is never replaced with fetch ti
 """
 import contextlib
 import contextvars
+from concurrent.futures import Future
 from collections import OrderedDict
 import copy
 import hashlib
@@ -37,6 +38,7 @@ DEFAULT_SITE = "https://jerry114514.github.io/HD2-Galatic_war-Map"
 CACHE = Path(__file__).parent / "cache"
 _memory = OrderedDict()
 _lock = threading.RLock()
+_inflight = {}
 _snapshot = contextvars.ContextVar("hd2_snapshot", default=None)
 
 
@@ -54,23 +56,54 @@ def resource_url(url):
     return url
 
 
-def get_json(url, ttl=120, timeout=15, force=False):
+def get_json(url, ttl=120, timeout=15, force=False, validate=None, stats=None):
     """A bounded in-memory cache; callers explicitly decide whether stale data is usable."""
     url = resource_url(url)
     with _lock:
         hit = _memory.get(url)
         if not force and hit and time.monotonic() - hit[0] < ttl:
-            _memory.move_to_end(url)
-            return copy.deepcopy(hit[1])
-    req = Request(url, headers={"User-Agent": "HD2-Bot/2.0", "Accept": "application/json"})
-    with urlopen(req, timeout=timeout) as response:
-        value = json.load(response)
-    with _lock:
-        _memory[url] = (time.monotonic(), copy.deepcopy(value))
-        _memory.move_to_end(url)
-        while len(_memory) > 256:
-            _memory.popitem(last=False)
-    return value
+            try:
+                if validate: validate(hit[1])
+            except ValueError:
+                _memory.pop(url, None)
+            else:
+                if stats is not None:
+                    stats["cache_hits"] = stats.get("cache_hits", 0) + 1
+                _memory.move_to_end(url)
+                return copy.deepcopy(hit[1])
+        pending = _inflight.get(url)
+        owner = pending is None
+        if owner:
+            pending = _inflight[url] = Future()
+    if not owner:
+        if stats is not None:
+            stats["coalesced"] = stats.get("coalesced", 0) + 1
+        value = copy.deepcopy(pending.result(timeout=timeout))
+        if validate:
+            validate(value)
+        return value
+    try:
+        if stats is not None:
+            stats["requests"] = stats.get("requests", 0) + 1
+        req = Request(url, headers={"User-Agent": "HD2-Bot/2.0", "Accept": "application/json"})
+        with urlopen(req, timeout=timeout) as response:
+            value = json.load(response)
+        if validate:
+            validate(value)
+        if not isinstance(value, dict) or not value.get("error"):
+            with _lock:
+                _memory[url] = (time.monotonic(), copy.deepcopy(value))
+                _memory.move_to_end(url)
+                while len(_memory) > 256:
+                    _memory.popitem(last=False)
+        pending.set_result(value)
+        return value
+    except BaseException as error:
+        pending.set_exception(error)
+        raise
+    finally:
+        with _lock:
+            _inflight.pop(url, None)
 
 
 def number(value):
@@ -172,8 +205,8 @@ def percent(current, goal):
 
 
 def planet_key(value):
-    # Spaces/underscores are interchangeable; meaningful hyphens remain intact.
-    return " ".join(str(value or "").replace("_", " ").upper().split())
+    from .search import planet_key as key
+    return key(str(value or "").replace("_", " "))
 
 
 def campaign_state(doc, planet):

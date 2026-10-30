@@ -4,6 +4,7 @@ import html
 import json
 from pathlib import Path
 import re
+import unicodedata
 
 from . import data
 
@@ -22,7 +23,8 @@ VARIANT_TERMS = json.loads((Path(__file__).parent / "variant_terms.json").read_t
 
 
 def parse(message):
-    text = re.sub(r"^@[\w.\-]+\s+", "", (message or "").strip())
+    text = " ".join(unicodedata.normalize("NFKC", message or "").split())
+    text = re.sub(r"^@[\w.\-]+\s+", "", text)
     if not text.startswith("/"):
         return None
     text = text[1:].strip()
@@ -133,9 +135,14 @@ def campaigns_text(doc):
 def find_planet(doc, query):
     query = data.planet_key(query)
     name_map = names()
+    matches = {}
     for planet in doc.get("planets") or []:
         if query in (str(planet.get("index")), data.planet_key(planet.get("name")), data.planet_key(name_map.get(str(planet.get("name")).upper()))):
-            return planet
+            matches[str(planet.get("index"))] = planet
+    if len(matches) == 1:
+        return next(iter(matches.values()))
+    if matches:
+        raise ValueError("星球名称有歧义，请使用星球 ID：" + "、".join(matches))
     raise ValueError("未找到该星球，请使用完整中文名、英文名或星球 ID")
 
 

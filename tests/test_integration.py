@@ -79,7 +79,8 @@ class IntegrationTests(unittest.TestCase):
             _,output=asyncio.run(collect(wiki.Hd2WikiPlugin(None),"/wiki roll"))
             self.assertIn("正文",output[0][1]);self.assertEqual(fetch.call_count,1)
         with patch.dict(sys.modules,{"bs4":None}):
-            self.assertEqual(wiki_data._extract_tables("<table><tr><td>test</td></tr></table>"),[])
+            with self.assertRaises(ImportError):
+                wiki_data._extract_tables("<table><tr><td>test</td></tr></table>")
 
     def test_guard_blocks_noncommands_and_preserves_enabled_chat(self):
         plugin=Hd2GuardPlugin(None)
@@ -94,7 +95,10 @@ class IntegrationTests(unittest.TestCase):
         def fetch(url,*args,**kwargs):
             return [] if url==variant.PLANETS_URL else {"warStatus":{"campaigns":[]}}
         with patch.object(variant,"_scan_cache",{"data":{},"ts":0}),patch.object(variant,"_load_effect_id_cn",return_value={1:"sample"}),patch.object(variant,"_fetch_official",side_effect=OSError("offline")),patch.object(variant,"_fetch_json",side_effect=fetch):
-            self.assertEqual(asyncio.run(variant._scan_all_variants()),{k:[] for k in variant.VARIANT_CN})
+            scan=asyncio.run(variant._scan_all_variants())
+            self.assertEqual(scan["variants"],{k:[] for k in variant.VARIANT_CN})
+            self.assertTrue(scan["complete"])
+            self.assertEqual(scan["source"],variant.LIVE_API_URL)
 
     def test_console_javascript_and_untrusted_log_values(self):
         web=load_console()
