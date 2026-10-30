@@ -23,6 +23,9 @@ from datetime import datetime, timedelta, timezone
 REPO = "Jerry114514/HD2-Bot-Release"
 API = "https://api.github.com"
 BRANCH = sys.argv[1] if len(sys.argv) > 1 else "main"
+# 链起点（本地内容基于哪个远端提交）。API 合并同步后远端 main 含本地没有的
+# 对象，origin/main..main 不再可用——显式传上次同步时的本地 tip。
+BASE = sys.argv[2] if len(sys.argv) > 2 else None
 TOKEN = os.environ.get("GH_PAT")
 if not TOKEN:
     sys.exit("缺少 GH_PAT 环境变量")
@@ -70,7 +73,10 @@ def iso_at(unix, off):
 
 
 # 待推提交（旧→新）与链起点
-commits = git_out("rev-list", "--reverse", "origin/main..main").split()
+if BASE:
+    commits = git_out("rev-list", "--reverse", "%s..%s" % (BASE, BRANCH)).split()
+else:
+    commits = git_out("rev-list", "--reverse", "origin/main..%s" % BRANCH).split()
 if not commits:
     print("本地与远端已同步，无事可做")
     sys.exit(0)
