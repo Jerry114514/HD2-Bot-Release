@@ -10,12 +10,12 @@ from astrbot.api.star import Context, Star
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from astrbot_plugin_hd2_common import commands, data
-from astrbot_plugin_hd2_common.runtime import blocking, new_request, request_id
-from astrbot_plugin_hd2_common.main import (
+from astrbot_plugin_hd2_common.runtime import blocking, text_reply, request_scope
+from astrbot_plugin_hd2_common.sources import (
     fetch_json as _fetch_json, fetch_official as _fetch_official,
     load_planet_map as _load_planet_map, PLANET_NAME_CN, OFFICIAL_WAR_ID, LIVE_API_URL,
 )
-from astrbot_plugin_hd2_monitor.main import hd2_log as _log
+from astrbot_plugin_hd2_common.diagnostics import hd2_log as _log
 
 GALAXY_MAP_REPLY = "🌌 中文银河星图\n" + data.site_url("galaxy-map-v2.html")
 WAR_KINDS = {"report", "campaigns", "dss", "briefing", "analysis", "api", "map"}
@@ -60,6 +60,7 @@ class Hd2WarReportPlugin(Star):
         self._warm_task = None
 
     @filter.event_message_type(filter.EventMessageType.ALL)
+    @request_scope
     async def keyword_trigger(self, event: AstrMessageEvent):
         parsed = commands.parse_event(event)
         if not parsed or parsed[0] not in WAR_KINDS:
@@ -68,18 +69,17 @@ class Hd2WarReportPlugin(Star):
             return
         kind, args, plain = parsed
         if args:
-            yield event.plain_result("⚠️ 该命令不接受额外参数；可加 t 或文字查看纯文本。")
+            yield text_reply(event, "⚠️ 该命令不接受额外参数；可加 t 或文字查看纯文本。")
             event.stop_event()
             return
-        token = new_request(event)
         begin = time.monotonic()
         fields = event_fields(event)
         _log("matched", plugin="war_report", text=event.message_str, **fields)
         try:
             if kind == "map":
-                yield event.plain_result(GALAXY_MAP_REPLY)
+                yield text_reply(event, GALAXY_MAP_REPLY)
             elif kind == "analysis":
-                yield event.plain_result(await self._get_analysis(getattr(event,"unified_msg_origin",None)))
+                yield text_reply(event, await self._get_analysis(getattr(event,"unified_msg_origin",None)))
             else:
                 view = await blocking(commands.result, kind)
                 images = None
@@ -93,7 +93,7 @@ class Hd2WarReportPlugin(Star):
                     for path in images if isinstance(images, list) else [images]:
                         yield event.image_result(path)
                 else:
-                    yield event.plain_result(view.text)
+                    yield text_reply(event, view.text)
                 _log("generated", plugin="war_report", output_mode="image" if images else "text",
                      source=(view.document.get("_hd2") or {}).get("source", ""),data_version=view.document.get("fetchedAt", ""),
                      source_time=view.document.get("fetchedAt"), stale=(view.document.get("_hd2") or {}).get("stale"),
@@ -101,9 +101,8 @@ class Hd2WarReportPlugin(Star):
         except Exception as error:
             logger.warning(f"[HD2] 命令失败：{error}")
             _log("failed", plugin="war_report", detail=str(error), **fields)
-            yield event.plain_result("⚠️ " + str(error))
+            yield text_reply(event, "⚠️ " + str(error))
         finally:
-            request_id.reset(token)
             event.stop_event()
 
     async def _get_analysis(self, origin=None):

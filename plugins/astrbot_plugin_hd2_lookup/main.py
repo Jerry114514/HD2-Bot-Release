@@ -61,7 +61,7 @@ _MON_PARENT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 if _MON_PARENT not in _sys.path:
     _sys.path.insert(0, _MON_PARENT)
 try:
-    from astrbot_plugin_hd2_monitor.main import hd2_log as _log
+    from astrbot_plugin_hd2_common.diagnostics import hd2_log as _log
 except Exception:
     def _log(*a, **k):
         pass
@@ -83,14 +83,15 @@ def _uname(event):
         return ""
 
 
-from astrbot_plugin_hd2_common.runtime import blocking
+from astrbot_plugin_hd2_common.runtime import blocking, text_reply, request_scope
 from astrbot_plugin_hd2_common.commands import parse_event
 
 class Hd2LookupPlugin(Star):
     def __init__(self, context: Context) -> None:
         super().__init__(context)
 
-    @filter.event_message_type(filter.EventMessageType.ALL)
+    @filter.event_message_type(filter.EventMessageType.ALL, priority=100)
+    @request_scope
     async def keyword_trigger(self, event: AstrMessageEvent):
         """帮助触发：/帮助 或 /help"""
         parsed = parse_event(event)
@@ -105,7 +106,7 @@ class Hd2LookupPlugin(Star):
         except Exception:
             pass
         if args:
-            yield event.plain_result("用法：/帮助 或 /help；加 t / 文字查看纯文本。")
+            yield text_reply(event, "用法：/帮助 或 /help；加 t / 文字查看纯文本。")
             event.stop_event()
             return
         _t0 = time.time()
@@ -129,10 +130,10 @@ class Hd2LookupPlugin(Star):
                 gpath = _os.path.join(_tables_dir(), "群使用说明.txt")
                 with io.open(gpath, encoding="utf-8") as f:
                     guide = f.read().strip()
-            yield event.plain_result(guide or "📖 暂无使用说明内容。")
+            yield text_reply(event, guide or "📖 暂无使用说明内容。")
             _log("done", plugin="lookup", text=text, group=_gid(event), user=_uid(event), cost=time.time() - _t0, detail="help-text")
         except Exception as e:
             _log("failed", plugin="lookup", text=text, group=_gid(event), user=_uid(event), cost=time.time() - _t0, detail=str(e)[:150])
-            yield event.plain_result(f"⚠️ 读取使用说明失败：{e}")
+            yield text_reply(event, f"⚠️ 读取使用说明失败：{e}")
         event.stop_event()
         return

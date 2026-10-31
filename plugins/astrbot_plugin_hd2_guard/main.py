@@ -13,6 +13,10 @@ GROUP_PLATFORMS = {"aiocqhttp": "napcat", "qq_official": "qq_official", "qq_offi
 class Hd2GuardPlugin(Star):
     @filter.event_message_type(filter.EventMessageType.ALL, priority=1000)
     async def guard(self, event):
+        raw = getattr(event.message_obj, "raw_message", None)
+        if (event.get_platform_name() == "aiocqhttp" and callable(getattr(raw, "get", None))
+                and raw.get("post_type") == "notice"):
+            return  # Notice listeners (such as welcome) are not chat commands.
         adapter = str(getattr(event, "unified_msg_origin", "")).split(":", 1)[0]
         selected = setting("bot", "platform_id", default="")
         if selected and adapter != selected:

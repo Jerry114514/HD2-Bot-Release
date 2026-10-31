@@ -9,12 +9,12 @@ from astrbot.api.event import filter
 from astrbot.api.star import Star
 from astrbot_plugin_hd2_common import commands
 from astrbot_plugin_hd2_common.search import normalize
-from astrbot_plugin_hd2_common.runtime import blocking, singleflight, new_request, request_id
-from astrbot_plugin_hd2_common.main import (
+from astrbot_plugin_hd2_common.runtime import blocking, singleflight, text_reply, request_scope
+from astrbot_plugin_hd2_common.sources import (
     fetch_json as _fetch_json, fetch_official as _fetch_official,
     load_effect_id_cn as _load_effect_id_cn, OFFICIAL_API_URL, LIVE_API_URL, OFFICIAL_WAR_ID, PLANETS_URL,
 )
-from astrbot_plugin_hd2_monitor.main import hd2_log
+from astrbot_plugin_hd2_common.diagnostics import hd2_log
 
 VARIANT_CN = commands.VARIANT_TERMS
 _scan_cache = {"ts":0,"data":{}}
@@ -117,15 +117,15 @@ async def _scan_all_variants(deadline=None):
 
 class Hd2VariantQueryPlugin(Star):
     @filter.event_message_type(filter.EventMessageType.ALL)
+    @request_scope
     async def keyword_trigger(self,event):
         parsed=commands.parse_event(event)
         if not parsed or parsed[0]!="variant": return
         query=normalize(parsed[1])
         key=next((k for k,cn in VARIANT_CN.items() if query in (normalize(k),normalize(cn))),None)
         if key is None:
-            yield event.plain_result("请使用 /变种 名称，支持："+"、".join(VARIANT_CN.values()))
+            yield text_reply(event, "请使用 /变种 名称，支持："+"、".join(VARIANT_CN.values()))
             event.stop_event();return
-        token=new_request(event)
         try:
             deadline=time.monotonic()+20
             scan=await asyncio.wait_for(singleflight(("variants",),lambda:_scan_all_variants(deadline)),20)
@@ -136,11 +136,10 @@ class Hd2VariantQueryPlugin(Star):
                 lines.append("在当前已支持的效果映射内，未发现该变种的活动战役。" if scan["complete"] else "数据覆盖不完整，尚不能判断是否存在该变种的活动战役。")
             if not scan["complete"]: lines.append("部分星球/效果尚未确认；请核对原始数据。")
             lines.extend(["范围：活动战役；支持 "+str(len(VARIANT_CN))+" 类变种", "来源："+scan["source"],"采集时间："+scan["fetched_at"]])
-            yield event.plain_result("\n".join(lines))
+            yield text_reply(event, "\n".join(lines))
             hd2_log("generated",plugin="variant",source=scan["source"],source_time=scan["source_time"],
                     detail={"complete":scan["complete"],"unknown_effects":scan["unknown_effects"],"warnings":scan["warnings"]})
         except Exception as error:
-            yield event.plain_result("⚠️ 变种数据不可用："+type(error).__name__)
+            yield text_reply(event, "⚠️ 变种数据不可用："+type(error).__name__)
         finally:
-            request_id.reset(token)
             event.stop_event()

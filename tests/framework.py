@@ -29,6 +29,15 @@ def install():
     sys.modules.update(modules)
 
 
+class Result(tuple):
+    def use_t2i(self, value):
+        self.use_t2i_ = value
+        return self
+    def use_markdown(self, value):
+        self.use_markdown_ = value
+        return self
+
+
 class Event:
     def __init__(self, text, group="official-group-A", user="official-user-B", wake=True):
         self.message_str=text
@@ -44,5 +53,5 @@ class Event:
     def get_messages(self):return []
     def get_sender(self):return types.SimpleNamespace(card="",nickname="tester")
     def stop_event(self):self.stopped=True
-    def plain_result(self,text):return ("text",text)
+    def plain_result(self,text):return Result(("text",text))
     def image_result(self,path):return ("image",path)

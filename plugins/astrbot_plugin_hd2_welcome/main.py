@@ -7,7 +7,7 @@
 事件链路：aiocqhttp 适配器把 notice 也转成 GROUP_MESSAGE 进管道，
 原始 OneBot 字段保留在 event.message_obj.raw_message（dict 风格），据此识别进群。
 群白名单由管道 whitelist_check 统一拦截，本插件不重复过滤；
-机器人自己的进群通知会被 waking_check 当作自身消息拦掉，自然到不了这里。
+机器人自己的进群通知由本插件显式排除，不依赖框架的可选自身消息过滤。
 
 可选配置（本目录 welcome_config.json，缺省即全群生效）：
 {
@@ -68,7 +68,7 @@ class Hd2WelcomePlugin(Star):
     async def on_group_message(self, event: AstrMessageEvent):
         """群消息统一入口：快速过滤，只处理进群通知。"""
         from astrbot_plugin_hd2_common.data import setting
-        if setting("bot", "platform", default="napcat") != "napcat":
+        if event.get_platform_name() != "aiocqhttp" or setting("bot", "platform", default="napcat") != "napcat":
             return
         raw = getattr(event.message_obj, "raw_message", None)
         if raw is None:

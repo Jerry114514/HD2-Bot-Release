@@ -14,6 +14,7 @@ from astrbot_plugin_hd2_war_report.main import Hd2WarReportPlugin
 from astrbot_plugin_hd2_roll import main as roll
 from astrbot_plugin_hd2_lookup import main as lookup
 from astrbot_plugin_hd2_monitor.main import Hd2MonitorPlugin
+from astrbot_plugin_hd2_common.runtime import request_scope, request_id, text_reply
 
 
 def stripped_event(original):
@@ -23,6 +24,29 @@ def stripped_event(original):
 
 
 class EventCommandTests(unittest.TestCase):
+    def test_request_scope_survives_generator_close_from_another_task(self):
+        observations = []
+        class Plugin:
+            @request_scope
+            async def handler(self, event):
+                try:
+                    observations.append(request_id.get())
+                    yield text_reply(event, "result")
+                finally:
+                    observations.append(request_id.get())
+        async def run():
+            outer = request_id.get()
+            event = Event("/roll")
+            iterator = Plugin().handler(event)
+            result = await anext(iterator)
+            self.assertFalse(result.use_t2i_)
+            self.assertFalse(result.use_markdown_)
+            self.assertEqual(request_id.get(), outer)
+            await asyncio.create_task(iterator.aclose())
+            self.assertEqual(request_id.get(), outer)
+            self.assertEqual(observations, [event._hd2_request_id] * 2)
+        asyncio.run(run())
+
     def test_original_text_is_authoritative_and_slash_stays_required(self):
         for original in ("/roll", "/api", "/战报 t", "/wiki AR23", "/星球 X45", "/变种", "/help"):
             event = stripped_event(original)

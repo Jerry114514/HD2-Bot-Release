@@ -94,12 +94,14 @@ python -X utf8 scripts/check.py
 
 检查包括语法、隔离函数、真实本机 HTTP、事件接口契约、Pillow 绘图及 Node 黑箱桥接；不会连接 QQ、使用凭据或发送消息。CI 在 Windows/Python 3.12/Node 24 与 Linux/Python 3.12/Node 22 运行离线检查。本轮在独立环境验证 AstrBot 4.29.3 可加载全部10插件；真实 QQ 收发待验，平台能力须结合实际适配器权限确认。
 
-框架回归另在隔离环境运行，CI 也执行此项。它使用真实 AstrBot 唤醒、插件调度及回复阶段，数据/绘图为夹具，发送端只在内存记录，不连接平台：
+框架回归另在隔离环境运行，CI 也执行此项。全部10插件按 AstrBot 的 `data.plugins` 命名空间加载，经过真实唤醒、白名单、处理、结果修饰及回复阶段；同时检查内置帮助、进群通知、取消与卸载。数据/绘图使用夹具；QQ 官方/OneBot 真实适配器的发送转换只替换网络 API，不连接平台：
 
 ```powershell
 python -m pip install -r requirements-wiki.txt AstrBot==4.29.3
 python -X utf8 scripts/sdk_pipeline.py
 ```
+
+`t`/`文字`、候选及图片渲染回退使用明确的纯文本消息，不再跟随全局文字转图片或官方 QQ Markdown 设置。`/help` 由 HD2 帮助优先处理，避免与内置帮助重复回复。进群欢迎仍受 AstrBot 会话白名单与 `welcome_config.json` 限制，自己的进群通知不播报。
 
 [修复与验收记录](docs/修复验收.md) 对应审查问题 1–21。旧 Agent 记录和架构分析属于历史材料，不代表当前运行状态。旧数据层与测试按当前图片架构选择性适配；没有整体回退当前插件。
 
