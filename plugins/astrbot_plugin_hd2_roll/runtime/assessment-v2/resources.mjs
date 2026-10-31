@@ -31,12 +31,12 @@ export function combatResources(weapons, providers, targets = {}) {
   return initialState({resources, targets});
 }
 
-export function receiveSupply(state, provider, weapons, providers = []) {
+export function receiveSupply(state, provider, weapons, providers = [], copyState) {
   if (!Number.isSafeInteger(provider.take_ms) || provider.take_ms < 1) return {status: 'UNKNOWN', reason: 'SUPPLY_TIME_REQUIRED'};
   const key = supplyKey(provider.id);
   if (!(state.resources[key]?.value > 0)) return {status: 'UNAVAILABLE', reason: 'SUPPLY_EXHAUSTED'};
   if (!Number.isSafeInteger(provider.ready_at_ms) || provider.ready_at_ms < 0) return {status: 'UNKNOWN', reason: 'SUPPLY_READY_TIME_REQUIRED'};
-  const ready = advance(state, Math.max(state.time, state.manual_until, provider.ready_at_ms));
+  const ready = advance(state, Math.max(state.time, state.manual_until, provider.ready_at_ms), [], copyState);
   const credits = [], unresolved = [];
   for (const weapon of weapons) {
     if (weapon.renewable&&!weapon.finite_heat_sinks) continue;
@@ -59,20 +59,20 @@ export function receiveSupply(state, provider, weapons, providers = []) {
     ? {status: 'UNKNOWN', reason: 'REFILL_AMOUNT_REQUIRED', equipment_ids: unresolved}
     : {status: 'UNAVAILABLE', reason: 'NOTHING_TO_REFILL'};
   const next = startAction(ready, {id: `take:${provider.id}`, busy_ms: provider.take_ms,
-    events: [{kind: 'resource', key, delta: -1, offset_ms: 0}, ...credits]}, []);
+    events: [{kind: 'resource', key, delta: -1, offset_ms: 0}, ...credits]}, [], copyState);
   return next ? {status: 'TAKEN', state: next, provider_id: provider.id,
     started_at_ms: ready.time, completed_at_ms: next.time, credited_accounts: credits.map(e => e.key),
     unresolved_refills: unresolved}
     : {status: 'INVALID', reason: 'SUPPLY_LEDGER_REFUSED'};
 }
 
-export function reloadWeapon(state, weapon) {
+export function reloadWeapon(state, weapon, copyState) {
   const loaded = state.resources[loadedKey(weapon.id)], reserve = state.resources[ammoKey(weapon.id)];
   if (!loaded || !reserve) return {status: 'UNKNOWN', reason: 'AMMO_ACCOUNT_MISSING'};
   if (weapon.renewable&&!(weapon.finite_heat_sinks&&reserve.value>=loaded.cap-loaded.value)) {
     const cooling=weapon.cooling_ms??weapon.reload_ms;
     if (!integer(cooling)) return {status: 'UNKNOWN', reason: 'COOLING_TIME_REQUIRED'};
-    const ready = advance(state, Math.max(state.time, state.manual_until) + cooling);
+    const ready = advance(state, Math.max(state.time, state.manual_until) + cooling, [], copyState);
     applyEvent(ready, {id: `cool:${weapon.id}:${ready.trace.length}`, at: ready.time,
       kind: 'resource', key: loadedKey(weapon.id), delta: loaded.cap - loaded.value});
     ready.trace.push({kind: 'action', action_id: `cool:${weapon.id}`, at: ready.time});
@@ -83,20 +83,26 @@ export function reloadWeapon(state, weapon) {
   if (!Number.isSafeInteger(weapon.reload_ms) || weapon.reload_ms < 1) return {status: 'UNKNOWN', reason: 'RELOAD_TIME_REQUIRED'};
   const next = startAction(state, {id: `reload:${weapon.id}`, busy_ms: weapon.reload_ms,
     events: [{kind: 'resource', key: ammoKey(weapon.id), delta: -amount, offset_ms: 0},
-      {kind: 'resource', key: loadedKey(weapon.id), delta: amount, offset_ms: weapon.reload_ms}]}, []);
+      {kind: 'resource', key: loadedKey(weapon.id), delta: amount, offset_ms: weapon.reload_ms}]}, [], copyState);
   return next ? {status: 'RELOADED', state: next} : {status: 'INVALID', reason: 'RELOAD_LEDGER_REFUSED'};
 }
 
 // Execute an explicit sequence, with supply acquisition only when ammunition is
 // insufficient. The caller may compare sequences; this function does not claim
 // that a failed sequence proves every possible fighting strategy impossible.
-export function executeResourcePlan({weapons, providers, steps, deadline_ms = Number.MAX_SAFE_INTEGER, targets = {}}) {
+// Only private plan states use this copy. Ledger transitions append history entries,
+// never edit them. Copy mutable fields deeply and history arrays shallowly; no caller
+// state or input weapon is shared. Public ledger/supply/reload defaults stay deep.
+function copyPlanState({trace, used_events, ...mutable}) {
+  return {...structuredClone(mutable), trace:trace.slice(), used_events:used_events.slice()};
+}
+export function executeResourcePlan({weapons, providers, steps, deadline_ms = Number.MAX_SAFE_INTEGER, targets = {}}, copyState = copyPlanState) {
   let state = combatResources(weapons, providers, targets);
   // This state is private to this execution. With no pending event there is
   // nothing to replay: do not clone the ever-growing trace for every beam tick.
   const advanceOwned=(s,time)=>{
     if(!integer(time)||time<s.time)return null;
-    if(s.pending.length)return advance(s,time);
+    if(s.pending.length)return advance(s,time,[],copyState);
     s.time=time;return s;
   };
   const byId = new Map(weapons.map(w => [w.id, w]));
@@ -162,7 +168,7 @@ export function executeResourcePlan({weapons, providers, steps, deadline_ms = Nu
             .sort((a, b) => (a.kind === 'public') - (b.kind === 'public') || a.take_ms - b.take_ms);
           let received = null, unknownReason = null;
           for (const p of choices) {
-            const attempt = receiveSupply(state, p, weapons, providers);
+            const attempt = receiveSupply(state, p, weapons, providers, copyState);
             if (attempt.status === 'TAKEN') { received = attempt; break; }
             if (attempt.status === 'UNKNOWN') unknownReason = attempt.reason;
           }
@@ -176,7 +182,7 @@ export function executeResourcePlan({weapons, providers, steps, deadline_ms = Nu
           state = received.state; taken.push({provider_id: received.provider_id, at_ms: received.completed_at_ms});
         }
         if (state.resources[loadedKey(weapon.id)].value === 0) {
-          const reload = reloadWeapon(state, weapon);
+          const reload = reloadWeapon(state, weapon, copyState);
           if (reload.status !== 'RELOADED') return fail(reload.status, reload.reason, {index});
           state = reload.state;
         }
@@ -185,7 +191,7 @@ export function executeResourcePlan({weapons, providers, steps, deadline_ms = Nu
         const partial = weapon.round_reload_profile.partial_one_ms;
         state = startAction(state, {id: `top-up:${weapon.id}`, busy_ms: partial, events: [
           {kind: 'resource', key: ammoKey(weapon.id), delta: -1, offset_ms: 0},
-          {kind: 'resource', key: loadedKey(weapon.id), delta: 1, offset_ms: partial}]}, []);
+          {kind: 'resource', key: loadedKey(weapon.id), delta: 1, offset_ms: partial}]}, [], copyState);
         if (!state) throw new Error('PARTIAL_RELOAD_LEDGER_REFUSED');
       }
       // Throwing takes the player's hands after supply/reload, on every throw.
@@ -227,7 +233,7 @@ export function executeResourcePlan({weapons, providers, steps, deadline_ms = Nu
     completedStepEffects.push(stepEffectAt);
   }
   const actionReady = previous ? previous.at + previous.interval_ms : state.time;
-  state = advance(state, Math.max(state.time, ...state.pending.map(e => e.at)));
+  state = advance(state, Math.max(state.time, ...state.pending.map(e => e.at)), [], copyState);
   if (Object.values(state.targets).some(t => t.neutralized_at == null || t.neutralized_at > deadline_ms)) {
     return fail('INSUFFICIENT', 'TARGET_WINDOW_EXCEEDED');
   }

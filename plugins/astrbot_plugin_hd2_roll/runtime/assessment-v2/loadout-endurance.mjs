@@ -5,7 +5,7 @@ import {isMeleeEquipment} from './score-exclusions.mjs';
 export const DEFAULT_LOADOUT_ENDURANCE_POLICY={
   id:'routine-primary-plus-backup-v1',role_weights:{chaff:.6,close_defense:.3,anti_medium:.1},
   role_reference:60,backup_weight:.35,ceiling:100,supply_final_floor:100,
-  scope:'DETERMINISTIC_RESOURCE_INDEX; NO_LLM; NO_NEW_PASS_THRESHOLD',
+  scope:'DETERMINISTIC_RESOURCE_INDEX; NO_LLM; FINAL_SCORE_PARTICIPATES_IN_SIX_DIMENSION_GATE',
   parameters_status:'ENGINEERING_INITIAL_VALUES_PENDING_PLAY_REVIEW'
 };
 const finite=n=>Number.isFinite(n)&&n>=0;
