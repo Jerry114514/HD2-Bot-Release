@@ -94,8 +94,8 @@ export function applyEvent(s, event) {
   s.used_events.push(event.id);
   return true;
 }
-export function advance(state, time, observations = []) {
-  const s = clone(state);
+export function advance(state, time, observations = [], copyState = clone) {
+  const s = copyState(state);
   if (!validTime(time) || time < s.time) return null;
   const obs = observations[s.next_observation];
   const stop = obs && obs.at <= time ? obs.at : time;
@@ -107,7 +107,7 @@ export function advance(state, time, observations = []) {
   s.time = stop;
   return s;
 }
-export function startAction(state, action, observations) {
+export function startAction(state, action, observations, copyState = clone) {
   if (!validTime(action.busy_ms) || action.busy_ms < 1 || state.time < state.manual_until) return null;
   if (Object.entries(action.requires_slots || {}).some(([slot, id]) => state.slots[slot] !== id)) return null;
   if (Object.entries(action.requires_flags || {}).some(([key, value]) => state.flags[key] !== value || state.flag_expiries?.[key]!==undefined&&state.flag_expiries[key]<=state.time)) return null;
@@ -141,7 +141,7 @@ export function startAction(state, action, observations) {
     const entry = state.resources[action.demolition.resource.key];
     if (entry?.resource_id !== undefined && entry.resource_id !== action.demolition.resource.resource_id) return null;
   }
-  const s = clone(state), start = s.time, serial = s.trace.length;
+  const s = copyState(state), start = s.time, serial = s.trace.length;
   const events = (action.events || []).map((e, i) => ({...clone(e), deployment_guards:Object.keys(action.requires_flags||{}).filter(k=>s.flag_expiries?.[k]!==undefined), at: start + e.offset_ms, id: `a${serial}:${i}`, order:[serial,i]}));
   if (events.some(e => !validTime(e.at) || e.at < start || e.kind === 'resource' && e.delta < 0 && e.offset_ms !== 0)) return null;
   // TASK-B composite detonation boundaries on the ledger's own view: every
@@ -183,7 +183,7 @@ export function startAction(state, action, observations) {
     s.cooldowns[action.cooldown.key] = start + action.cooldown.duration_ms;
   }
   s.trace.push({kind: 'action', action_id: action.id, at: start});
-  return advance(s, s.manual_until, observations);
+  return advance(s, s.manual_until, observations, copyState);
 }
 export function branchState(state, observation, alternative) {
   const s = clone(state);

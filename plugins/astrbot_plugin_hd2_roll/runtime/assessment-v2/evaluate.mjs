@@ -4,7 +4,7 @@ import {assessFiveHoles} from './demolition.mjs';
 import {summarizeLoadout,finalizeAssessmentSummary} from './aggregate.mjs';
 import {capacityCurve} from './formulas.mjs';
 import {assessStrategic} from './strategic.mjs';
-import {suppliedGrenadeAdditions} from './grenade-chaff.mjs';
+import {suppliedGrenadeAdditions,grenadeChaffAddition} from './grenade-chaff.mjs';
 import {assessAutomatic} from './automatic.mjs';
 import {manualValue,contributionKind} from './manual-scores.mjs';
 import {originalScore,contributionScore} from './score-scale.mjs';
@@ -86,6 +86,16 @@ function closeSafety(rows, model) {
 // End-to-end diagnostic of real seven-slot inputs. All gates are computed here,
 // not supplied as PASS by the caller. Never reads the retired six-dimension table.
 export function evaluateAssessment(loadout, model, catalog, options = {}) {
+  return evaluateCore(loadout,model,catalog,options,false);
+}
+
+// Cheap ranking only: omit resource simulations and portable grenade credit.
+// This result cannot admit a loadout, even when all its score estimates pass.
+export function previewAssessment(loadout, model, catalog, options = {}) {
+  return {...evaluateCore(loadout,model,catalog,options,true),status:'RANKING_ONLY',acceptance_ready:false,eligible_for_draw:false};
+}
+
+function evaluateCore(loadout, model, catalog, options, ranking) {
   const legal = assessmentLegality(loadout, catalog, model, options);
   if (legal.status !== 'PASS') return {status: legal.status === 'FAIL' ? 'REJECTED_ILLEGAL' : 'UNKNOWN',
     eligible_for_draw: false, gates: {legality: legal}};
@@ -117,10 +127,11 @@ export function evaluateAssessment(loadout, model, catalog, options = {}) {
   const chaffBonus = strategic.filter(r => r.role === 'chaff' && r.contribution.status === 'KNOWN'
     &&contributionKind(byId.get(r.equipment_id),'chaff')==='AUXILIARY_ADDITION').reduce((n,r)=>n+
       (r.contribution.score_origin==='MANUAL_CALIBRATED'?originalScore(r.contribution.value,scale):r.contribution.value),0);
-  const ordinaryPlan = assessMixedEndurance(ordinaryRows, model, {require_role_floors: true,
+  const pending={status:'UNKNOWN',reason:'RANKING_ONLY_REQUIRES_FULL_CHECK'};
+  const ordinaryPlan = ranking?pending:assessMixedEndurance(ordinaryRows, model, {require_role_floors: true,
     chaff_score_floor: Math.max(0, (scale?.previous_pass??60) - chaffBonus)});
-  const grenadeAdditions=suppliedGrenadeAdditions(ordinaryRows,model,ordinaryPlan);
-  const gates = {legality: legal, heavy_pair: assessHeavyPairs(rows, model), demolition: assessFiveHoles(rows, model),
+  const grenadeAdditions=ranking?ordinaryRows.flatMap(grenadeChaffAddition):suppliedGrenadeAdditions(ordinaryRows,model,ordinaryPlan);
+  const gates = {legality: legal, heavy_pair: ranking?pending:assessHeavyPairs(rows, model), demolition: ranking?pending:assessFiveHoles(rows, model),
     shared_resources: ordinaryPlan, close_safety: closeSafety(ordinaryRows, model)};
   // Every final dimension must pass, in addition to the independent physical gates.
   // Medium route selection still uses physical response, not slot display preference.
