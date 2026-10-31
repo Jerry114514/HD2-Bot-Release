@@ -191,6 +191,9 @@ def main():
                 await check("/战报", image_pages=2)
             from sdk_contracts import audit
             count += await audit(modules, scheduler, config, CaptureEvent, sandbox, check, llm_attempts)
+            from sdk_choices import check_choices
+            count += await check_choices(modules, scheduler, config, CaptureEvent, sandbox)
+            assert not llm_attempts, f"Unexpected default LLM requests: {llm_attempts}"
         print(f"AstrBot {importlib.metadata.version('AstrBot')}: {count} pipeline cases passed; no real sends")
 
     with asyncio.Runner(loop_factory=lambda: loop) as runner:

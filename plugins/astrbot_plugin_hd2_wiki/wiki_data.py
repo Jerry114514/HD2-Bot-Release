@@ -86,9 +86,9 @@ def _pages(value):
     return list(value["query"]["pages"].values())
 
 
-def _page_query(title):
+def _page_query(title, pageid=None):
     return _wiki_get({"action":"query", "prop":"extracts|pageimages|info|revisions|pageprops",
-        "ppprop":"disambiguation", "rvprop":"ids", "titles":title, "explaintext":1,
+        "ppprop":"disambiguation", "rvprop":"ids", **({"pageids":pageid} if pageid else {"titles":title}), "explaintext":1,
         "exsectionformat":"plain", "piprop":"thumbnail", "pithumbsize":600, "inprop":"url", "redirects":1})
 
 
@@ -160,7 +160,7 @@ def _disambiguation(page):
     return [_candidate(p,"消歧义页面",1,i) for i,p in enumerate(_pages(info)) if _valid(p)], len(titles)<=40
 
 
-def wiki_lookup(keyword, include_tables=True, deadline=None):
+def wiki_lookup(keyword, include_tables=True, deadline=None, selected=None):
     start = time.monotonic()
     state = {"deadline":deadline or start+20,"requests":0,"cache_hits":0,"coalesced":0}
     token = _request.set(state)
@@ -173,12 +173,13 @@ def wiki_lookup(keyword, include_tables=True, deadline=None):
         if not kw or len(kw)>160 or "|" in kw or "\x00" in kw:
             raise ValueError("请输入 1–160 字的单个查询，不支持 | 分隔查询")
         remaining()
-        result["catalogue_version"] = catalogue()["version"]
-        rows = _local(kw)
-        try:
-            from rapidfuzz.distance import OSA  # optional for direct lookup
-        except ImportError:
-            result["warnings"].append("名称纠错依赖未安装，仍可精确查询和搜索 Wiki")
+        result["catalogue_version"] = catalogue()["version"] if selected is None else "selected"
+        rows = _local(kw) if selected is None else []
+        if selected is None:
+            try:
+                from rapidfuzz.distance import OSA  # optional for direct lookup
+            except ImportError:
+                result["warnings"].append("名称纠错依赖未安装，仍可精确查询和搜索 Wiki")
         exact = [r for r in rows if r["tier"]==0]
         if len(exact)>1:
             result.update(status="ambiguous", candidates=exact, search_complete=True)
@@ -186,12 +187,23 @@ def wiki_lookup(keyword, include_tables=True, deadline=None):
         resolution_key = (WIKI_API,normalize(kw),result["catalogue_version"],RULE_VERSION)
         with _resolution_lock:
             cached = _resolutions.get(resolution_key)
-        cached = cached if cached and time.monotonic()-cached[0]<60 else None
-        target = exact[0]["title"] if exact else cached[1] if cached else kw
+        cached = cached if selected is None and cached and time.monotonic()-cached[0]<60 else None
+        target = selected["title"] if selected is not None else exact[0]["title"] if exact else cached[1] if cached else kw
         state["resolution_cache"] = bool(cached)
-        pages = _pages(_page_query(target))
+        selected_id = selected.get("pageid") if selected is not None else None
+        pages = _pages(_page_query(target, selected_id))
         page = pages[0] if pages else None
-        if _valid(page) and models(kw) and models(kw) != models(page["title"]):
+        if selected is not None:
+            state["selected"] = True
+            if not _valid(page):
+                result.update(status="not_found", search_complete=True)
+                result["warnings"].append("所选词条已不可用，请重新搜索。")
+                return result
+            if ((selected_id and page["pageid"] != selected_id) or
+                    (not selected_id and normalize(page["title"]) != normalize(target))):
+                result.update(status="ambiguous", candidates=[_candidate(page,"所选目标已变化，请再次确认",1)])
+                return result
+        if selected is None and _valid(page) and models(kw) and models(kw) != models(page["title"]):
             result.update(status="ambiguous",candidates=[_candidate(page,"型号与目标冲突，请确认",1)])
             return result
         if _valid(page) and cached and page["pageid"] != cached[2]:
@@ -245,10 +257,11 @@ def wiki_lookup(keyword, include_tables=True, deadline=None):
                 return result
         result.update(status="resolved",title=page["title"],pageid=page["pageid"],url=page.get("fullurl",result["url"]),
             rev=str((page.get("revisions") or [{}])[0].get("revid") or page.get("lastrevid") or "0"),search_complete=True)
-        with _resolution_lock:
-            _resolutions[resolution_key] = (time.monotonic(),page["title"],page["pageid"])
-            _resolutions.move_to_end(resolution_key)
-            while len(_resolutions)>128: _resolutions.popitem(last=False)
+        if selected is None:
+            with _resolution_lock:
+                _resolutions[resolution_key] = (time.monotonic(),page["title"],page["pageid"])
+                _resolutions.move_to_end(resolution_key)
+                while len(_resolutions)>128: _resolutions.popitem(last=False)
         result["text"], result["truncated"] = _clean_extract(page.get("extract"))
         if include_tables:
             result["thumb"] = (page.get("thumbnail") or {}).get("source")
@@ -272,24 +285,34 @@ def wiki_lookup(keyword, include_tables=True, deadline=None):
         _request.reset(token)
 
 
-def format_text(value):
+def format_text(value, *, choice_page=None, official=False):
     status = value["status"]
     lines = ["📖 "+value["title"]]
     if status in ("resolved","ok"):
         lines.extend([value.get("text") or "该词条暂无正文摘要。", "正文摘要；完整数据见原文。"])
         if value.get("table_status") in ("unavailable","unsupported"):
             lines.append("表格未完整取得，请查看原文。")
-    elif status=="ambiguous":
+    elif status=="ambiguous" and choice_page is None:
         lines.append("请使用完整词条名选择：")
+    elif status=="ambiguous":
+        lines.append("请选择要查看的词条：")
     elif status=="not_found":
         lines.append("本次搜索未找到相关词条。")
     else:
         lines.append("Wiki 数据暂不可用，尚不能判断是否存在该词条。")
     candidates = value.get("candidates",[])
-    for i,c in enumerate(candidates[:5],1):
+    start = (choice_page or 0) * 5
+    for i,c in enumerate(candidates[start:start+5],start+1):
         lines.append(f"{i}. {c['title']}（{c['reason']}）\n/wiki {c['title']}")
         if c.get("snippet"): lines.append(c["snippet"])
-    if len(candidates)>5:
+    if choice_page is not None:
+        page_count = (len(candidates)+4)//5
+        lines.append(f"第 {choice_page+1}/{page_count} 页，共 {len(candidates)} 项。")
+        lines.append("仅本次查询者可选，自列出候选起2分钟有效；翻页不延时，发其他消息结束选择。")
+        lines.append("回复编号或“选 编号”查看；“下一页”/“上一页”翻页，“取消”退出。")
+        if official:
+            lines.append("群内建议 @机器人 后回复编号；仅在已接收所有消息时可直接发数字。")
+    elif len(candidates)>5:
         lines.append(f"另有 {len(candidates)-5} 个候选；可补充名称或查看搜索链接。")
     if not value.get("search_complete",True):
         lines.append("搜索尚未完成，以上仅为已取得的结果。")
