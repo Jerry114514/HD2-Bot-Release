@@ -1,6 +1,6 @@
 # Published loadout runtime
 
-Source: https://github.com/Jerry114514/Jerry114514.github.io/tree/4bf2de73af9208efef131b217c219b94d6ceabc8/shared/hd2-loadout
+Source: https://github.com/Jerry114514/Jerry114514.github.io/tree/c79b56067783a9b8d7257b3c2f205003fa2188d7/shared/hd2-loadout
 
 The catalog, assessment model and 54 transitive runtime modules/data files are pinned together. `snapshot.json` records their SHA256 digests. Source bytes are preserved, including line endings; the bridge verifies every entry before returning a result. The bot does not maintain a separate scoring implementation.
 

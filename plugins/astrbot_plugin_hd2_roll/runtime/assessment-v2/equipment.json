@@ -78800,7 +78800,7 @@
           "basis": "SINGLE_COMPONENT_FORCE; DIRECT_OR_EXPLOSION_40_SUFFICIENT; NO_CROSS_HIT_SUM",
           "scope": "STRUCTURE_ELIGIBILITY; STOCK_AND_TIMING_SEPARATE"
         },
-        "score": 87.69,
+        "score": 0,
         "score_lower_bound": false,
         "score_basis": "S_FIRST_CYCLE_HOLES_DIVIDED_BY_5; NO_LARGE_CD_REFILL; NO_SPEED_BONUS",
         "max_demolition_force": 30,
@@ -78941,7 +78941,9 @@
         "scope": "FIVE_DISTINCT_ORDINARY_HOLES; ONE_PAID_ACTION_PER_HOLE; NO_TRAVEL_DEADLINE",
         "caveats": [
           "INSIDE_ANY_30_FROM_ARCHIVED_MISSIONS_EQUIVALENCE; CURRENT_BUG_HOLE_PAGE_OMITS_THIS_BRANCH"
-        ]
+        ],
+        "calculated_score": 87.69,
+        "score_origin": "MANUAL_CALIBRATED"
       },
       "automatic_assessments": [],
       "calculated_scores": {
@@ -78951,6 +78953,15 @@
         "anti_heavy": 0,
         "endurance": 73.6,
         "demolition": 87.69
+      },
+      "manual_calibration": {
+        "scores": {
+          "demolition": 0
+        },
+        "mode": "auto",
+        "note": "",
+        "updated_at": "2026-10-31T13:23:29.379Z",
+        "score_scale_id": "review-65-as-60"
       }
     },
     {
@@ -290001,7 +290012,7 @@
     "shared/hd2-loadout/assessment-v2/source-bindings.mjs": "c375b51dcb60776dd5234503bd4324f42c795fb41a7e07b39fe26edc90663537",
     "shared/hd2-loadout/assessment-v2/sources/equipment-expanded.json": "bc38fff25a077147f69b0f586d21cbecf0ad2bee0b2feb8c1a1ed86c1cb0ccb2",
     "shared/hd2-loadout/data/catalog.json": "54d89df24f0bef72826c652de224a6e0f6f8ee9da5cdb4e3684e864316e8fba5",
-    "HD2_Wiki/data/wiki/zh/enemies.json": "e5db1dc441670bd2a4509bbe240fa8c5494a2e0de04329d3e38e8794686bd4b6",
+    "HD2_Wiki/data/wiki/zh/enemies.json": "519765efe74dbf898f76ec141b71257bef7e48e0484b88c7e0c9e0161f6da507",
     "shared/hd2-loadout/assessment-v2/automatic.mjs": "42ff200baedb561bbd9af67e31b12fb989fb1ff52e1ef086619a3877644a30d8",
     "shared/hd2-loadout/assessment-v2/children.mjs": "f8c1bce7069a8a4005bbd0b3ff4bbef0757ca6d18b6e0d1fee3aebf39bbc62ee",
     "shared/hd2-loadout/assessment-v2/score-scale.mjs": "a1549fed0595c078a81d738354330716df2fd86df971696be30202ded4fd7b81",
@@ -290050,7 +290061,7 @@
     "shared/hd2-loadout/assessment-v2/demolition.mjs": "ce257117f8c73c7f33a10917fa8d35d081dcfc239c7aee2a7988022fe6aee75e",
     "shared/hd2-loadout/assessment-v2/heavy-eligibility.mjs": "d2356f2b4430bc657ebb6bc63cee28a9d38550d4087b8b4987f3b4b8e5484754",
     "shared/hd2-loadout/assessment-v2/manual-scores.mjs": "8c791e0ab91077e009cb922e953d7e748ca21b2cc0c9415cafbf2de4f9914822",
-    "shared/hd2-loadout/assessment-v2/manual-scores.json": "17fc7b7b6bbe53e190c2ae9ccc7f3d54fe6045fa9a603f53c10071dc7afd5c8f",
+    "shared/hd2-loadout/assessment-v2/manual-scores.json": "13cea2e09d7fede30c2ee84c8acdf3df5e02c01e0e45a5d999950abd318e487f",
     "shared/hd2-loadout/assessment-v2/dimension-scores.mjs": "8d3fe37edce631369decda46667105498d30b12911819d7e890e105225c85776",
     "shared/hd2-loadout/assessment-v2/endurance-total.mjs": "e7ce041decf361dc16c6e6c4d953c32f6dd61e86ba9719f1fbfe2bf66e6944cc",
     "shared/hd2-loadout/assessment-v2/loadout-endurance.mjs": "9429c931c9010c2c360861e158e9694bb847fbe908f3834474ad41b03f9e71c4",
@@ -290065,8 +290076,8 @@
   "manual_calibration": {
     "schema": 1,
     "path": "shared/hd2-loadout/assessment-v2/manual-scores.json",
-    "edited_equipment": 69,
-    "history_entries": 84,
+    "edited_equipment": 70,
+    "history_entries": 85,
     "scope": "SCORE_AND_CONTRIBUTION_MODE_ONLY; NO_DAMAGE_INVENTORY_LEGALITY_OR_PHYSICAL_GATE_OVERRIDE"
   }
 }
