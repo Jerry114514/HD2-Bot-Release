@@ -23,7 +23,7 @@ DEFAULTS = {
         "allow_chat": False,
         "self_id": "",          # 机器人 QQ 号（NapCat 登录号）
         "admin_qq": "",         # 管理员 QQ（可选）
-        "groups": [],           # 允许的群号列表（白名单）
+        "groups": [],           # bot.platform 的群白名单：NapCat群号 / 官方群OpenID，不跨平台套用
         "default_group": 0,     # 推送默认目标群
     },
     "napcat": {

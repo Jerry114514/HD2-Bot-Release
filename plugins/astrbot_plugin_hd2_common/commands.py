@@ -22,6 +22,16 @@ ALIASES = {
 VARIANT_TERMS = json.loads((Path(__file__).parent / "variant_terms.json").read_text(encoding="utf-8"))
 
 
+def parse_event(event):
+    """Parse the adapter's original text, before AstrBot removes wake prefixes.
+
+    Do not prepend '/' to the processed text: an @ or private message also wakes
+    the framework, but must not turn ordinary conversation into an HD2 command.
+    """
+    original = getattr(getattr(event, "message_obj", None), "message_str", None)
+    return parse(original if isinstance(original, str) else getattr(event, "message_str", ""))
+
+
 def parse(message):
     text = " ".join(unicodedata.normalize("NFKC", message or "").split())
     text = re.sub(r"^@[\w.\-]+\s+", "", text)

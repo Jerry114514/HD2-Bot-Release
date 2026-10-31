@@ -84,6 +84,7 @@ def _uname(event):
 
 
 from astrbot_plugin_hd2_common.runtime import blocking
+from astrbot_plugin_hd2_common.commands import parse_event
 
 class Hd2LookupPlugin(Star):
     def __init__(self, context: Context) -> None:
@@ -92,26 +93,26 @@ class Hd2LookupPlugin(Star):
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def keyword_trigger(self, event: AstrMessageEvent):
         """帮助触发：/帮助 或 /help"""
-        text = (event.message_str or "").strip()
-        if not text:
+        parsed = parse_event(event)
+        if not parsed or parsed[0] != "help":
             return
+        _, args, plain = parsed
+        text = getattr(event.message_obj, "message_str", event.message_str)
         # 过滤机器人自己发出的消息（同号多端登录时避免自我触发）
         try:
             if str(event.get_sender_id()) == str(event.get_self_id()):
                 return
         except Exception:
             pass
-        # 仅响应 / 指令（无需 @）
-        if not text.startswith("/"):
-            return
-        cmd = text[1:].strip()
-        if cmd.lower() not in ("帮助", "help"):
+        if args:
+            yield event.plain_result("用法：/帮助 或 /help；加 t / 文字查看纯文本。")
+            event.stop_event()
             return
         _t0 = time.time()
         _log("matched", plugin="lookup", text=text, group=_gid(event), user=_uid(event), name=_uname(event))
         # 作战手册：图片卡优先；文本回退：代码同源文案 -> 群使用说明.txt
         img_path = None
-        if _render_help_card:
+        if _render_help_card and not plain:
             try:
                 img_path = await blocking(_render_help_card)
             except Exception as e:

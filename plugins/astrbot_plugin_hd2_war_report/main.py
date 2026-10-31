@@ -61,7 +61,7 @@ class Hd2WarReportPlugin(Star):
 
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def keyword_trigger(self, event: AstrMessageEvent):
-        parsed = commands.parse(event.message_str)
+        parsed = commands.parse_event(event)
         if not parsed or parsed[0] not in WAR_KINDS:
             return
         if str(event.get_sender_id()) == str(event.get_self_id()):

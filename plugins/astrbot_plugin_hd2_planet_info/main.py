@@ -830,7 +830,7 @@ class Hd2PlanetInfoPlugin(Star):
         return False
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def keyword_trigger(self, event: AstrMessageEvent):
-        parsed = commands.parse(event.message_str)
+        parsed = commands.parse_event(event)
         if not parsed or parsed[0] != "planet":
             return
         _, query, plain = parsed

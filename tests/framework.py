@@ -39,6 +39,7 @@ class Event:
         self.stopped=False
     def get_sender_id(self):return self.user
     def get_self_id(self):return "self"
+    def get_platform_name(self):return "aiocqhttp"
     def is_wake_up(self):return self.wake
     def get_messages(self):return []
     def get_sender(self):return types.SimpleNamespace(card="",nickname="tester")

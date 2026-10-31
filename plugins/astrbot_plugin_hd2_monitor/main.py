@@ -10,7 +10,7 @@ from astrbot.api.event import filter
 from astrbot.api.star import Context, Star
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from astrbot_plugin_hd2_common.commands import parse
+from astrbot_plugin_hd2_common.commands import parse_event
 from astrbot_plugin_hd2_common.runtime import request_id, new_request
 
 from astrbot_plugin_hd2_common.diagnostics import hd2_log
@@ -19,7 +19,7 @@ from astrbot_plugin_hd2_common.diagnostics import hd2_log
 class Hd2MonitorPlugin(Star):
     @filter.event_message_type(filter.EventMessageType.ALL, priority=1100)
     async def monitor(self, event):
-        if not parse(event.message_str):
+        if not parse_event(event):
             return
         token = new_request(event)
         try:

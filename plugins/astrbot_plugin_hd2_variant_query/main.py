@@ -118,7 +118,7 @@ async def _scan_all_variants(deadline=None):
 class Hd2VariantQueryPlugin(Star):
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def keyword_trigger(self,event):
-        parsed=commands.parse(event.message_str)
+        parsed=commands.parse_event(event)
         if not parsed or parsed[0]!="variant": return
         query=normalize(parsed[1])
         key=next((k for k,cn in VARIANT_CN.items() if query in (normalize(k),normalize(cn))),None)

@@ -5,7 +5,7 @@ sys.path.insert(0,os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from astrbot.api import logger
 from astrbot.api.event import filter
 from astrbot.api.star import Star
-from astrbot_plugin_hd2_common.commands import parse
+from astrbot_plugin_hd2_common.commands import parse_event
 from astrbot_plugin_hd2_common.runtime import blocking,new_request,request_id
 from astrbot_plugin_hd2_common.diagnostics import hd2_log
 from astrbot_plugin_hd2_roll.loadout import draw,format_result
@@ -19,7 +19,7 @@ def render(result):
 class Hd2RollPlugin(Star):
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def keyword_trigger(self,event):
-        parsed=parse(event.message_str)
+        parsed=parse_event(event)
         if not parsed or parsed[0]!="roll":
             return
         _,args,plain=parsed
