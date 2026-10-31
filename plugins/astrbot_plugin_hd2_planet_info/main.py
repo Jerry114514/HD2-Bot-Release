@@ -13,15 +13,15 @@ _MON_PARENT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 if _MON_PARENT not in _sys.path:
     _sys.path.insert(0, _MON_PARENT)
 try:
-    from astrbot_plugin_hd2_monitor.main import hd2_log as _log
+    from astrbot_plugin_hd2_common.diagnostics import hd2_log as _log
 except Exception:
     def _log(*a, **k):
         pass
 
 # 公共库（hd2_common）：共享常量/抓取/表加载/译名映射
 from astrbot_plugin_hd2_common import commands
-from astrbot_plugin_hd2_common.runtime import blocking, new_request, request_id
-from astrbot_plugin_hd2_common.main import (
+from astrbot_plugin_hd2_common.runtime import blocking, text_reply, request_scope
+from astrbot_plugin_hd2_common.sources import (
     fetch_json as _fetch_json,
     fetch_official as _fetch_official,
     load_effect_id_cn as _load_effect_id_cn,
@@ -829,16 +829,16 @@ class Hd2PlanetInfoPlugin(Star):
             return True
         return False
     @filter.event_message_type(filter.EventMessageType.ALL)
+    @request_scope
     async def keyword_trigger(self, event: AstrMessageEvent):
-        parsed = commands.parse(event.message_str)
+        parsed = commands.parse_event(event)
         if not parsed or parsed[0] != "planet":
             return
         _, query, plain = parsed
         if not query:
-            yield event.plain_result("用法：/查询 星球名，例 /查询 X-45")
+            yield text_reply(event, "用法：/查询 星球名，例 /查询 X-45")
             event.stop_event()
             return
-        token = new_request(event)
         try:
             view = await blocking(commands.result, "planet", query)
             images = None
@@ -851,13 +851,12 @@ class Hd2PlanetInfoPlugin(Star):
                 for image in images if isinstance(images,list) else [images]:
                     yield event.image_result(image)
             else:
-                yield event.plain_result(view.text)
+                yield text_reply(event, view.text)
             _log("generated", plugin="planet_info", group=_gid(event), user=_uid(event),
                  source=(view.document.get("_hd2") or {}).get("source", ""),data_version=view.document.get("fetchedAt", ""),
                  source_time=view.document.get("fetchedAt"), output_mode="image" if images else "text",
                  stale=(view.document.get("_hd2") or {}).get("stale"))
         except Exception as error:
-            yield event.plain_result("⚠️ " + str(error))
+            yield text_reply(event, "⚠️ " + str(error))
         finally:
-            request_id.reset(token)
             event.stop_event()

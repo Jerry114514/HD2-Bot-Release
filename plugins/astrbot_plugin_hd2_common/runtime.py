@@ -11,6 +11,39 @@ _shared = weakref.WeakKeyDictionary()
 _wiki_limits = weakref.WeakKeyDictionary()
 
 
+def text_reply(event, text):
+    """Keep explicit text and rendering fallbacks independent of framework T2I/MD."""
+    return event.plain_result(text).use_t2i(False).use_markdown(False)
+
+
+def request_scope(handler):
+    """Never carry a ContextVar token across a yield into AstrBot's pipeline.
+
+    A framework hook can stop iteration and close generators from another task.
+    Each advance/close owns and resets its token in the same context instead.
+    """
+    @functools.wraps(handler)
+    async def scoped(self, event, *args, **kwargs):
+        iterator = handler(self, event, *args, **kwargs)
+        try:
+            while True:
+                token = new_request(event)
+                try:
+                    result = await anext(iterator)
+                except StopAsyncIteration:
+                    return
+                finally:
+                    request_id.reset(token)
+                yield result
+        finally:
+            token = new_request(event)
+            try:
+                await iterator.aclose()
+            finally:
+                request_id.reset(token)
+    return scoped
+
+
 async def singleflight(key, factory):
     """Share in-flight work only; a waiter cancellation never cancels its producer."""
     jobs = _shared.setdefault(asyncio.get_running_loop(), {})
