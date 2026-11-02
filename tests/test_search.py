@@ -94,6 +94,20 @@ class SearchTests(unittest.TestCase):
         self.assertEqual(fetch.call_count,1)
         self.assertEqual(fetch.call_args.args[0]["ppprop"],"disambiguation")
 
+    def test_table_render_uses_page_endpoint_and_same_revision(self):
+        def fetch(params):
+            if params["action"]=="parse":
+                self.assertEqual(params["page"],"标题")
+                self.assertNotIn("oldid",params)
+                return {"parse":{"revid":123,"text":'<h2>数据</h2><table><tr><th>甲</th></tr><tr><td>1</td></tr></table>'}}
+            return pages(page("标题"))
+        with patch.object(wiki,"catalogue",return_value=EMPTY),patch.object(wiki,"_wiki_get",side_effect=fetch):
+            value=wiki.wiki_lookup("标题")
+        self.assertEqual(value["status"],"resolved")
+        self.assertEqual(value["table_status"],"available")
+        self.assertEqual(len(value["tables"]),1)
+        self.assertEqual(value["tables"][0]["rows"],[["甲"],["1"]])
+
     def test_disambiguation_excludes_navigation(self):
         def fetch(params):
             if params["action"]=="parse":
@@ -157,7 +171,7 @@ class SearchTests(unittest.TestCase):
         self.assertGreater(tables.extract('<table><tr><td colspan="999999">X</td></tr></table>')[1],0)
         self.assertGreater(tables.extract('<table><tr><td>外<table><tr><td>内</td></tr></table></td></tr></table>')[1],0)
 
-    def test_wiki_card_cache_covers_query_and_recovered_tables(self):
+    def test_wiki_card_cache_uses_one_long_image_for_all_tables(self):
         value={"status":"resolved","title":"测试","url":"https://example.test","rev":"1","text":"摘要","tables":[],"thumb":None,"table_status":"unavailable"}
         with tempfile.TemporaryDirectory() as temp:
             first=wiki_card.render_wiki_card("甲",temp,value)
@@ -165,8 +179,8 @@ class SearchTests(unittest.TestCase):
             value.update(table_status="available",tables=[{"section":"数据","title":"同名表","rows":[['标准伤害','耐久伤害']]+[['90','22']]*26,"headers":[[True,True]]+[[False,False]]*26}])
             third=wiki_card.render_wiki_card("甲",temp,value)
             self.assertNotEqual(first,second);self.assertNotEqual(first,third)
-            for path in third if isinstance(third,list) else [third]:
-                with wiki_card.Image.open(path) as img:self.assertLess(img.height,2165)
+            self.assertIsInstance(third,str)
+            with wiki_card.Image.open(third) as img:self.assertGreater(img.height,1000)
             value['tables']=[{'section':'长表','title':'分页','rows':[['重复列头','数值','来源','备注']]+[['长单元格测试'*10]*4 for _ in range(25)],
                               'headers':[[True]*4]+[[False]*4 for _ in range(25)]}]
             labels=[]; original=wiki_card.ImageDraw.ImageDraw.text
@@ -174,8 +188,11 @@ class SearchTests(unittest.TestCase):
                 labels.append(str(label));return original(draw,xy,label,*a,**kw)
             with patch.object(wiki_card.ImageDraw.ImageDraw,'text',record):
                 rendered=wiki_card.render_wiki_card('长表',temp,value)
-            self.assertGreaterEqual(labels.count('重复列头'),2)
-            self.assertGreater(len(rendered),2)
+            self.assertEqual(labels.count('重复列头'),1)
+            self.assertIsInstance(rendered,str)
+            with wiki_card.Image.open(rendered) as img:
+                self.assertGreater(img.height,2165)
+                self.assertLess(img.height,wiki_card.WIKI_LONG_MAX)
 
     def test_singleflight_cancel_one_waiter(self):
         async def probe():

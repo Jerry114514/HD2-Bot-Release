@@ -63,14 +63,15 @@ def _wiki_get(params):
     def validate(value):
         if not isinstance(value,dict) or value.get("error"):
             raise ValueError("Wiki 接口错误")
-        node = value.get("parse" if params.get("action")=="parse" else "query")
+        is_parse = params.get("action") == "parse"
+        node = value.get("parse" if is_parse else "query")
         if not isinstance(node,dict):
             raise ValueError("Wiki 返回缺少数据字段")
-        if params.get("action")=="parse" and not isinstance(node.get("text"),str):
+        if is_parse and not isinstance(node.get("text"),str):
             raise ValueError("Wiki 表格字段缺失")
         if params.get("list") == "search" and not isinstance(node.get("search"),list):
             raise ValueError("Wiki 搜索结果不完整")
-        if params.get("prop") != "text" and params.get("list") != "search" and not isinstance(node.get("pages"),dict):
+        if not is_parse and params.get("list") != "search" and not isinstance(node.get("pages"),dict):
             raise ValueError("Wiki 页面列表不完整")
     start = time.monotonic()
     try:
@@ -105,9 +106,16 @@ def _html(page):
     revision = (page.get("revisions") or [{}])[0].get("revid") or page.get("lastrevid")
     if not revision:
         raise ValueError("缺少页面修订，不能混用版本")
-    result = _wiki_get({"action":"parse","oldid":revision,"prop":"text","formatversion":2})["parse"]
+    title = page.get("title")
+    if not title:
+        raise ValueError("缺少页面标题，无法渲染表格")
+    # wiki.gg currently rejects action=parse with oldid (HTTP 403), while
+    # rendering by page title is available.  Keep revision consistency by
+    # requesting revid in the same parse response and verifying it below.
+    result = _wiki_get({"action":"parse","page":title,"prop":"text|revid",
+                        "formatversion":2,"redirects":1})["parse"]
     text = result.get("text")
-    if not isinstance(text,str) or result.get("revid",revision) != revision:
+    if not isinstance(text,str) or str(result.get("revid")) != str(revision):
         raise ValueError("Wiki 表格数据或修订不一致")
     return text
 
