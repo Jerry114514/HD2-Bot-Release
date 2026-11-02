@@ -1,10 +1,10 @@
 import {legality, equipmentIDs, canOccupy, withinExosuitLimit} from '../engine/common.mjs';
 import {assessMixedEndurance, assessHeavyPairs} from './engagement.mjs';
 import {assessFiveHoles} from './demolition.mjs';
-import {summarizeLoadout} from './aggregate.mjs';
+import {summarizeLoadout,finalizeAssessmentSummary} from './aggregate.mjs';
 import {capacityCurve} from './formulas.mjs';
 import {assessStrategic} from './strategic.mjs';
-import {suppliedGrenadeAdditions} from './grenade-chaff.mjs';
+import {suppliedGrenadeAdditions,grenadeChaffAddition} from './grenade-chaff.mjs';
 import {assessAutomatic} from './automatic.mjs';
 import {manualValue,contributionKind} from './manual-scores.mjs';
 import {originalScore,contributionScore} from './score-scale.mjs';
@@ -86,6 +86,16 @@ function closeSafety(rows, model) {
 // End-to-end diagnostic of real seven-slot inputs. All gates are computed here,
 // not supplied as PASS by the caller. Never reads the retired six-dimension table.
 export function evaluateAssessment(loadout, model, catalog, options = {}) {
+  return evaluateCore(loadout,model,catalog,options,false);
+}
+
+// Cheap ranking only: omit resource simulations and portable grenade credit.
+// This result cannot admit a loadout, even when all its score estimates pass.
+export function previewAssessment(loadout, model, catalog, options = {}) {
+  return {...evaluateCore(loadout,model,catalog,options,true),status:'RANKING_ONLY',acceptance_ready:false,eligible_for_draw:false};
+}
+
+function evaluateCore(loadout, model, catalog, options, ranking) {
   const legal = assessmentLegality(loadout, catalog, model, options);
   if (legal.status !== 'PASS') return {status: legal.status === 'FAIL' ? 'REJECTED_ILLEGAL' : 'UNKNOWN',
     eligible_for_draw: false, gates: {legality: legal}};
@@ -117,15 +127,15 @@ export function evaluateAssessment(loadout, model, catalog, options = {}) {
   const chaffBonus = strategic.filter(r => r.role === 'chaff' && r.contribution.status === 'KNOWN'
     &&contributionKind(byId.get(r.equipment_id),'chaff')==='AUXILIARY_ADDITION').reduce((n,r)=>n+
       (r.contribution.score_origin==='MANUAL_CALIBRATED'?originalScore(r.contribution.value,scale):r.contribution.value),0);
-  const ordinaryPlan = assessMixedEndurance(ordinaryRows, model, {require_role_floors: true,
+  const pending={status:'UNKNOWN',reason:'RANKING_ONLY_REQUIRES_FULL_CHECK'};
+  const ordinaryPlan = ranking?pending:assessMixedEndurance(ordinaryRows, model, {require_role_floors: true,
     chaff_score_floor: Math.max(0, (scale?.previous_pass??60) - chaffBonus)});
-  const grenadeAdditions=suppliedGrenadeAdditions(ordinaryRows,model,ordinaryPlan);
-  const gates = {legality: legal, heavy_pair: assessHeavyPairs(rows, model), demolition: assessFiveHoles(rows, model),
+  const grenadeAdditions=ranking?ordinaryRows.flatMap(grenadeChaffAddition):suppliedGrenadeAdditions(ordinaryRows,model,ordinaryPlan);
+  const gates = {legality: legal, heavy_pair: ranking?pending:assessHeavyPairs(rows, model), demolition: ranking?pending:assessFiveHoles(rows, model),
     shared_resources: ordinaryPlan, close_safety: closeSafety(ordinaryRows, model)};
-  // Medium's weaker requirement is a mean physical route benchmark inside
-  // the shared plan. Its display score is advisory; slot preference never turns
-  // a physically faster support gun into an unusable medium route.
-  const thresholds = {chaff: 60, close_defense: 60, anti_medium: null,anti_heavy:null,endurance:null,demolition:null};
+  // Every final dimension must pass, in addition to the independent physical gates.
+  // Medium route selection still uses physical response, not slot display preference.
+  const thresholds = {chaff:60,close_defense:60,anti_medium:60,anti_heavy:60,endurance:60,demolition:60};
   // A grenade's auxiliary display score cannot lower the physical gun-only
   // floor without a paid combined plan. The stock ledger remains conservative.
   const candidates=[...ordinary.map(r=>({...r,default_kind:'BASE_CAPABILITY'})),
@@ -150,13 +160,14 @@ export function evaluateAssessment(loadout, model, catalog, options = {}) {
   }
   baseScores.push({equipment_id:'plan:routine-endurance',role:'endurance',score:enduranceAssessment.score,
     score_origin:'CURRENT_DISPLAY_SCALE',state:Number.isFinite(enduranceAssessment.score)?'ENGINEERING_ESTIMATE':'UNRESOLVED'});
-  const summary = summarizeLoadout({ordinary:baseScores, strategic:additions, gates, thresholds,score_scale:scale,
+  let summary = summarizeLoadout({ordinary:baseScores, strategic:additions, gates, thresholds,score_scale:scale,
     coverage_complete: {chaff: false, close_defense: false, anti_medium: false}, calibration_ready: false});
   summary.dimensions.endurance={...summary.dimensions.endurance,
     scope:enduranceAssessment.scope,lower_bound:enduranceAssessment.lower_bound,
     ...(enduranceAssessment.score===null&&!summary.dimensions.endurance.contributions.length?{score:null}:{}),
     computation:enduranceAssessment};
   summary.dimensions.endurance=applySupplyEnduranceFloor(summary.dimensions.endurance,rows,enduranceAssessment.policy);
+  summary=finalizeAssessmentSummary(summary);
   return {...summary, loadout, gates, medium_routes: medium,
     endurance_assessment:enduranceAssessment,
     throwable_endurance:rows.filter(r=>r.category==='throwables').map(r=>({equipment_id:r.equipment_id,
@@ -169,7 +180,7 @@ export function evaluateAssessment(loadout, model, catalog, options = {}) {
     disabled_contributions: [...disabled],
     role_plan: options.role_plan ?? null,
     baseline_policy: {chaff: model.references.chaff, close_defense: model.references.close_defense,
-      anti_medium: model.references.anti_medium, medium_gate: 'MEAN_PHYSICAL_RESPONSE_INSIDE_SHARED_PLAN; SCORE_ADVISORY',
+      anti_medium: model.references.anti_medium, medium_gate: 'MEAN_PHYSICAL_RESPONSE_INSIDE_SHARED_PLAN; FINAL_SCORE_AT_LEAST_60',
       threshold_meaning: 'REFERENCE_NORMALIZED; NOT_RETIRED_ABSOLUTE_POINTS'},
     unresolved_strategic_equipment: [...new Set(strategic.filter(r => r.contribution.status !== 'KNOWN').map(r => r.equipment_id))],
     quality: 'SOURCE_DERIVED_DIAGNOSTIC; NOT_GAMEPLAY_CALIBRATED', eligible_for_draw: false};

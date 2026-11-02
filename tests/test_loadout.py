@@ -24,10 +24,21 @@ class LoadoutTests(unittest.TestCase):
             self.assertEqual(len(set([value["primary"],value["secondary"],value["grenade"],*value["stratagems"]])),7)
             self.assertLessEqual(sum(x.startswith("vehicle_exo_") for x in value["stratagems"]),1)
             samples.append(value)
-        # Internal-only verification against the unchanged published evaluator.
+        # Internal-only verification against the pinned published evaluator.
         script="""import{readFileSync}from'node:fs';import{evaluateAssessment,assessmentLegality}from'./plugins/astrbot_plugin_hd2_roll/runtime/assessment-v2/evaluate.mjs';
 const base='./plugins/astrbot_plugin_hd2_roll/runtime/';const model=JSON.parse(readFileSync(base+'assessment-v2/equipment.json'));const catalog=JSON.parse(readFileSync(base+'data/catalog.json'));
-const values=JSON.parse(readFileSync(process.argv[1]));for(let i=0;i<values.length;i++){if(assessmentLegality(values[i],catalog,model).status!=='PASS')throw Error('illegal');if(i<5){const result=evaluateAssessment(values[i],model,catalog);if(result.status!=='ESTIMATED_PASS'||!result.acceptance_ready)throw Error('rejected');}}"""
+const values=JSON.parse(readFileSync(process.argv[1]));
+for(let i=0;i<values.length;i++){
+  if(assessmentLegality(values[i],catalog,model).status!=='PASS')throw Error('illegal');
+  if(i<5){
+    const result=evaluateAssessment(values[i],model,catalog);
+    if(result.status!=='ESTIMATED_PASS'||!result.acceptance_ready)throw Error('rejected');
+    for(const role of ['chaff','close_defense','anti_medium','anti_heavy','endurance','demolition']){
+      const d=result.dimensions[role];
+      if(d.threshold!==60||d.status!=='PASS'||!(d.score>=60-1e-10))throw Error('below final threshold: '+role);
+    }
+  }
+}"""
         with tempfile.TemporaryDirectory() as temp:
             path=Path(temp,"samples.json");path.write_text(json.dumps(samples))
             subprocess.run(["node","--input-type=module","-e",script,str(path)],cwd=ROOT,check=True,capture_output=True)
