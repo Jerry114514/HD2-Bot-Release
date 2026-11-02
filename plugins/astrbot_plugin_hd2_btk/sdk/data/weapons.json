@@ -1,0 +1,3654 @@
+[
+ {
+  "id": "AR-2",
+  "name": "AR-2 野狼",
+  "cat": "突击步枪",
+  "dmg": 75,
+  "dmg2": 10,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 7,
+  "mass": 8,
+  "v0": 650,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "附带燃烧状态（v1 不计）",
+  "rpm": 600
+ },
+ {
+  "id": "AR-11",
+  "name": "AR-11 仲裁者",
+  "cat": "突击步枪",
+  "dmg": 70,
+  "dmg2": 20,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 8,
+  "mass": 11,
+  "v0": 920,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "另有下挂霰弹表（v1 不计）",
+  "rpm": 1200
+ },
+ {
+  "id": "AR-23",
+  "name": "AR-23 解放者",
+  "cat": "突击步枪",
+  "dmg": 90,
+  "dmg2": 22,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 5.5,
+  "mass": 4.5,
+  "v0": 900,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 640
+ },
+ {
+  "id": "AR-23A",
+  "name": "AR-23A “解放者”卡宾枪",
+  "cat": "突击步枪",
+  "dmg": 90,
+  "dmg2": 22,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 5.5,
+  "mass": 4.5,
+  "v0": 900,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "射弹表与 AR-23 共用",
+  "rpm": 920
+ },
+ {
+  "id": "AR-23C",
+  "name": "AR-23C 震荡“解放者”",
+  "cat": "突击步枪",
+  "dmg": 75,
+  "dmg2": 35,
+  "ap": [
+   2,
+   2,
+   2,
+   2
+  ],
+  "caliber": 5.5,
+  "mass": 4.5,
+  "v0": 800,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "极端角度仍 AP2（本系唯一）",
+  "rpm": 400
+ },
+ {
+  "id": "AR-23L",
+  "name": "AR-23L “解放者”传承",
+  "cat": "突击步枪",
+  "dmg": 90,
+  "dmg2": 22,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 5.5,
+  "mass": 4.5,
+  "v0": 900,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "射弹表与 AR-23 共用",
+  "rpm": 660
+ },
+ {
+  "id": "AR-23P",
+  "name": "AR-23P 穿甲“解放者”",
+  "cat": "突击步枪",
+  "dmg": 65,
+  "dmg2": 15,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 5.5,
+  "mass": 4.5,
+  "v0": 1000,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 640
+ },
+ {
+  "id": "AR-32",
+  "name": "AR-32 安抚者",
+  "cat": "突击步枪",
+  "dmg": 55,
+  "dmg2": 10,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 5.5,
+  "mass": 4.5,
+  "v0": 900,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "附带眩晕II（v1 不计）",
+  "rpm": 700
+ },
+ {
+  "id": "AR-59",
+  "name": "AR-59 消音器",
+  "cat": "突击步枪",
+  "dmg": 80,
+  "dmg2": 20,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 5.5,
+  "mass": 4.5,
+  "v0": 330,
+  "drag": 0.3,
+  "grav": 1.2,
+  "pellets": 1,
+  "note": "重力系数 120%（全表唯一）",
+  "rpm": 850
+ },
+ {
+  "id": "AR-61",
+  "name": "AR-61 肉锤",
+  "cat": "突击步枪",
+  "dmg": 105,
+  "dmg2": 30,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 8,
+  "mass": 11,
+  "v0": 820,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 600
+ },
+ {
+  "id": "AR/GL-21",
+  "name": "AR/GL-21 幺二",
+  "cat": "突击步枪",
+  "dmg": 95,
+  "dmg2": 24,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 8,
+  "mass": 11,
+  "v0": 920,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "双段武器，仅计入 8mm 主射弹",
+  "rpm": 650
+ },
+ {
+  "id": "BR-14",
+  "name": "BR-14 审判者",
+  "cat": "突击步枪",
+  "dmg": 95,
+  "dmg2": 23,
+  "ap": [
+   3,
+   3,
+   3,
+   1
+  ],
+  "caliber": 8,
+  "mass": 11,
+  "v0": 820,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "极端角度 AP1",
+  "rpm": 550
+ },
+ {
+  "id": "MA5C",
+  "name": "MA5C 突击步枪",
+  "cat": "突击步枪",
+  "dmg": 90,
+  "dmg2": 20,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 8,
+  "mass": 11,
+  "v0": 820,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 640
+ },
+ {
+  "id": "StA-52",
+  "name": "StA-52 突击步枪",
+  "cat": "突击步枪",
+  "dmg": 90,
+  "dmg2": 22,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 5.5,
+  "mass": 4.5,
+  "v0": 900,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "射弹表与 AR-23 共用",
+  "rpm": 790
+ },
+ {
+  "id": "M7S",
+  "name": "M7S 冲锋枪",
+  "cat": "冲锋枪",
+  "dmg": 90,
+  "dmg2": 18,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 9,
+  "mass": 7,
+  "v0": 320,
+  "drag": 1.2,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 872
+ },
+ {
+  "id": "MP-98",
+  "name": "MP-98 骑士",
+  "cat": "冲锋枪",
+  "dmg": 90,
+  "dmg2": 18,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 9,
+  "mass": 7,
+  "v0": 375,
+  "drag": 1.2,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 1380
+ },
+ {
+  "id": "SMG-203",
+  "name": "SMG-203 英勇无畏",
+  "cat": "冲锋枪",
+  "dmg": 65,
+  "dmg2": 13,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 9,
+  "mass": 7,
+  "v0": 450,
+  "drag": 1.2,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 1380
+ },
+ {
+  "id": "SMG-32",
+  "name": "SMG-32 训斥",
+  "cat": "冲锋枪",
+  "dmg": 140,
+  "dmg2": 32,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 12,
+  "mass": 15,
+  "v0": 285,
+  "drag": 1.2,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 490
+ },
+ {
+  "id": "SMG-37",
+  "name": "SMG-37 防卫者",
+  "cat": "冲锋枪",
+  "dmg": 110,
+  "dmg2": 22,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 12,
+  "mass": 15,
+  "v0": 285,
+  "drag": 1.2,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 520
+ },
+ {
+  "id": "SMG-72",
+  "name": "SMG-72 暴击斗士",
+  "cat": "冲锋枪",
+  "dmg": 85,
+  "dmg2": 17,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 12,
+  "mass": 15,
+  "v0": 210,
+  "drag": 1.2,
+  "grav": 1,
+  "pellets": 1,
+  "note": "附带眩晕II（v1 不计）",
+  "rpm": 475
+ },
+ {
+  "id": "StA-11",
+  "name": "StA-11 冲锋枪",
+  "cat": "冲锋枪",
+  "dmg": 100,
+  "dmg2": 20,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 9,
+  "mass": 7,
+  "v0": 320,
+  "drag": 1.2,
+  "grav": 1,
+  "pellets": 1,
+  "note": "射弹表与 P-2 共用",
+  "rpm": 1050
+ },
+ {
+  "id": "R-2",
+  "name": "R-2 修正",
+  "cat": "精确射手",
+  "dmg": 200,
+  "dmg2": 50,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 8,
+  "mass": 20,
+  "v0": 850,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 480
+ },
+ {
+  "id": "R-2124",
+  "name": "R-2124 宪法",
+  "cat": "精确射手",
+  "dmg": 180,
+  "dmg2": 50,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 8,
+  "mass": 20,
+  "v0": 850,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 60
+ },
+ {
+  "id": "R-4",
+  "name": "R-4 鬣狗",
+  "cat": "精确射手",
+  "dmg": 220,
+  "dmg2": 45,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 9,
+  "mass": 20,
+  "v0": 950,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "附带燃烧（v1 不计）",
+  "rpm": 190
+ },
+ {
+  "id": "R-6",
+  "name": "R-6 鹰眼",
+  "cat": "精确射手",
+  "dmg": 300,
+  "dmg2": 100,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 8,
+  "mass": 20,
+  "v0": 850,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 100
+ },
+ {
+  "id": "R-40",
+  "name": "R-40 视界者",
+  "cat": "狙击",
+  "dmg": 350,
+  "dmg2": 205,
+  "ap": [
+   4,
+   4,
+   4,
+   0
+  ],
+  "caliber": 8,
+  "mass": 11,
+  "v0": 950,
+  "drag": 0.2,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 40
+ },
+ {
+  "id": "R-63",
+  "name": "R-63 勤勉",
+  "cat": "精确射手",
+  "dmg": 165,
+  "dmg2": 45,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 9,
+  "mass": 20,
+  "v0": 850,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 350
+ },
+ {
+  "id": "R-63CS",
+  "name": "R-63CS 反狙击“勤勉”",
+  "cat": "精确射手",
+  "dmg": 200,
+  "dmg2": 50,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 9,
+  "mass": 20,
+  "v0": 940,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 350
+ },
+ {
+  "id": "R-72",
+  "name": "R-72 审查官",
+  "cat": "精确射手",
+  "dmg": 165,
+  "dmg2": 45,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 8,
+  "mass": 20,
+  "v0": 330,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "消音",
+  "rpm": 400
+ },
+ {
+  "id": "M6C",
+  "name": "M6C/特种作战 手枪",
+  "cat": "手枪",
+  "dmg": 125,
+  "dmg2": 28,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 12,
+  "mass": 15,
+  "v0": 285,
+  "drag": 1.2,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 900
+ },
+ {
+  "id": "P-113",
+  "name": "P-113 裁决",
+  "cat": "手枪",
+  "dmg": 140,
+  "dmg2": 32,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 12,
+  "mass": 15,
+  "v0": 285,
+  "drag": 1.2,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 450
+ },
+ {
+  "id": "P-19",
+  "name": "P-19 救世主",
+  "cat": "手枪",
+  "dmg": 70,
+  "dmg2": 12,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 9,
+  "mass": 7,
+  "v0": 375,
+  "drag": 1.2,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 1100
+ },
+ {
+  "id": "P-2",
+  "name": "P-2 和平制造者",
+  "cat": "手枪",
+  "dmg": 100,
+  "dmg2": 20,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 9,
+  "mass": 7,
+  "v0": 320,
+  "drag": 1.2,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 900
+ },
+ {
+  "id": "P-4",
+  "name": "P-4 参议员",
+  "cat": "手枪",
+  "dmg": 225,
+  "dmg2": 75,
+  "ap": [
+   4,
+   4,
+   4,
+   0
+  ],
+  "caliber": 12,
+  "mass": 15,
+  "v0": 550,
+  "drag": 1.2,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 200
+ },
+ {
+  "id": "P-44",
+  "name": "P-44 迷雾",
+  "cat": "手枪",
+  "dmg": 110,
+  "dmg2": 18,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 9,
+  "mass": 7,
+  "v0": 375,
+  "drag": 1.2,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 400
+ },
+ {
+  "id": "P-69",
+  "name": "P-69 否决者",
+  "cat": "手枪",
+  "dmg": 105,
+  "dmg2": 35,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 12,
+  "mass": 7,
+  "v0": 375,
+  "drag": 0,
+  "grav": 0.3,
+  "pellets": 1,
+  "note": "阻力 0% → 无伤害衰减",
+  "rpm": 750
+ },
+ {
+  "id": "P-92",
+  "name": "P-92 法令",
+  "cat": "手枪",
+  "dmg": 80,
+  "dmg2": 20,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 12,
+  "mass": 15,
+  "v0": 285,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "note": "阻力/重力均 0% → 无衰减",
+  "rpm": 450
+ },
+ {
+  "id": "MG-43",
+  "name": "MG-43 机枪",
+  "cat": "支援武器",
+  "dmg": 90,
+  "dmg2": 23,
+  "ap": [
+   3,
+   3,
+   3,
+   1
+  ],
+  "caliber": 8,
+  "mass": 11,
+  "v0": 820,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 760
+ },
+ {
+  "id": "MG-206",
+  "name": "MG-206 重机枪",
+  "cat": "支援武器",
+  "dmg": 150,
+  "dmg2": 35,
+  "ap": [
+   4,
+   4,
+   4,
+   0
+  ],
+  "caliber": 12.5,
+  "mass": 52,
+  "v0": 980,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 600
+ },
+ {
+  "id": "M-1000",
+  "name": "M-1000 重装机枪",
+  "cat": "支援武器",
+  "dmg": 80,
+  "dmg2": 18,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 8,
+  "mass": 11,
+  "v0": 920,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 1500
+ },
+ {
+  "id": "M-105",
+  "name": "M-105 盟友",
+  "cat": "支援武器",
+  "dmg": 90,
+  "dmg2": 22,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 5.5,
+  "mass": 4.5,
+  "v0": 900,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "射弹表与 AR-23 共用",
+  "rpm": 850
+ },
+ {
+  "id": "MGX-42",
+  "name": "MGX-42 子弹风暴",
+  "cat": "支援武器",
+  "dmg": 100,
+  "dmg2": 25,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 9,
+  "mass": 4.5,
+  "v0": 450,
+  "drag": 0.6,
+  "grav": 1,
+  "pellets": 1,
+  "note": "24 管轮转供弹，**每次击发只出一颗弹丸**（不是 24 发齐射）",
+  "rpm": 1300
+ },
+ {
+  "id": "APW-1",
+  "name": "APW-1 反器材步枪",
+  "cat": "支援武器",
+  "dmg": 450,
+  "dmg2": 225,
+  "ap": [
+   4,
+   4,
+   4,
+   0
+  ],
+  "caliber": 12.5,
+  "mass": 52,
+  "v0": 880,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "rpm": 400
+ },
+ {
+  "id": "RS-422",
+  "name": "RS-422 磁轨炮",
+  "cat": "支援武器",
+  "dmg": 600,
+  "dmg2": 225,
+  "ap": [
+   5,
+   5,
+   5,
+   5
+  ],
+  "caliber": 10,
+  "mass": 50,
+  "v0": 2000,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "穿透减速 0%？wiki 原文确为 0%；另有过蓄力爆炸（v1 不计）",
+  "rpm": 60
+ },
+ {
+  "id": "S-11",
+  "name": "S-11 矛枪",
+  "cat": "支援武器",
+  "dmg": 650,
+  "dmg2": 275,
+  "ap": [
+   5,
+   5,
+   5,
+   5
+  ],
+  "caliber": 10,
+  "mass": 100,
+  "v0": 300,
+  "drag": 4,
+  "grav": 1,
+  "pellets": 1,
+  "note": "阻力 400%，掉速极快",
+  "rpm": 60
+ },
+ {
+  "id": "SG-8",
+  "name": "SG-8 制裁者",
+  "cat": "霰弹枪",
+  "dmg": 54,
+  "dmg2": 15,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 8,
+  "mass": 6,
+  "v0": 385,
+  "drag": 0.5,
+  "grav": 1,
+  "pellets": 9,
+  "note": "dmg 为每弹丸；射弹表与 SG-22 共用",
+  "rpm": 80
+ },
+ {
+  "id": "SG-8S",
+  "name": "SG-8S 重炮手",
+  "cat": "霰弹枪",
+  "dmg": 330,
+  "dmg2": 90,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 18,
+  "mass": 50,
+  "v0": 390,
+  "drag": 2,
+  "grav": 1,
+  "pellets": 1,
+  "note": "单发弹块；阻力 200% —— 用户 air_drag 校验样本枪",
+  "rpm": 80
+ },
+ {
+  "id": "SG-20",
+  "name": "SG-20 止息",
+  "cat": "霰弹枪",
+  "dmg": 35,
+  "dmg2": 10,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 8,
+  "mass": 6,
+  "v0": 385,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 11,
+  "note": "dmg 为每弹丸；另有眩晕弹（v1 不计）",
+  "rpm": 80
+ },
+ {
+  "id": "SG-225",
+  "name": "SG-225 破裂者",
+  "cat": "霰弹枪",
+  "dmg": 36,
+  "dmg2": 8,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 8,
+  "mass": 4,
+  "v0": 360,
+  "drag": 0.5,
+  "grav": 1,
+  "pellets": 11,
+  "note": "dmg 为每弹丸",
+  "rpm": 300
+ },
+ {
+  "id": "SG-225IE",
+  "name": "SG-225IE 高燃“破裂者”",
+  "cat": "霰弹枪",
+  "dmg": 20,
+  "dmg2": 10,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 8,
+  "mass": 2,
+  "v0": 120,
+  "drag": 0.8,
+  "grav": 1,
+  "pellets": 12,
+  "note": "dmg 为每弹丸；附燃烧（v1 不计）",
+  "rpm": 300
+ },
+ {
+  "id": "SG-225SP",
+  "name": "SG-225SP 千发百中“破裂者”",
+  "cat": "霰弹枪",
+  "dmg": 18,
+  "dmg2": 5,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 3,
+  "mass": 1,
+  "v0": 250,
+  "drag": 0.5,
+  "grav": 1,
+  "pellets": 16,
+  "note": "dmg 为每弹丸",
+  "rpm": 330
+ },
+ {
+  "id": "SG-451",
+  "name": "SG-451 野炊",
+  "cat": "霰弹枪",
+  "dmg": 16,
+  "dmg2": 3,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 8,
+  "mass": 2,
+  "v0": 120,
+  "drag": 0.8,
+  "grav": 1,
+  "pellets": 20,
+  "note": "dmg 为每弹丸；附燃烧（v1 不计）",
+  "rpm": 80
+ },
+ {
+  "id": "SG-97",
+  "name": "SG-97 扫荡者",
+  "cat": "霰弹枪",
+  "dmg": 42,
+  "dmg2": 11,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 12,
+  "mass": 10,
+  "v0": 385,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 12,
+  "note": "dmg 为每弹丸",
+  "rpm": 150
+ },
+ {
+  "id": "SG-88",
+  "name": "SG-88 中折式霰弹枪",
+  "cat": "霰弹枪",
+  "dmg": 65,
+  "dmg2": 13,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 8,
+  "mass": 6,
+  "v0": 385,
+  "drag": 0.5,
+  "grav": 1,
+  "pellets": 9,
+  "note": "dmg 为每弹丸",
+  "rpm": 600
+ },
+ {
+  "id": "DBS-2",
+  "name": "DBS-2 双重自由",
+  "cat": "霰弹枪",
+  "dmg": 70,
+  "dmg2": 35,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 8,
+  "mass": 6,
+  "v0": 385,
+  "drag": 0.5,
+  "grav": 1,
+  "pellets": 12,
+  "note": "dmg 为每弹丸",
+  "rpm": 650
+ },
+ {
+  "id": "M90A",
+  "name": "M90A 霰弹枪",
+  "cat": "霰弹枪",
+  "dmg": 66,
+  "dmg2": 24,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 8,
+  "mass": 6,
+  "v0": 385,
+  "drag": 0.5,
+  "grav": 1,
+  "pellets": 11,
+  "note": "dmg 为每弹丸",
+  "rpm": 80
+ },
+ {
+  "id": "SG-22",
+  "name": "SG-22“游击兵”",
+  "cat": "霰弹枪",
+  "dmg": 54,
+  "dmg2": 15,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 8,
+  "mass": 6,
+  "v0": 385,
+  "drag": 0.5,
+  "grav": 1,
+  "pellets": 9,
+  "note": "dmg 为每弹丸",
+  "rpm": 650
+ },
+ {
+  "id": "JAR-5",
+  "name": "JAR-5 主宰",
+  "cat": "主手特殊",
+  "dmg": 275,
+  "dmg2": 90,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 15,
+  "mass": 100,
+  "v0": 180,
+  "drag": 0,
+  "grav": 0.3,
+  "pellets": 1,
+  "type": "projectile",
+  "note": "无爆炸表，纯直击",
+  "rpm": 250
+ },
+ {
+  "id": "LAS-12",
+  "name": "LAS-12 钗",
+  "cat": "激光",
+  "dmg": 80,
+  "dmg2": 4,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 10,
+  "mass": 12,
+  "v0": 100,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "type": "projectile",
+  "note": "阻力 0% → 无伤害衰减"
+ },
+ {
+  "id": "LAS-16",
+  "name": "LAS-16 镰刀",
+  "cat": "激光",
+  "dmg": 60,
+  "dmg2": 6,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 10,
+  "mass": 12,
+  "v0": 1300,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "type": "projectile",
+  "note": "阻力 0% → 无伤害衰减"
+ },
+ {
+  "id": "LAS-44",
+  "name": "LAS-44 新星",
+  "cat": "激光",
+  "dmg": 880,
+  "dmg2": 880,
+  "ap": [
+   5,
+   5,
+   5,
+   0
+  ],
+  "caliber": 10,
+  "mass": 8,
+  "v0": 1500,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "type": "projectile",
+  "note": "阻力 0% → 无伤害衰减"
+ },
+ {
+  "id": "LAS-58",
+  "name": "LAS-58 猛爪",
+  "cat": "激光",
+  "dmg": 200,
+  "dmg2": 20,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 10,
+  "mass": 12,
+  "v0": 1300,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "type": "projectile",
+  "note": "阻力 0% → 无伤害衰减"
+ },
+ {
+  "id": "ARC-12",
+  "name": "ARC-12 雷霆",
+  "cat": "电弧",
+  "dmg": 50,
+  "dmg2": 35,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 5,
+  "type": "arc",
+  "note": "电弧：射程 25 m，5 道弧/次，连锁 1 次",
+  "range": 25
+ },
+ {
+  "id": "ARC-3",
+  "name": "ARC-3 电弧发射器",
+  "cat": "电弧",
+  "dmg": 250,
+  "dmg2": 100,
+  "ap": [
+   7,
+   7,
+   7,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "type": "arc",
+  "note": "电弧：射程 55 m，连锁 1 次",
+  "range": 55
+ },
+ {
+  "id": "EAT-17",
+  "name": "EAT-17 消耗性反坦克武器",
+  "cat": "支援武器",
+  "dmg": 2000,
+  "dmg2": 2000,
+  "ap": [
+   6,
+   6,
+   6,
+   3
+  ],
+  "caliber": 75,
+  "mass": 2500,
+  "v0": 200,
+  "drag": 0,
+  "grav": 1,
+  "pellets": 1,
+  "type": "projectile",
+  "explosion": {
+   "dmg": 150,
+   "ap": [
+    3,
+    2,
+    3
+   ],
+   "r": [
+    1.5,
+    3,
+    6
+   ]
+  },
+  "note": "一次性；直击 2000 + 命中爆炸 150（AP3）"
+ },
+ {
+  "id": "GR-8",
+  "name": "GR-8 无后坐力炮（反坦克模式）",
+  "cat": "支援武器",
+  "dmg": 3200,
+  "dmg2": 3200,
+  "ap": [
+   6,
+   6,
+   6,
+   3
+  ],
+  "caliber": 85,
+  "mass": 3300,
+  "v0": 250,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "type": "projectile",
+  "explosion": {
+   "dmg": 150,
+   "ap": [
+    3,
+    2,
+    3
+   ],
+   "r": [
+    1.5,
+    3,
+    6
+   ]
+  },
+  "note": "P 射弹；直击 3200 为主"
+ },
+ {
+  "id": "GR-8-HE",
+  "name": "GR-8 无后坐力炮（高爆模式）",
+  "cat": "支援武器",
+  "dmg": 750,
+  "dmg2": 750,
+  "ap": [
+   5,
+   5,
+   5,
+   0
+  ],
+  "caliber": 85,
+  "mass": 3300,
+  "v0": 250,
+  "drag": 0,
+  "grav": 1,
+  "pellets": 1,
+  "type": "projectile",
+  "explosion": {
+   "dmg": 800,
+   "ap": [
+    4,
+    3,
+    4
+   ],
+   "r": [
+    3,
+    7.5,
+    12
+   ]
+  },
+  "note": "P1 射弹；直击 750 + 大范围爆炸 800（AP4）"
+ },
+ {
+  "id": "AC-8",
+  "name": "AC-8 机炮（穿甲模式）",
+  "cat": "支援武器",
+  "dmg": 325,
+  "dmg2": 260,
+  "ap": [
+   4,
+   4,
+   4,
+   0
+  ],
+  "caliber": 20,
+  "mass": 120,
+  "v0": 820,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "type": "projectile",
+  "explosion": {
+   "dmg": 150,
+   "ap": [
+    3,
+    2,
+    3
+   ],
+   "r": [
+    2,
+    4,
+    5.5
+   ]
+  },
+  "note": "只做 P 射弹（穿甲高爆曳光弹）"
+ },
+ {
+  "id": "MLS-4X",
+  "name": "MLS-4X 突击兵",
+  "cat": "支援武器",
+  "dmg": 1100,
+  "dmg2": 1100,
+  "ap": [
+   6,
+   6,
+   6,
+   3
+  ],
+  "caliber": 66,
+  "mass": 350,
+  "v0": 70,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "type": "projectile",
+  "explosion": {
+   "dmg": 150,
+   "ap": [
+    3,
+    2,
+    3
+   ],
+   "r": [
+    1,
+    2,
+    4
+   ]
+  },
+  "note": "4 根发射管但一次一发；制导，不衰减"
+ },
+ {
+  "id": "FAF-14",
+  "name": "FAF-14 飞矛",
+  "cat": "支援武器",
+  "dmg": 4000,
+  "dmg2": 4000,
+  "ap": [
+   7,
+   7,
+   7,
+   7
+  ],
+  "caliber": 66,
+  "mass": 350,
+  "v0": 70,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "type": "projectile",
+  "explosion": {
+   "dmg": 200,
+   "ap": [
+    3,
+    2,
+    3
+   ],
+   "r": [
+    1.5,
+    3,
+    6
+   ]
+  },
+  "note": "制导射弹，不损失伤害（wiki §4.2 例外条款）"
+ },
+ {
+  "id": "LAS-99",
+  "name": "LAS-99 类星体加农炮",
+  "cat": "支援武器",
+  "dmg": 2000,
+  "dmg2": 2000,
+  "ap": [
+   6,
+   6,
+   6,
+   3
+  ],
+  "caliber": 10,
+  "mass": 12,
+  "v0": 1300,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "type": "projectile",
+  "explosion": {
+   "dmg": 150,
+   "ap": [
+    3,
+    2,
+    3
+   ],
+   "r": [
+    1.5,
+    3,
+    6
+   ]
+  },
+  "note": "阻力 0%，无衰减；需蓄力"
+ },
+ {
+  "id": "PLAS-45",
+  "name": "PLAS-45 纪元（半蓄力）",
+  "cat": "支援武器",
+  "dmg": 400,
+  "dmg2": 200,
+  "ap": [
+   4,
+   4,
+   4,
+   4
+  ],
+  "caliber": 20,
+  "mass": 100,
+  "v0": 250,
+  "drag": 0.1,
+  "grav": 2,
+  "pellets": 1,
+  "type": "projectile",
+  "explosion": {
+   "dmg": 500,
+   "ap": [
+    4,
+    3,
+    4
+   ],
+   "r": [
+    2.3,
+    3,
+    4
+   ]
+  },
+  "note": "P 射弹，蓄力 1.00 s（×1.00 倍）"
+ },
+ {
+  "id": "PLAS-45-P3",
+  "name": "PLAS-45 纪元（满蓄力）",
+  "cat": "支援武器",
+  "dmg": 800,
+  "dmg2": 400,
+  "ap": [
+   5,
+   5,
+   5,
+   5
+  ],
+  "caliber": 20,
+  "mass": 100,
+  "v0": 250,
+  "drag": 0.1,
+  "grav": 2,
+  "pellets": 1,
+  "type": "projectile",
+  "explosion": {
+   "dmg": 800,
+   "ap": [
+    5,
+    4,
+    5
+   ],
+   "r": [
+    3,
+    4,
+    5
+   ]
+  },
+  "note": "P3 射弹，蓄力 2.60 s（×2.00 倍）：表内 400/200 ×2"
+ },
+ {
+  "id": "AMW-20",
+  "name": "AMW-20 尖峰",
+  "cat": "支援武器",
+  "dmg": 1550,
+  "dmg2": 930,
+  "ap": [
+   5,
+   5,
+   5,
+   0
+  ],
+  "caliber": 20,
+  "mass": 70,
+  "v0": 1500,
+  "drag": 0.1,
+  "grav": 0.35,
+  "pellets": 1,
+  "type": "projectile",
+  "note": "无爆炸；口径曾由 60 改 20（补丁说明用来校验衰减公式）",
+  "rpm": 50
+ },
+ {
+  "id": "R-36",
+  "name": "R-36 爆裂铳",
+  "cat": "主手特殊",
+  "dmg": 230,
+  "dmg2": 115,
+  "ap": [
+   4,
+   4,
+   4,
+   0
+  ],
+  "caliber": 15,
+  "mass": 100,
+  "v0": 180,
+  "drag": 0,
+  "grav": 0.3,
+  "pellets": 1,
+  "type": "projectile",
+  "explosion": {
+   "dmg": 225,
+   "ap": [
+    3,
+    2,
+    3
+   ],
+   "r": [
+    4,
+    7,
+    8
+   ]
+  },
+  "shrapnel": {
+   "count": 30,
+   "dmg": 110,
+   "dmg2": 35,
+   "ap": [
+    3,
+    3,
+    2,
+    0
+   ],
+   "caliber": 10,
+   "mass": 100,
+   "v0": 30,
+   "drag": 0.4
+  },
+  "note": "母射弹 230 + 爆炸 225 + 30 片破片（AC-8 P2 弹丸）"
+ },
+ {
+  "id": "AC-8-P1",
+  "name": "AC-8 机炮（高射模式 P1）",
+  "cat": "支援武器",
+  "dmg": 150,
+  "dmg2": 150,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 40,
+  "mass": 130,
+  "v0": 820,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "type": "projectile",
+  "explosion": {
+   "dmg": 190,
+   "ap": [
+    3,
+    2,
+    3
+   ],
+   "r": [
+    2,
+    7,
+    8
+   ]
+  },
+  "shrapnel": {
+   "count": 30,
+   "dmg": 110,
+   "dmg2": 35,
+   "ap": [
+    3,
+    3,
+    2,
+    0
+   ],
+   "caliber": 10,
+   "mass": 100,
+   "v0": 30,
+   "drag": 0.4
+  },
+  "note": "P1 高射炮弹：母射弹 150 + 爆炸 190 + 30 片破片"
+ },
+ {
+  "id": "CB-9",
+  "name": "CB-9 爆燃弩",
+  "cat": "主手特殊",
+  "dmg": 270,
+  "dmg2": 50,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 15,
+  "mass": 100,
+  "v0": 100,
+  "drag": 1,
+  "grav": 0.5,
+  "pellets": 1,
+  "type": "projectile",
+  "explosion": {
+   "dmg": 350,
+   "ap": [
+    3,
+    2,
+    3
+   ],
+   "r": [
+    3,
+    6,
+    7
+   ]
+  },
+  "note": "直击 270 + 爆炸 350（爆炸为主）"
+ },
+ {
+  "id": "GL-21",
+  "name": "GL-21 榴弹发射器",
+  "cat": "支援武器",
+  "dmg": 0,
+  "dmg2": 0,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 40,
+  "mass": 50,
+  "v0": 100,
+  "drag": 1.2,
+  "grav": 1,
+  "pellets": 1,
+  "type": "projectile",
+  "explosion": {
+   "dmg": 400,
+   "ap": [
+    3,
+    2,
+    3
+   ],
+   "r": [
+    2.3,
+    3,
+    4
+   ]
+  },
+  "note": "无直击伤害，全部来自爆炸 400"
+ },
+ {
+  "id": "GL-15",
+  "name": "GL-15 驱逐者",
+  "cat": "主手特殊",
+  "dmg": 250,
+  "dmg2": 250,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 40,
+  "mass": 50,
+  "v0": 100,
+  "drag": 1.2,
+  "grav": 1,
+  "pellets": 1,
+  "type": "projectile",
+  "explosion": {
+   "dmg": 400,
+   "ap": [
+    3,
+    2,
+    3
+   ],
+   "r": [
+    2.3,
+    3,
+    4
+   ]
+  },
+  "note": "直击 250 + 爆炸 400"
+ },
+ {
+  "id": "EAT-411",
+  "name": "EAT-411 荡平者",
+  "cat": "支援武器",
+  "type": "projectile",
+  "dmg": 1000,
+  "dmg2": 1000,
+  "ap": [
+   6,
+   6,
+   6,
+   6
+  ],
+  "caliber": 80,
+  "mass": 500,
+  "v0": 50,
+  "drag": 0.5,
+  "grav": 1,
+  "pellets": 1,
+  "note": "射弹直击 1000，主爆炸 2500；尾焰爆炸 15/AP4；wiki 标题 EAT-411 荡平者",
+  "explosion": {
+   "dmg": 2500,
+   "ap": [
+    6,
+    5,
+    6
+   ]
+  }
+ },
+ {
+  "id": "MS-11",
+  "name": "MS-11 单兵导弹发射井",
+  "cat": "支援武器",
+  "type": "projectile",
+  "dmg": 0,
+  "dmg2": 0,
+  "ap": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 1,
+  "pellets": 1,
+  "note": "撞击爆炸 1500，AP[9,8,9]；发射井主体生命值 1500，护甲 轻甲(AP2)",
+  "explosion": {
+   "dmg": 2500,
+   "ap": [
+    7,
+    6,
+    7
+   ]
+  }
+ },
+ {
+  "id": "GL-28",
+  "name": "GL-28 弹链式榴弹发射器",
+  "cat": "支援武器",
+  "type": "projectile",
+  "dmg": 0,
+  "dmg2": 0,
+  "ap": [
+   4,
+   4,
+   4,
+   0
+  ],
+  "caliber": 40,
+  "mass": 50,
+  "v0": 100,
+  "drag": 1.2,
+  "grav": 1,
+  "pellets": 1,
+  "note": "射弹伤害 0，全部伤害来自命中爆炸",
+  "explosion": {
+   "dmg": 150,
+   "ap": [
+    4,
+    3,
+    4
+   ]
+  }
+ },
+ {
+  "id": "GL-52",
+  "name": "GL-52 缓和使者",
+  "cat": "支援武器",
+  "type": "projectile",
+  "dmg": 20,
+  "dmg2": 2,
+  "ap": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "caliber": 40,
+  "mass": 50,
+  "v0": 100,
+  "drag": 1.2,
+  "grav": 1,
+  "pellets": 1,
+  "note": "爆炸伤害 0，实际伤害在电弧(100/70)；连锁次数 2，状态 眩晕I(Stun Small) 1.5s｜电弧已用滑条表达（内圈全额、不计射程）｜电弧 10 条（wiki）",
+  "explosion": {
+   "dmg": 0,
+   "ap": [
+    6,
+    5,
+    6
+   ]
+  },
+  "shrapnel": {
+   "count": 10,
+   "dmg": 100,
+   "dmg2": 70,
+   "ap": [
+    4,
+    4,
+    4,
+    0
+   ],
+   "label": "电弧"
+  }
+ },
+ {
+  "id": "G-12",
+  "name": "G-12 高爆弹",
+  "cat": "投掷物",
+  "type": "throwable",
+  "dmg": 0,
+  "dmg2": 0,
+  "ap": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "explosion": {
+   "dmg": 800,
+   "ap": [
+    4,
+    3,
+    4
+   ]
+  }
+ },
+ {
+  "id": "G-16",
+  "name": "G-16 冲击弹",
+  "cat": "投掷物",
+  "type": "throwable",
+  "dmg": 0,
+  "dmg2": 0,
+  "ap": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "explosion": {
+   "dmg": 400,
+   "ap": [
+    4,
+    3,
+    4
+   ]
+  }
+ },
+ {
+  "id": "G-6",
+  "name": "G-6 破片弹",
+  "cat": "投掷物",
+  "type": "throwable",
+  "dmg": 0,
+  "dmg2": 0,
+  "ap": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 1,
+  "pellets": 1,
+  "note": "破片引用 AC-8 机炮射弹（P2）",
+  "explosion": {
+   "dmg": 500,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  },
+  "shrapnel": {
+   "count": 35,
+   "dmg": 110,
+   "dmg2": 35,
+   "ap": [
+    3,
+    3,
+    2,
+    0
+   ]
+  }
+ },
+ {
+  "id": "G-48",
+  "name": "G-48 千兆级榴弹",
+  "cat": "投掷物",
+  "type": "throwable",
+  "dmg": 0,
+  "dmg2": 0,
+  "ap": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "explosion": {
+   "dmg": 2000,
+   "ap": [
+    5,
+    4,
+    5
+   ]
+  }
+ },
+ {
+  "id": "G-60",
+  "name": "G-60 反坦克追踪者",
+  "cat": "投掷物",
+  "type": "throwable",
+  "dmg": 0,
+  "dmg2": 0,
+  "ap": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "explosion": {
+   "dmg": 1800,
+   "ap": [
+    5,
+    4,
+    5
+   ]
+  }
+ },
+ {
+  "id": "G-50",
+  "name": "G-50 寻踪者",
+  "cat": "投掷物",
+  "type": "throwable",
+  "dmg": 0,
+  "dmg2": 0,
+  "ap": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "explosion": {
+   "dmg": 500,
+   "ap": [
+    4,
+    3,
+    4
+   ]
+  }
+ },
+ {
+  "id": "TM-1",
+  "name": "TM-1 诱饵地雷",
+  "cat": "投掷物",
+  "type": "throwable",
+  "dmg": 0,
+  "dmg2": 0,
+  "ap": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 1,
+  "pellets": 1,
+  "note": "破片引用 AC-8 机炮射弹（P2）；主体生命值 300，护甲 无护甲",
+  "explosion": {
+   "dmg": 1000,
+   "ap": [
+    5,
+    4,
+    5
+   ]
+  },
+  "shrapnel": {
+   "count": 35,
+   "dmg": 110,
+   "dmg2": 35,
+   "ap": [
+    3,
+    3,
+    2,
+    0
+   ]
+  }
+ },
+ {
+  "id": "TED-63",
+  "name": "TED-63 炸药",
+  "cat": "投掷物",
+  "type": "throwable",
+  "dmg": 0,
+  "dmg2": 0,
+  "ap": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 1,
+  "pellets": 1,
+  "note": "",
+  "explosion": {
+   "dmg": 1000,
+   "ap": [
+    4,
+    3,
+    4
+   ]
+  }
+ },
+ {
+  "id": "K-2",
+  "name": "K-2 飞刀",
+  "cat": "投掷物",
+  "type": "projectile",
+  "dmg": 300,
+  "dmg2": 150,
+  "ap": [
+   3,
+   3,
+   3,
+   3
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 1,
+  "pellets": 1,
+  "note": "数据来自 attack-data-table-damage 表，无爆炸表"
+ },
+ {
+  "id": "CQC-1",
+  "name": "CQC-1 唯一真旗",
+  "cat": "近战",
+  "type": "melee",
+  "dmg": 200,
+  "dmg2": 100,
+  "ap": [
+   3,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "note": "近战武器，无弹道衰减"
+ },
+ {
+  "id": "CQC-2",
+  "name": "CQC-2 军刀",
+  "cat": "近战",
+  "type": "melee",
+  "dmg": 188,
+  "dmg2": 98,
+  "ap": [
+   3,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "note": "近战武器，无弹道衰减"
+ },
+ {
+  "id": "CQC-5",
+  "name": "CQC-5 战斗短柄斧",
+  "cat": "近战",
+  "type": "melee",
+  "dmg": 240,
+  "dmg2": 120,
+  "ap": [
+   3,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "note": "近战武器，无弹道衰减"
+ },
+ {
+  "id": "CQC-9",
+  "name": "CQC-9 除叶工具",
+  "cat": "近战",
+  "type": "melee",
+  "dmg": 450,
+  "dmg2": 225,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "note": "近战武器，无弹道衰减"
+ },
+ {
+  "id": "CQC-19",
+  "name": "CQC-19 眩晕长矛",
+  "cat": "近战",
+  "type": "melee",
+  "dmg": 165,
+  "dmg2": 83,
+  "ap": [
+   3,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "note": "近战武器，无弹道衰减"
+ },
+ {
+  "id": "CQC-20",
+  "name": "CQC-20 破门锤",
+  "cat": "近战",
+  "type": "melee",
+  "dmg": 300,
+  "dmg2": 150,
+  "ap": [
+   3,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "note": "近战武器，无弹道衰减",
+  "explosion": {
+   "dmg": 2200,
+   "ap": [
+    6,
+    5,
+    6
+   ]
+  }
+ },
+ {
+  "id": "CQC-30",
+  "name": "CQC-30 眩晕短棍",
+  "cat": "近战",
+  "type": "melee",
+  "dmg": 120,
+  "dmg2": 60,
+  "ap": [
+   3,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "note": "近战武器，无弹道衰减"
+ },
+ {
+  "id": "CQC-42",
+  "name": "CQC-42 砍刀",
+  "cat": "近战",
+  "type": "melee",
+  "dmg": 300,
+  "dmg2": 150,
+  "ap": [
+   3,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "note": "近战武器，无弹道衰减"
+ },
+ {
+  "id": "CQC-73",
+  "name": "CQC-73 挖壕工具",
+  "cat": "近战",
+  "type": "melee",
+  "dmg": 165,
+  "dmg2": 83,
+  "ap": [
+   3,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "note": "近战武器，无弹道衰减（wiki 复用 CQC-72 数据）"
+ },
+ {
+  "id": "CQC-72",
+  "name": "CQC-72 堑壕工具",
+  "cat": "近战",
+  "type": "melee",
+  "dmg": 165,
+  "dmg2": 83,
+  "ap": [
+   3,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "note": "近战武器，无弹道衰减"
+ },
+ {
+  "id": "PLAS-1",
+  "name": "PLAS-1 焦土",
+  "cat": "主手特殊",
+  "type": "projectile",
+  "dmg": 100,
+  "dmg2": 50,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 20,
+  "mass": 25,
+  "v0": 550,
+  "drag": 1.5,
+  "grav": 0.5,
+  "pellets": 1,
+  "note": "等离子：直击 + 命中爆炸",
+  "explosion": {
+   "dmg": 100,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  }
+ },
+ {
+  "id": "PLAS-101",
+  "name": "PLAS-101 净化者",
+  "cat": "主手特殊",
+  "type": "projectile",
+  "dmg": 100,
+  "dmg2": 50,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 20,
+  "mass": 25,
+  "v0": 550,
+  "drag": 1.5,
+  "grav": 1,
+  "pellets": 1,
+  "note": "未蓄力（0.50 倍）：直击 100 + 爆炸 75",
+  "explosion": {
+   "dmg": 75,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  }
+ },
+ {
+  "id": "PLAS-15",
+  "name": "PLAS-15 忠诚者",
+  "cat": "主手特殊",
+  "type": "projectile",
+  "dmg": 75,
+  "dmg2": 38,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 20,
+  "mass": 25,
+  "v0": 550,
+  "drag": 1.5,
+  "grav": 1,
+  "pellets": 1,
+  "note": "未蓄力档（0.5 倍，待二次核验）：直击 75 + 爆炸 75",
+  "explosion": {
+   "dmg": 75,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  }
+ },
+ {
+  "id": "PLAS-39",
+  "name": "PLAS-39 加速步枪",
+  "cat": "主手特殊",
+  "type": "projectile",
+  "dmg": 250,
+  "dmg2": 125,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 20,
+  "mass": 25,
+  "v0": 1000,
+  "drag": 0.1,
+  "grav": 0.5,
+  "pellets": 1,
+  "note": "等离子：直击 + 命中爆炸",
+  "explosion": {
+   "dmg": 100,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  }
+ },
+ {
+  "id": "SG-8P",
+  "name": "SG-8P 等离子“制裁者”",
+  "cat": "主手特殊",
+  "type": "projectile",
+  "dmg": 0,
+  "dmg2": 0,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": 20,
+  "mass": 100,
+  "v0": 90,
+  "drag": 4,
+  "grav": 3,
+  "pellets": 1,
+  "note": "等离子：直击 + 命中爆炸",
+  "explosion": {
+   "dmg": 225,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  }
+ },
+ {
+  "id": "R/40-K",
+  "name": "R/40-K 高能精确射手步枪",
+  "cat": "主手特殊",
+  "type": "projectile",
+  "dmg": 275,
+  "dmg2": 40,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 10,
+  "mass": 10,
+  "v0": 500,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "note": "等离子：直击 + 命中爆炸"
+ },
+ {
+  "id": "PLAS-101-P",
+  "name": "PLAS-101 净化者（满蓄力）",
+  "dmg": 200,
+  "dmg2": 100,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 20,
+  "mass": 25,
+  "v0": 350,
+  "drag": 1.5,
+  "grav": 1,
+  "explosion": {
+   "dmg": 300,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  },
+  "note": "满蓄力发：200 直击 + 300 爆炸；AP 沿用未蓄力表，未单独核对",
+  "cat": "主手特殊",
+  "type": "projectile",
+  "pellets": 1
+ },
+ {
+  "id": "PLAS-15-P2",
+  "name": "PLAS-15 忠诚者（满蓄力）",
+  "dmg": 150,
+  "dmg2": 75,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": 20,
+  "mass": 25,
+  "v0": 350,
+  "drag": 1.5,
+  "grav": 1,
+  "explosion": {
+   "dmg": 225,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  },
+  "note": "满蓄力发：150 直击 + 225 爆炸；AP 沿用未蓄力表，未单独核对",
+  "cat": "主手特殊",
+  "type": "projectile",
+  "pellets": 1
+ },
+ {
+  "id": "LAS-5",
+  "name": "LAS-5 长柄镰",
+  "cat": "激光",
+  "type": "beam",
+  "dmg": 350,
+  "dmg2": 70,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "rpm": 60,
+  "note": "光束：按累计照射时间计算（0.1 s 向上取整）"
+ },
+ {
+  "id": "LAS-7",
+  "name": "LAS-7 匕首",
+  "cat": "激光",
+  "type": "beam",
+  "dmg": 250,
+  "dmg2": 50,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "rpm": 60,
+  "note": "光束：按累计照射时间计算（0.1 s 向上取整）"
+ },
+ {
+  "id": "LAS-98",
+  "name": "LAS-98 激光大炮",
+  "cat": "激光",
+  "type": "beam",
+  "dmg": 350,
+  "dmg2": 200,
+  "ap": [
+   4,
+   4,
+   4,
+   4
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "rpm": 60,
+  "note": "光束：极端角度也是 AP4；按照射时间计算"
+ },
+ {
+  "id": "LAS-13",
+  "name": "LAS-13 三叉戟",
+  "cat": "激光",
+  "type": "projectile",
+  "dmg": 60,
+  "dmg2": 6,
+  "ap": [
+   2,
+   2,
+   2,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 6,
+  "note": "按命中次数算：一次 6 条光束，每条 60/6"
+ },
+ {
+  "id": "ORB-PRECISION",
+  "name": "轨道精准攻击",
+  "cat": "轨道",
+  "type": "stratagem",
+  "dmg": 4000,
+  "dmg2": 4000,
+  "ap": [
+   8,
+   7,
+   6,
+   6
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "explosion": {
+   "dmg": 1500,
+   "ap": [
+    6,
+    5,
+    6
+   ]
+  },
+  "note": "直击 4000 · AP 8/7/6/6｜爆炸 1500 · AP 6/5/6"
+ },
+ {
+  "id": "ORB-GATLING",
+  "name": "轨道加特林火力网",
+  "cat": "轨道",
+  "type": "stratagem",
+  "dmg": 350,
+  "dmg2": 200,
+  "ap": [
+   5,
+   5,
+   4,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "explosion": {
+   "dmg": 350,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  },
+  "note": "直击 350（耐久 200） · AP 5/5/4/0｜爆炸 350 · AP 3/2/3｜弹数 60/齐射 4"
+ },
+ {
+  "id": "ORB-AIRBURST",
+  "name": "轨道空爆攻击",
+  "cat": "轨道",
+  "type": "stratagem",
+  "dmg": 300,
+  "dmg2": 300,
+  "ap": [
+   7,
+   7,
+   6,
+   6
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "explosion": {
+   "dmg": 350,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  },
+  "note": "直击 300 · AP 7/7/6/6｜爆炸 350 · AP 3/2/3｜破片 12 片｜子弹药 300/150 AP3/3/3/0，破片 12",
+  "shrapnel": {
+   "count": 12,
+   "dmg": 350,
+   "dmg2": 350,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  }
+ },
+ {
+  "id": "ORB-120",
+  "name": "轨道120MM高爆弹火力网",
+  "cat": "轨道",
+  "type": "stratagem",
+  "dmg": 3500,
+  "dmg2": 3500,
+  "ap": [
+   7,
+   7,
+   6,
+   6
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "explosion": {
+   "dmg": 1200,
+   "ap": [
+    5,
+    4,
+    5
+   ]
+  },
+  "note": "直击 3500 · AP 7/7/6/6｜爆炸 1200 · AP 5/4/5｜弹数 3/齐射 5"
+ },
+ {
+  "id": "ORB-380",
+  "name": "轨道380MM高爆弹火力网",
+  "cat": "轨道",
+  "type": "stratagem",
+  "dmg": 4000,
+  "dmg2": 4000,
+  "ap": [
+   8,
+   7,
+   6,
+   6
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "explosion": {
+   "dmg": 1500,
+   "ap": [
+    6,
+    5,
+    6
+   ]
+  },
+  "note": "直击 4000 · AP 8/7/6/6｜爆炸 1500 · AP 6/5/6｜弹数 3/齐射 5"
+ },
+ {
+  "id": "ORB-RAILCANNON",
+  "name": "轨道电磁炮",
+  "cat": "轨道",
+  "type": "stratagem",
+  "dmg": 10000,
+  "dmg2": 10000,
+  "ap": [
+   7,
+   7,
+   7,
+   7
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "explosion": {
+   "dmg": 1000,
+   "ap": [
+    6,
+    5,
+    6
+   ]
+  },
+  "note": "直击 10000 · AP 7/7/7/7｜爆炸 1000 · AP 6/5/6"
+ },
+ {
+  "id": "EAGLE-AIRSTRIKE",
+  "name": "“飞鹰”空袭",
+  "cat": "飞鹰",
+  "type": "stratagem",
+  "dmg": 1500,
+  "dmg2": 1500,
+  "ap": [
+   7,
+   7,
+   7,
+   7
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "explosion": {
+   "dmg": 800,
+   "ap": [
+    5,
+    4,
+    5
+   ]
+  },
+  "note": "直击 1500 · AP 7/7/7/7｜爆炸 800 · AP 5/4/5｜6 枚"
+ },
+ {
+  "id": "EAGLE-110",
+  "name": "“飞鹰”110MM火箭巢",
+  "cat": "飞鹰",
+  "type": "stratagem",
+  "dmg": 600,
+  "dmg2": 600,
+  "ap": [
+   7,
+   7,
+   7,
+   7
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "explosion": {
+   "dmg": 300,
+   "ap": [
+    4,
+    3,
+    4
+   ]
+  },
+  "note": "直击 600 · AP 7/7/7/7｜爆炸 300 · AP 4/3/4"
+ },
+ {
+  "id": "EAGLE-500",
+  "name": "“飞鹰”500KG炸弹",
+  "cat": "飞鹰",
+  "type": "stratagem",
+  "dmg": 2000,
+  "dmg2": 2000,
+  "ap": [
+   7,
+   7,
+   7,
+   7
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "explosion": {
+   "dmg": 1500,
+   "ap": [
+    6,
+    5,
+    6
+   ]
+  },
+  "note": "直击 2000 · AP 7/7/7/7｜爆炸 1500 · AP 6/5/6｜命中引信小爆 100 已忽略，取延时主爆"
+ },
+ {
+  "id": "EAGLE-NAPALM",
+  "name": "“飞鹰”凝固汽油弹空袭",
+  "cat": "飞鹰",
+  "type": "stratagem",
+  "dmg": 1500,
+  "dmg2": 1500,
+  "ap": [
+   7,
+   7,
+   7,
+   7
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "explosion": {
+   "dmg": 250,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  },
+  "note": "直击 1500 · AP 7/7/7/7｜爆炸 250 · AP 3/2/3｜附带燃烧 100/s×3s、重度灼烧 200/s×1s（不计）"
+ },
+ {
+  "id": "EAGLE-CLUSTER",
+  "name": "“飞鹰”集束炸弹",
+  "cat": "飞鹰",
+  "type": "stratagem",
+  "dmg": 1500,
+  "dmg2": 1500,
+  "ap": [
+   7,
+   7,
+   7,
+   7
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "explosion": {
+   "dmg": 350,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  },
+  "note": "直击 1500 · AP 7/7/7/7｜爆炸 350 · AP 3/2/3｜破片 8 片｜母弹 1500/1500；子弹药 20/2 AP0，破片 8",
+  "shrapnel": {
+   "count": 8,
+   "dmg": 350,
+   "dmg2": 350,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  }
+ },
+ {
+  "id": "MINE-AP",
+  "name": "反步兵地雷",
+  "cat": "地雷",
+  "type": "stratagem",
+  "dmg": 0,
+  "dmg2": 0,
+  "ap": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "explosion": {
+   "dmg": 700,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  },
+  "note": "爆炸 700 · AP 3/2/3｜只被重型单位触发"
+ },
+ {
+  "id": "MINE-INCENDIARY",
+  "name": "燃烧地雷",
+  "cat": "地雷",
+  "type": "stratagem",
+  "dmg": 0,
+  "dmg2": 0,
+  "ap": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "explosion": {
+   "dmg": 300,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  },
+  "note": "爆炸 300 · AP 3/2/3｜附带燃烧 100/s×3s（不计）"
+ },
+ {
+  "id": "SENTRY-ROCKET",
+  "name": "火箭哨戒炮",
+  "cat": "哨戒炮",
+  "type": "stratagem",
+  "dmg": 525,
+  "dmg2": 525,
+  "ap": [
+   5,
+   5,
+   5,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "explosion": {
+   "dmg": 150,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  },
+  "note": "直击 525 · AP 5/5/5/0｜爆炸 150 · AP 3/2/3｜90 RPM，16 发"
+ },
+ {
+  "id": "SENTRY-AUTOCANNON",
+  "name": "自动哨戒炮",
+  "cat": "哨戒炮",
+  "type": "stratagem",
+  "dmg": 450,
+  "dmg2": 450,
+  "ap": [
+   5,
+   5,
+   5,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "explosion": {
+   "dmg": 150,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  },
+  "note": "直击 450 · AP 5/5/5/0｜爆炸 150 · AP 3/2/3｜160 RPM，24 发"
+ },
+ {
+  "id": "SENTRY-TESLA",
+  "name": "特斯拉塔",
+  "cat": "哨戒炮",
+  "type": "arc",
+  "dmg": 600,
+  "dmg2": 600,
+  "ap": [
+   4,
+   4,
+   4,
+   1
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "range": 20,
+  "note": "直击 600 · AP 4/4/4/1｜电弧，射程 20 m，最大分叉 2"
+ },
+ {
+  "id": "ORB-LASER",
+  "name": "轨道激光",
+  "cat": "轨道",
+  "type": "beam",
+  "dmg": 600,
+  "dmg2": 600,
+  "ap": [
+   6,
+   6,
+   6,
+   1
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "rpm": 60,
+  "note": "直击 600 · AP 6/6/6/1｜射流，持续 25 s"
+ },
+ {
+  "id": "AT-MINE",
+  "name": "MD-17 反坦克地雷",
+  "cat": "地雷",
+  "type": "stratagem",
+  "dmg": 0,
+  "dmg2": 0,
+  "ap": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "explosion": {
+   "dmg": 2000,
+   "ap": [
+    5,
+    4,
+    5
+   ]
+  },
+  "note": "爆炸 2000 · AP 5/4/5｜内圈 3 m；只被重型单位触发"
+ },
+ {
+  "id": "MG-SENTRY",
+  "name": "A/MG-43 哨戒机枪",
+  "cat": "哨戒炮",
+  "type": "projectile",
+  "dmg": 90,
+  "dmg2": 23,
+  "ap": [
+   3,
+   3,
+   3,
+   1
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "range": 75,
+  "note": "630 RPM（详情表）/660 RPM（战备表）两说；射程 75 m 需视线"
+ },
+ {
+  "id": "40-K",
+  "name": "40-K 热熔枪",
+  "cat": "支援武器",
+  "type": "beam",
+  "dmg": 2600,
+  "dmg2": 2600,
+  "ap": [
+   7,
+   7,
+   7,
+   7
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "rpm": 50,
+  "range": 15,
+  "note": "激光射程 15 m，末端衰减到 0.6×（约 1560 DPS）；蓄力 0.4 s 后喷 1.4 s；四档全 AP7"
+ },
+ {
+  "id": "P-33",
+  "name": "P-33 制导手枪",
+  "cat": "手枪",
+  "type": "projectile",
+  "dmg": 1000,
+  "dmg2": 1000,
+  "ap": [
+   5,
+   5,
+   5,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 1,
+  "pellets": 1,
+  "rpm": 60,
+  "note": "60 RPM",
+  "explosion": {
+   "dmg": 300,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  }
+ },
+ {
+  "id": "P-34",
+  "name": "P-34 爆破者",
+  "cat": "手枪",
+  "type": "projectile",
+  "dmg": 60,
+  "dmg2": 0,
+  "ap": [
+   4,
+   4,
+   3,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 1,
+  "pellets": 1,
+  "rpm": 20,
+  "note": "20 RPM",
+  "explosion": {
+   "dmg": 2000,
+   "ap": [
+    7,
+    6,
+    7
+   ]
+  }
+ },
+ {
+  "id": "P-35",
+  "name": "P-35 Re-Educator",
+  "cat": "手枪",
+  "type": "projectile",
+  "dmg": 60,
+  "dmg2": 10,
+  "ap": [
+   4,
+   4,
+   3,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 1,
+  "pellets": 1,
+  "rpm": 110,
+  "note": "110 RPM"
+ },
+ {
+  "id": "P/40-K",
+  "name": "P/40-K 爆弹手枪",
+  "cat": "手枪",
+  "type": "projectile",
+  "dmg": 325,
+  "dmg2": 115,
+  "ap": [
+   4,
+   4,
+   4,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 1,
+  "pellets": 1,
+  "rpm": 150,
+  "note": "150 RPM",
+  "explosion": {
+   "dmg": 175,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  }
+ },
+ {
+  "id": "GP-20",
+  "name": "GP-20 最后通牒",
+  "cat": "手枪",
+  "type": "projectile",
+  "dmg": 1000,
+  "dmg2": 1000,
+  "ap": [
+   6,
+   6,
+   6,
+   6
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 1,
+  "pellets": 1,
+  "rpm": 900,
+  "note": "900 RPM｜容量 1，面板射速不代表持续输出",
+  "explosion": {
+   "dmg": 2000,
+   "ap": [
+    6,
+    5,
+    6
+   ]
+  }
+ },
+ {
+  "id": "GP-31",
+  "name": "GP-31 榴弹手枪",
+  "cat": "手枪",
+  "type": "projectile",
+  "dmg": 250,
+  "dmg2": 250,
+  "ap": [
+   3,
+   3,
+   3,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 1,
+  "pellets": 1,
+  "rpm": 900,
+  "note": "900 RPM｜容量 1，面板射速不代表持续输出",
+  "explosion": {
+   "dmg": 400,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  }
+ },
+ {
+  "dmg": 0,
+  "dmg2": 0,
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "id": "DOT-FIRE",
+  "name": "燃烧（火焰）",
+  "cat": "持续伤害",
+  "type": "dot",
+  "dps": 100,
+  "dps2": 100,
+  "ap": [
+   4,
+   4,
+   4,
+   4
+  ],
+  "duration": 3,
+  "note": "100/s ×3s，AP4；只作用于主体",
+  "element": "fire"
+ },
+ {
+  "dmg": 0,
+  "dmg2": 0,
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "id": "DOT-BURN-HEAVY",
+  "name": "重度燃烧",
+  "cat": "持续伤害",
+  "type": "dot",
+  "dps": 200,
+  "dps2": 200,
+  "ap": [
+   4,
+   4,
+   4,
+   4
+  ],
+  "duration": 1,
+  "note": "200/s ×1s，AP4；凝固汽油弹附带",
+  "element": "fire"
+ },
+ {
+  "dmg": 0,
+  "dmg2": 0,
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "id": "DOT-GAS",
+  "name": "毒气",
+  "cat": "持续伤害",
+  "type": "dot",
+  "dps": 25,
+  "dps2": 25,
+  "ap": [
+   6,
+   6,
+   6,
+   6
+  ],
+  "duration": 6,
+  "note": "25/s ×6s，AP6",
+  "element": "gas"
+ },
+ {
+  "dmg": 0,
+  "dmg2": 0,
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "id": "DOT-THERMITE",
+  "name": "铝热剂",
+  "cat": "持续伤害",
+  "type": "dot",
+  "dps": 150,
+  "dps2": 150,
+  "ap": [
+   7,
+   7,
+   7,
+   7
+  ],
+  "duration": 1,
+  "note": "150/s ×1s，AP7",
+  "element": "explosion"
+ }
+]

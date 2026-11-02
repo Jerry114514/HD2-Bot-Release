@@ -50,8 +50,9 @@ async def audit(modules, scheduler, config, Event, sandbox, check, llm_attempts)
             "unknown_effects": [], "warnings": []}
     with patch.object(modules["wiki"], "wiki_lookup", return_value=wiki_value), \
          patch.object(modules["wiki"], "render", side_effect=ImportError("fixture")), \
+         patch.object(modules["btk"], "_run_bridge", return_value={"ok": True, "weapon": "AR-23 解放者", "enemy": "武斗虫", "part": "头部", "btk": 2, "ttk": 0.1, "path": "part", "label": "打爆致死部位", "perShotDamage": 150, "pelletsPerShot": 1, "stuck": None}), \
          patch.object(modules["variant_query"], "_scan_all_variants", new=AsyncMock(return_value=scan)):
-        for command in ("/战线", "/dss", "/战役", "/银河星图", "/查询 X45", "/X45信息", "/wiki AR23", "/变种 孢裂变种", "/帮助 t", "/help t", "/roll 纯随机 t"):
+        for command in ("/战线", "/dss", "/战役", "/银河星图", "/查询 X45", "/X45信息", "/wiki AR23", "/btk AR-23 武斗虫 头部", "/变种 孢裂变种", "/帮助 t", "/help t", "/roll 纯随机 t"):
             await case("command " + command, lambda command=command: check(command))
         for module, method, command in ((modules["wiki"], "render", "/wiki AR23"), (modules["lookup"], "_render_help_card", "/帮助")):
             async def image(module=module, method=method, command=command):

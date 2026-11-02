@@ -16,6 +16,7 @@ ALIASES = {
     "api": "api", "银河星图": "map", "星图": "map",
     "roll": "roll", "随机战备": "roll", "roll战备": "roll",
     "wiki": "wiki", "wiki查询": "wiki", "查wiki": "wiki",
+    "btk": "btk", "btk测伤": "btk",
     "帮助": "help", "help": "help", "星球": "planet", "查询": "planet", "查": "planet",
     "变种": "variant", "查询变种": "variant", "查变种": "variant",
 }

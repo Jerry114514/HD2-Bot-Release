@@ -1,0 +1,4 @@
+name: astrbot_plugin_hd2_btk
+desc: 绝地潜兵2 武器伤害与敌人部位阈值测试 - /btk 武器 敌人 部位，并支持卡阈值扫描和武器/敌人菜单
+author: local
+version: 1.1.1

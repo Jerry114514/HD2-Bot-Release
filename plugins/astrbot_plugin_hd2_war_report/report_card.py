@@ -1467,6 +1467,13 @@ HELP_SECTIONS = [
         ("/roll", "整套七槽配装：主手/副手/手雷 + 四战备，只显示结果与装备图标"),
         ("/变种名", "该变种当前出没星球（如 /孢裂变种）"),
     ]),
+    ("伤害测试", "BALLISTICS", [
+        ("/btk 武器 敌人 部位", "伤害 HUD 卡：BTK/TTK、打残/致死和卡阈值对比"
+                          "（如 /btk AR-23 武斗虫 头部）"),
+        ("/btk 卡阈值 武器", "阈值矩阵卡：扫描哪些敌人致死部位接近少一发击杀"),
+        ("/btk DOT-FIRE 敌人", "持续伤害卡：每跳伤害、触发次数、总时长与元素倍率（无需部位）"),
+        ("/btk 武器 / 敌人", "查看可测武器分类、敌人阵营和部位数据"),
+    ]),
     ("AI 增强", "AUGMENT", [
         ("/分析", "AI 战局分析：威胁评估与目标建议（需配置 LLM，失败时明确提示）"),
     ]),
@@ -1479,6 +1486,7 @@ HELP_SECTIONS = [
 HELP_NOTES = [
     "官方平台需 @机器人；NapCat 可直接 /指令；名称支持中英文",
     "默认输出战术 HUD 图片卡，渲染失败自动回退文本；指令后加 t 可要纯文本",
+    "BTK 伤害结果输出图片卡；可加 距离=20 角度=1 破片=3 波及=部位1,部位2",
     "进群欢迎仅 NapCat；战况以源数据时间与陈旧提示为准",
 ]
 
@@ -1578,7 +1586,7 @@ def render_help_card(out_dir=None):
         return _render_cached(
             os.path.join(out_dir, "help_card.png"),
             os.path.join(out_dir, "help_card.meta.json"),
-            "help-v5", _draw_help)
+            "help-v8", _draw_help)
     except Exception:
         if os.environ.get("HD2_CARD_DEBUG"):
             import traceback
