@@ -6,6 +6,7 @@ import tempfile
 import types
 import unittest
 from unittest.mock import patch
+from PIL import Image
 
 from test_core import ROOT
 from framework import install
@@ -15,6 +16,19 @@ from astrbot_plugin_hd2_roll import loadout, main as roll
 
 
 class LoadoutTests(unittest.TestCase):
+    def test_catalog_icons_are_matching_valid_pngs(self):
+        equipment=loadout.catalog()["equipment"]
+        ids={row["id"] for row in equipment}
+        found={path.stem for path in (loadout.HERE/"icons").glob("*.png")}
+        self.assertEqual(found,ids)
+        for eid in sorted(ids):
+            path=loadout.HERE/"icons"/(eid+".png")
+            with Image.open(path) as image:
+                self.assertEqual(image.format,"PNG",eid)
+                self.assertGreater(image.width,0,eid)
+                self.assertGreater(image.height,0,eid)
+                image.verify()
+
     def test_real_bridge_returns_only_equipment_and_passes_published_core(self):
         samples=[]
         for mode in ("assessment",)*5+("pure",):
