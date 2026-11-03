@@ -4,11 +4,12 @@ import {isMeleeEquipment} from './score-exclusions.mjs';
 // User-selected role shares. Ability proportions estimate usage, not measured
 // shooting time; the finite-ammunition ledger remains a separate admission gate.
 export const DEFAULT_LOADOUT_ENDURANCE_POLICY={
-  id:'routine-role-weighted-v2',role_weights:{chaff:.5,close_defense:.35,anti_medium:.15},
+  id:'routine-role-weighted-v3',role_weights:{chaff:.5,close_defense:.35,anti_medium:.15},
+  endurance_tendency:.35,
   throwable_bonus:'ROLE_ADDITION_TIMES_ENDURANCE_OVER_100',
   ceiling:100,pass_threshold:55,supply_final_floor:100,
   scope:'DETERMINISTIC_RESOURCE_INDEX; NO_LLM; FINAL_SCORE_PARTICIPATES_IN_SIX_DIMENSION_GATE',
-  parameters_status:'USER_SELECTED_ROLE_PROPORTIONS_20261103'
+  parameters_status:'USER_SELECTED_ROLE_PROPORTIONS_AND_65_35_TENDENCY_20261103'
 };
 const finite=n=>Number.isFinite(n)&&n>=0;
 const policyFor=model=>model.scenario.loadout_endurance??DEFAULT_LOADOUT_ENDURANCE_POLICY;
@@ -23,31 +24,46 @@ export function routineRoleScores(row,model,policy=policyFor(model)) {
 export function aggregateRoutineScores(items,policy=DEFAULT_LOADOUT_ENDURANCE_POLICY) {
   // Stable order also makes the diagnostic totals independent of slot ordering.
   const ordered=[...items].sort((a,b)=>a.equipment_id.localeCompare(b.equipment_id));
+  const tendency=policy.endurance_tendency??DEFAULT_LOADOUT_ENDURANCE_POLICY.endurance_tendency;
   const roles=Object.fromEntries(Object.entries(policy.role_weights).map(([role,weight])=>{
     const missingAbilities=ordered.filter(i=>!finite(i.role_scores[role])).map(i=>i.equipment_id);
     const missingEndurance=ordered.filter(i=>i.role_scores[role]>0&&!finite(i.score)).map(i=>i.equipment_id);
     const total=ordered.reduce((sum,i)=>sum+(finite(i.role_scores[role])?i.role_scores[role]:0),0);
     const numerator=ordered.reduce((sum,i)=>sum+(finite(i.role_scores[role])&&finite(i.score)?i.role_scores[role]*i.score:0),0);
+    const squared=ordered.reduce((sum,i)=>sum+(finite(i.role_scores[role])&&finite(i.score)?i.role_scores[role]*i.score*i.score:0),0);
+    const unknown=missingAbilities.length>0||missingEndurance.length>0;
     // Unknown ability means an unknown denominator; dropping that weapon could
     // inflate the mean. Missing ammo also stays unknown, not a free zero-weight gun.
-    const lower=missingAbilities.length?0:total?numerator/total:0;
-    return [role,{weight,score:missingAbilities.length||missingEndurance.length?null:lower,
-      ability_total:missingAbilities.length?null:total,known_lower_bound:lower,
+    const base=missingAbilities.length?0:total?numerator/total:0;
+    const biased=unknown?null:numerator?squared/numerator:base;
+    const score=unknown?null:(1-tendency)*base+tendency*biased;
+    // With nonnegative values the tilted mean cannot be below the ordinary mean.
+    // The old incomplete mean is therefore still a safe lower bound, not a pass.
+    return [role,{weight,score,ability_only_score:unknown?null:base,endurance_tilted_score:biased,
+      ability_total:missingAbilities.length?null:total,ability_endurance_total:unknown?null:numerator,
+      known_lower_bound:unknown?base:score,
       missing_abilities:missingAbilities,missing_endurance:missingEndurance}];
   }));
   const scored=ordered.map(item=>{
-    const roleShares=Object.fromEntries(Object.entries(roles).map(([role,r])=>[role,
+    const abilityShares=Object.fromEntries(Object.entries(roles).map(([role,r])=>[role,
       r.ability_total===null?null:r.ability_total?item.role_scores[role]/r.ability_total:0]));
+    const roleShares=Object.fromEntries(Object.entries(roles).map(([role,r])=>{
+      const base=abilityShares[role];
+      if(r.score===null)return [role,null];
+      const biased=r.ability_endurance_total?item.role_scores[role]*(item.score??0)/r.ability_endurance_total:base;
+      return [role,(1-tendency)*base+tendency*biased];
+    }));
     const share=Object.values(roleShares).some(v=>v===null)?null:
       Object.entries(roles).reduce((sum,[role,r])=>sum+r.weight*roleShares[role],0);
-    return {...item,role_shares:roleShares,weighted_share:share,
+    return {...item,ability_shares:abilityShares,role_shares:roleShares,weighted_share:share,
       value:share===0?0:finite(share)&&finite(item.score)?share*item.score:null};
   });
   const knownLowerBound=Math.min(policy.ceiling,Object.values(roles).reduce((sum,r)=>sum+r.weight*r.known_lower_bound,0));
   const unknown=Object.values(roles).some(r=>r.score===null);
   return {score:unknown?null:knownLowerBound,known_lower_bound:knownLowerBound,roles,items:scored,
     lower_bound:unknown||scored.some(item=>item.lower_bound),
-    formula:`MIN(${policy.ceiling}, SUM_ROLE(weight * SUM_ITEM(ability * E) / SUM_ITEM(ability)))`,
+    endurance_tendency:tendency,
+    formula:`MIN(${policy.ceiling}, SUM_ROLE(weight * ((1-${tendency}) * SUM(A*E)/SUM(A) + ${tendency} * SUM(A*E*E)/SUM(A*E))))`,
     score_units:'CURRENT_DISPLAY_SCALE'};
 }
 
