@@ -263,6 +263,53 @@ def section_label(dr, x, y, text, f_label):
     dr.rectangle([x, y + 2, x + 6, y + 2 + 28], fill=GOLD)
     dr.text((x + 16, y), text, font=f_label, fill=TEXT)
 
+
+def _wrap_rich_runs(runs, max_width, font, dr):
+    lines = []
+    line = []
+    width = 0
+    for text, tone in runs or ():
+        for char in str(text or ""):
+            if char in "\r":
+                continue
+            if char == "\n":
+                if line:
+                    lines.append(line)
+                line, width = [], 0
+                continue
+            char_width = dr.textlength(char, font=font)
+            if line and width + char_width > max_width:
+                lines.append(line)
+                line, width = [], 0
+            if line and line[-1][1] == tone:
+                line[-1] = (line[-1][0] + char, tone)
+            else:
+                line.append((char, tone))
+            width += char_width
+    if line:
+        lines.append(line)
+    return lines
+
+
+def _draw_rich_lines(dr, x, y, lines, font, line_height, color=DIM):
+    rich_colors = {"yellow": GOLD2, "blue": BLUE}
+    for line in lines:
+        xx = x
+        for text, tone in line:
+            dr.text((xx, y), text, font=font, fill=rich_colors.get(tone, color))
+            xx += dr.textlength(text, font=font)
+        y += line_height
+    return y
+
+
+def _money_amount(reward):
+    if not reward:
+        return "无"
+    return (
+        str(reward.get("name_cn") or reward.get("name") or "奖励")
+        + (f" ×{reward.get('amount')}" if reward.get("amount") else "")
+    )
+
 def render_report_card(out_dir=None):
     out_dir = out_dir or CACHE_DIR
     data = _site_get(DATA_URL)
@@ -276,7 +323,7 @@ def render_report_card(out_dir=None):
         mo = data.get("major_order") or {}
         mtask = mo.get("tasks") or {}
         tasks = mo_tasks(data)
-        brief = (mo.get("translated_brief") or a.get("briefing") or "").strip()
+        brief = shared.major_order_content(data).get("text") or ""
         war = data.get("war") or {}
         online = distribution["total"]
         campaigns = data.get("campaigns") or []
@@ -440,6 +487,117 @@ def render_report_card(out_dir=None):
         return y + 88
     return _render_cached(os.path.join(out_dir, OUT_NAME), "", str(data.get("fetchedAt")), draw)
 
+
+def render_major_order_card(out_dir=None):
+    """/重要指令：当期 MO 独立通知卡，不借用活动战役阶段头图。"""
+    out_dir = out_dir or CACHE_DIR
+    try:
+        os.makedirs(out_dir, exist_ok=True)
+        document = _site_get(DATA_URL)
+        order = shared.major_order_content(document)
+        assignment = document.get("assignments") or {}
+        tasks = mo_tasks(document)
+        if not order.get("text") and not tasks:
+            return None
+        out_path = os.path.join(out_dir, "major_order_card.png")
+        revision = "mo-card-v1:" + hashlib.sha256(json.dumps({
+            "revision": order.get("revision"),
+            "text": order.get("text"),
+            "tasks": tasks,
+            "deadline": assignment.get("deadline"),
+        }, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+
+        def draw(dr, img):
+            from PIL import ImageOps
+            y = _hud_head(dr, img, "重要指令", "MAJOR ORDER")
+            banner_w = W - PAD * 2
+            banner_h = 286
+            banner_file = next(
+                (path for source in order.get("banner_sources") or ()
+                 if (path := _banner_file(source))),
+                None,
+            )
+            if banner_file:
+                try:
+                    source = Image.open(banner_file).convert("RGB")
+                    img.paste(ImageOps.fit(source, (banner_w, banner_h)), (PAD, y))
+                except Exception:
+                    banner_file = None
+            if not banner_file:
+                for row in range(banner_h):
+                    shade = 20 + int(20 * row / max(1, banner_h - 1))
+                    dr.line([(PAD, y + row), (W - PAD, y + row)],
+                            fill=(shade, shade + 2, shade + 5))
+                for offset in range(-banner_h, banner_w, 38):
+                    dr.line([(PAD + offset, y + banner_h), (PAD + offset + 150, y)],
+                            fill=(49, 42, 24), width=2)
+            overlay = Image.new("RGBA", (banner_w, banner_h), (0, 0, 0, 0))
+            odr = ImageDraw.Draw(overlay, "RGBA")
+            odr.rectangle([0, banner_h - 76, banner_w, banner_h], fill=(0, 0, 0, 188))
+            odr.rectangle([0, 0, 9, banner_h], fill=(*GOLD, 235))
+            img.paste(overlay, (PAD, y), overlay)
+            dr.text((PAD + 26, y + banner_h - 62), "INCOMING MESSAGE FROM SUPER EARTH",
+                    font=F(14), fill=GOLD2)
+            dr.text((PAD + 26, y + banner_h - 40),
+                    "重要指令 · " + str(order.get("revision") or "CURRENT"),
+                    font=F(18, True), fill=TEXT)
+            y += banner_h + 18
+
+            body_font, body_w = F(21), W - PAD * 2 - 40
+            rich_lines = _wrap_rich_runs(order.get("rich_text") or (), body_w, body_font, dr)
+            deadline = assignment.get("deadline") or ""
+            panel_h = 56 + 31 * len(rich_lines) + 18 + 112 * len(tasks) + 20
+            dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
+            dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
+            section_label(dr, PAD + 18, y + 14, order.get("title") or "重要指令", F(25, True))
+            if deadline:
+                deadline_text = str(deadline)[:16].replace("T", " ")
+                dw = dr.textlength(deadline_text, font=F(15))
+                dr.text((W - PAD - 18 - dw, y + 17), "截止 " + deadline_text,
+                        font=F(15), fill=GOLD2)
+            yy = _draw_rich_lines(
+                dr, PAD + 20, y + 54, rich_lines, body_font, 31, color=DIM
+            )
+            yy += 16
+            dr.line([(PAD + 20, yy), (W - PAD - 20, yy)], fill=LINE)
+            yy += 12
+            for index, task in enumerate(tasks):
+                name = task.get("name") or task.get("action") or f"任务 {index + 1}"
+                dr.text((PAD + 20, yy), f"任务 {index + 1} · {name}",
+                        font=F(20, True), fill=TEXT)
+                yy += 34
+                percentage = shared.percent(task.get("progress"), task.get("goal"))
+                progress_bar(
+                    dr, PAD + 20, yy, W - PAD * 2 - 40, 14,
+                    (percentage or 0) / 100,
+                    fill=GREEN if percentage == 100 else GOLD,
+                )
+                yy += 22
+                progress = f"{percentage:.1f}%" if percentage is not None else "未知"
+                if percentage == 100:
+                    progress = "已完成"
+                dr.text((PAD + 20, yy), progress, font=F(18, True),
+                        fill=GREEN if percentage == 100 else GOLD)
+                detail = (
+                    f"{shared.fmt_big_num(task.get('progress'))} / "
+                    f"{shared.fmt_big_num(task.get('goal'))}"
+                )
+                detail_w = dr.textlength(detail, font=F(16))
+                dr.text((W - PAD - 20 - detail_w, yy + 3), detail, font=F(16), fill=MUTE)
+                yy += 44
+            y += panel_h + 18
+            dr.text((PAD, y), "正文来源：当期 NEW MAJOR ORDER 官方中文公告；HTML 已净化。",
+                    font=F(14), fill=MUTE)
+            return y + 42
+
+        return _render_cached(out_path, "", revision, draw)
+    except Exception:
+        if os.environ.get("HD2_CARD_DEBUG"):
+            import traceback
+            traceback.print_exc()
+        return None
+
+
 # ═══════════════════════════════════════════════════════════════
 # 其他板块图片卡（/战线 · /dss · /查询）——数据一律从主站抓取
 # ═══════════════════════════════════════════════════════════════
@@ -461,7 +619,7 @@ def _hud_head(dr, img, title, sub_en):
 
 def _render_cached(out_path, meta_path, rev, draw_fn, page_info=None):
     meta = shared._snapshot.get() or {}
-    digest = hashlib.sha256((str(rev) + json.dumps(meta.get("_hd2", {}), sort_keys=True) + "layout-v3" + (str(page_info) if page_info else "")).encode()).hexdigest()[:16]
+    digest = hashlib.sha256((str(rev) + json.dumps(meta.get("_hd2", {}), sort_keys=True) + "layout-v4" + (str(page_info) if page_info else "")).encode()).hexdigest()[:16]
     stem, _ = os.path.splitext(out_path)
     out_path = stem + "_" + digest + ".png"
     meta_path = out_path + ".meta"
@@ -1333,108 +1491,280 @@ def render_api_card(out_dir=None):
 
 
 def _banner_file(rel):
-    """主站战役 banner → 本地缓存文件路径；失败返回 None。"""
+    """Campaign/MO image → local cache; accepts site-relative paths and full URLs."""
     if not rel:
         return None
-    name = os.path.basename(rel.replace("\\", "/"))
+    source = str(rel).replace("\\", "/")
+    name = os.path.basename(source)
     if not name:
         return None
-    cache_file = os.path.join(CACHE_DIR, "banners", name)
+    bundled = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "campaign", name)
+    if os.path.isfile(bundled) and os.path.getsize(bundled) > 0:
+        return bundled
+    if source.startswith(("http://", "https://")):
+        cache_name = hashlib.sha256(source.encode()).hexdigest()[:10] + "_" + name
+        url = source
+    else:
+        cache_name = name
+        url = shared.site_url(source.lstrip("./"))
+    cache_file = os.path.join(CACHE_DIR, "banners", cache_name)
     if os.path.exists(cache_file) and os.path.getsize(cache_file) > 0:
         return cache_file
     try:
         os.makedirs(os.path.dirname(cache_file), exist_ok=True)
-        url = "https://jerry114514.github.io/HD2-Galatic_war-Map/assets/campaign/" + name
         req = urllib.request.Request(url, headers={"User-Agent": "HD2Bot/1.0"})
         with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT) as r:
-            data = r.read()
+            blob = r.read()
+        if not blob or not blob.startswith((b"\x89PNG", b"\xff\xd8", b"RIFF")):
+            raise ValueError("图片响应格式无效")
         with open(cache_file, "wb") as f:
-            f.write(data)
-        return cache_file if len(data) > 0 else None
+            f.write(blob)
+        return cache_file
     except Exception:
         return None
 
 
+def campaign_grid_columns(count):
+    return max(1, min(3, int(count or 0)))
+
+
+def _campaign_image_file(sources):
+    for source in sources or ():
+        path = _banner_file(source)
+        if path:
+            return path
+    return None
+
+
+def _crop_cover(path, size):
+    from PIL import ImageOps
+    if not path:
+        return None
+    try:
+        return ImageOps.fit(Image.open(path).convert("RGB"), size)
+    except Exception:
+        return None
+
+
+def _campaign_placeholder(dr, box, faction):
+    x0, y0, x1, y1 = box
+    palette = {
+        "Terminids": ((55, 48, 12), (24, 20, 10)),
+        "Automaton": ((58, 29, 24), (22, 15, 14)),
+        "Illuminate": ((45, 26, 61), (20, 15, 29)),
+    }.get(faction, ((24, 39, 57), (14, 20, 28)))
+    height = max(1, y1 - y0)
+    for row in range(height):
+        ratio = row / height
+        color = tuple(int(start + (end - start) * ratio) for start, end in zip(palette[0], palette[1]))
+        dr.line([(x0, y0 + row), (x1, y0 + row)], fill=color)
+    for offset in range(x0 - height, x1, 42):
+        dr.line([(offset, y1), (offset + height, y0)], fill=(48, 43, 31), width=2)
+    dr.rectangle(box, outline=LINE2)
+    dr.text((x0 + 18, y0 + 16), "ARCHIVE IMAGE / SIGNAL LOST", font=F(12), fill=MUTE)
+
+
+def _phase_color(status_key):
+    return {
+        "success": GREEN,
+        "failure": RED,
+        "in_progress": GOLD,
+    }.get(status_key, MUTE)
+
+
 def render_briefing_card(out_dir=None):
-    """/战役 图片卡：战役简报（概述 + 当前阶段 + 奖励），全部主站中文数据，无 LLM。失败返回 None。"""
+    """/战役：档案头图 + 全阶段简报/战报墙，所有阶段一次完整展示。"""
     out_dir = out_dir or CACHE_DIR
     try:
         os.makedirs(out_dir, exist_ok=True)
         out_path = os.path.join(out_dir, "briefing_card.png")
-        meta_path = out_path + ".meta"
-        data = _site_get(DATA_URL)
-        ac = data.get("active_campaign") or {}
-        if not ac.get("title_cn"):
+        document = _site_get(DATA_URL)
+        campaign = shared.campaign_view(document)
+        title = campaign.get("title_cn") or campaign.get("title") or ""
+        description = (campaign.get("description_cn") or campaign.get("description")
+                       or campaign.get("briefing_cn") or campaign.get("briefing") or "")
+        phases = campaign.get("phases") or []
+        if not (title or description) or not phases:
             return None
-        rev = "brief:" + str(ac.get("computed_at") or data.get("fetchedAt") or "")
+        current_index = campaign.get("current_phase_index")
+        current_phase = phases[current_index] if isinstance(current_index, int) and 0 <= current_index < len(phases) else {}
+        revision = "brief-wall-v2:" + hashlib.sha256(
+            json.dumps(campaign, ensure_ascii=False, sort_keys=True).encode()
+        ).hexdigest()
 
         def draw(dr, img):
-            from PIL import ImageOps
-            y = _hud_head(dr, img, "战役简报", "CAMPAIGN BRIEFING")
+            y = _hud_head(dr, img, "战役档案", "CAMPAIGN ARCHIVE")
+            content_w = W - PAD * 2
+            gap = 18
+            left_w = int(content_w * 0.58)
+            image_x = PAD + left_w + gap
+            image_w = W - PAD - image_x
+            image_h = 264
+            desc_font = F(18)
+            desc_w = left_w - 36
+            desc_lines = []
+            for line in wrap(description, max(18, int(desc_w / 18))):
+                desc_lines.append(line)
+            overall = {
+                "in_progress": "进行中 / IN PROGRESS",
+                "victory": "战役获胜 / VICTORY",
+                "defeat": "战役失败 / DEFEAT",
+            }.get(campaign.get("overall_status"), "进行中 / IN PROGRESS")
+            desc_offset = 146 if campaign.get("title_cn") and campaign.get("title") else 122
+            reward_offset = desc_offset + len(desc_lines) * 27 + 14
+            overview_h = max(image_h, reward_offset + 42)
+            dr.rectangle([PAD, y, W - PAD, y + overview_h], fill=PANEL, outline=LINE)
+            dr.rectangle([PAD, y, PAD + 5, y + overview_h], fill=GOLD)
+            dr.text((PAD + 22, y + 16), "ACTIVE CAMPAIGN / 战役档案",
+                    font=F(13, True), fill=GOLD)
+            title_cn = campaign.get("title_cn") or campaign.get("title") or ""
+            title_en = campaign.get("title") if campaign.get("title_cn") else ""
+            dr.text((PAD + 22, y + 44), title_cn, font=F(34, True), fill=TEXT)
+            if title_en:
+                dr.text((PAD + 22, y + 84), title_en, font=F(17, True), fill=GOLD2)
+            meta_y = y + (116 if title_en else 92)
+            meta = " · ".join(value for value in (
+                campaign.get("race_cn") or campaign.get("race_name"),
+                overall,
+                f"{len(phases)} 个阶段",
+            ) if value)
+            dr.text((PAD + 22, meta_y), meta, font=F(15), fill=DIM)
+            yy = y + desc_offset
+            for line in desc_lines:
+                dr.text((PAD + 22, yy), line, font=desc_font, fill=TEXT)
+                yy += 27
+            dr.text((PAD + 22, y + reward_offset), "战役奖励",
+                    font=F(14, True), fill=MUTE)
+            dr.text((PAD + 94, y + reward_offset - 2),
+                    "🏅 " + _money_amount(campaign.get("reward")),
+                    font=F(18, True), fill=GOLD)
+            image_box = (image_x, y + 12, W - PAD - 12, y + overview_h - 12)
+            image_path = _campaign_image_file(current_phase.get("image_sources"))
+            image = _crop_cover(image_path, (image_box[2] - image_box[0], image_box[3] - image_box[1]))
+            if image:
+                img.paste(image, (image_box[0], image_box[1]))
+            else:
+                _campaign_placeholder(dr, image_box, campaign.get("race_name"))
+            overlay = Image.new("RGBA", (
+                image_box[2] - image_box[0], image_box[3] - image_box[1]
+            ), (0, 0, 0, 0))
+            odr = ImageDraw.Draw(overlay, "RGBA")
+            odr.rectangle([0, overlay.height - 54, overlay.width, overlay.height],
+                          fill=(0, 0, 0, 196))
+            img.paste(overlay, (image_box[0], image_box[1]), overlay)
+            dr.text((image_box[0] + 16, image_box[3] - 44),
+                    (current_phase.get("title_cn") or current_phase.get("title") or title_cn)
+                    + " / CURRENT PHASE",
+                    font=F(15, True), fill=TEXT)
+            y += overview_h + 18
 
-            # banner（cover 裁切；失败 → 扫描线占位）
-            bw, bh = W - PAD * 2, int((W - PAD * 2) * 24.4 / 50)
-            bl = _banner_file(ac.get("banner_image_local"))
-            if bl:
-                try:
-                    bimg = Image.open(bl).convert("RGB")
-                    img.paste(ImageOps.fit(bimg, (bw, bh)), (PAD, y))
-                except Exception:
-                    bl = None
-            if not bl:
-                dr.rectangle([PAD, y, W - PAD, y + bh], fill=(16, 26, 40), outline=LINE)
-                for sy in range(y + 4, y + bh - 2, 5):
-                    dr.line([(PAD + 2, sy), (W - PAD - 2, sy)], fill=(22, 34, 50))
-            y += bh
-            dr.line([(PAD, y), (W - PAD, y)], fill=LINE2)   # banner 下方 2px 分隔
-            y += 2
+            header_h = 50
+            dr.rectangle([PAD, y, W - PAD, y + header_h], fill=(25, 25, 25), outline=LINE2)
+            dr.text((PAD + 18, y + 13), "战役章节", font=F(22, True), fill=TEXT)
+            caption = f"{len(phases)} 个阶段全部展示"
+            caption_w = dr.textlength(caption, font=F(14))
+            dr.text((W - PAD - 18 - caption_w, y + 17), caption, font=F(14), fill=MUTE)
+            y += header_h + 10
 
-            # 标题块
-            panel_h = 96
-            dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
-            dr.text((PAD + 18, y + 12), ac.get("title_cn") or "", font=F(36, True), fill=TEXT)
-            sub = " / ".join(x for x in [ac.get("title") or "", ac.get("label_cn") or "",
-                                          (ac.get("race_cn") or "") + "阵营"] if x)
-            dr.text((PAD + 20, y + 60), sub, font=F(16), fill=MUTE)
-            y += panel_h + 14
+            columns = campaign_grid_columns(len(phases))
+            card_gap = 16
+            card_w = (content_w - card_gap * (columns - 1)) // columns
+            phase_font = F(14)
+            report_font = F(14)
+            line_chars = max(11, int((card_w - 30) / 15))
+            media_height = {1: 320, 2: 205, 3: 138}[columns]
+            phase_text = []
+            for phase in phases:
+                brief_lines = wrap(phase.get("briefing_cn") or phase.get("briefing") or "（该阶段暂无简报）",
+                                   line_chars)
+                report_lines = wrap(phase.get("outcome") or "暂无可用战报。", line_chars)
+                body_height = 36 + len(brief_lines) * 22 + 14 + 36 + len(report_lines) * 22 + 18
+                phase_text.append((brief_lines, report_lines, body_height))
+            body_height = max(row[2] for row in phase_text)
+            card_h = 46 + media_height + body_height
 
-            # 【战役概述】
-            desc_lines = wrap(ac.get("description_cn") or "", 46)
-            if desc_lines:
-                section_label(dr, PAD + 18, y + 6, "战役概述", F(23, True))
-                yy = y + 42
-                for ln in desc_lines:
-                    dr.text((PAD + 18, yy), ln, font=F(19), fill=TEXT)
-                    yy += 26
-                y = yy + 12
+            for index, (phase, text_rows) in enumerate(zip(phases, phase_text)):
+                x = PAD + index * (card_w + card_gap)
+                is_current = index == current_index
+                status_key = phase.get("status_key") or "unknown"
+                status_color = _phase_color(status_key)
+                border = GOLD if is_current else LINE2
+                dr.rectangle([x, y, x + card_w, y + card_h], fill=PANEL, outline=border, width=2 if is_current else 1)
+                dr.rectangle([x, y, x + card_w, y + 46], fill=(24, 24, 24), outline=LINE)
+                dr.text((x + 12, y + 8), f"阶段 {index + 1:02d}", font=F(16, True), fill=TEXT)
+                code = f"PHASE {index + 1:02d}"
+                dr.text((x + 12, y + 27), code, font=F(11), fill=MUTE)
+                status = phase.get("status_cn") or "未知"
+                status_w = dr.textlength(status, font=F(13, True))
+                dr.text((x + card_w - 10 - status_w, y + 14), status,
+                        font=F(13, True), fill=status_color)
+                if is_current:
+                    dr.rectangle([x + card_w - 48, y + 2, x + card_w - 2, y + 7], fill=GOLD)
 
-            # 【当前阶段简报】
-            ph = ac.get("phases") or []
-            cur = shared.current_phase(ac)
-            if cur:
-                section_label(dr, PAD + 18, y + 6, "当前阶段 · " + (cur.get("title_cn") or cur.get("title") or ""),
-                              F(23, True))
-                yy = y + 42
-                for ln in wrap(cur.get("briefing_cn") or cur.get("briefing") or "", 46):
-                    dr.text((PAD + 18, yy), ln, font=F(19), fill=TEXT)
-                    yy += 26
-                y = yy + 12
+                media_box = (x + 1, y + 47, x + card_w - 1, y + 46 + media_height)
+                image_path = _campaign_image_file(phase.get("image_sources"))
+                phase_image = _crop_cover(
+                    image_path,
+                    (media_box[2] - media_box[0], media_box[3] - media_box[1]),
+                )
+                if phase_image:
+                    img.paste(phase_image, (media_box[0], media_box[1]))
+                else:
+                    _campaign_placeholder(dr, media_box, campaign.get("race_name"))
+                overlay_h = 78
+                phase_overlay = Image.new(
+                    "RGBA",
+                    (media_box[2] - media_box[0], media_box[3] - media_box[1]),
+                    (0, 0, 0, 0),
+                )
+                pdr = ImageDraw.Draw(phase_overlay, "RGBA")
+                pdr.rectangle([0, phase_overlay.height - overlay_h,
+                               phase_overlay.width, phase_overlay.height],
+                              fill=(0, 0, 0, 205))
+                pdr.rectangle([0, phase_overlay.height - overlay_h,
+                               5, phase_overlay.height],
+                              fill=(*status_color, 232))
+                img.paste(phase_overlay, (media_box[0], media_box[1]), phase_overlay)
+                overlay_y = media_box[3] - overlay_h + 10
+                phase_title = phase.get("title_cn") or phase.get("title") or "未命名阶段"
+                dr.text((x + 13, overlay_y), phase_title,
+                        font=F(20 if columns < 3 else 17, True), fill=TEXT)
+                phase_en = phase.get("title") if phase.get("title_cn") else ""
+                if phase_en:
+                    dr.text((x + 13, overlay_y + 24), phase_en,
+                            font=F(11), fill=GOLD2)
+                result_y = media_box[3] - 33
+                dr.text((x + 13, result_y),
+                        f"结果 · {status}" + (f" / {phase.get('status_en')}" if phase.get("status_en") else ""),
+                        font=F(11, True), fill=status_color)
+                reward = phase.get("reward") or {}
+                reward_text = _money_amount(reward)
+                if not reward:
+                    reward_text = "无阶段奖励"
+                rw = dr.textlength(reward_text, font=F(11))
+                dr.text((x + card_w - 10 - rw, result_y), reward_text,
+                        font=F(11), fill=GOLD2)
 
-            # 【阶段奖励】
-            rw = ac.get("reward") or {}
-            if rw.get("amount") and (rw.get("name_cn") or rw.get("name")):
-                section_label(dr, PAD + 18, y + 6, "阶段奖励", F(23, True))
-                rt = f"{rw.get('amount')} × {rw.get('name_cn') or rw.get('name')}"
-                dr.text((PAD + 18, y + 44), "🏅 " + rt, font=F(21, True), fill=GOLD)
-                y += 84
+                body_y = media_box[3] + 12
+                dr.text((x + 12, body_y), "简报", font=F(13, True), fill=GOLD)
+                body_y += 24
+                for line in text_rows[0]:
+                    dr.text((x + 12, body_y), line, font=phase_font, fill=TEXT)
+                    body_y += 22
+                body_y += 8
+                dr.line([(x + 12, body_y), (x + card_w - 12, body_y)], fill=LINE)
+                body_y += 10
+                dr.text((x + 12, body_y), "战报", font=F(13, True), fill=status_color)
+                body_y += 24
+                for line in text_rows[1]:
+                    dr.text((x + 12, body_y), line, font=report_font, fill=DIM)
+                    body_y += 22
+            y += card_h + 18
+            dr.text((PAD, y), "文案：活动战役中文层优先，缺失时按战役/阶段 ID 回退 campaign_zh.json。",
+                    font=F(13), fill=MUTE)
+            return y + 40
 
-            # 数据口径小字
-            note = "简报文本来自主站官方中文数据 · 翻译仓同步"
-            nw = dr.textlength(note, font=F(13))
-            dr.text((W - PAD - 18 - nw, y - 2), note, font=F(13), fill=(80, 80, 80))
-            return y + 18
-
-        return _render_cached(out_path, meta_path, rev, draw)
+        return _render_cached(out_path, "", revision, draw)
     except Exception:
         if os.environ.get("HD2_CARD_DEBUG"):
             import traceback
@@ -1452,10 +1782,11 @@ if __name__ == "__main__":
 
 HELP_SECTIONS = [
     ("战况速报", "INTEL", [
-        ("/战报", "银河战况速报卡：重要指令进度、目标星球、四阵营兵力分布"),
+        ("/战报", "银河战况速报卡：当期 MO、目标星球、四阵营兵力分布"),
+        ("/重要指令", "独立 MO 通知卡：官方中文全文、黄色重点、任务进度与独立横幅"),
         ("/战线", "全银河战线列表：各战区解放/防御进度与交战双方"),
         ("/dss", "民主空间站：停靠星球、生效行动效果、投票与捐献进度"),
-        ("/战役", "当前战役简报：战役故事与阶段目标（中文优先）"),
+        ("/战役", "活动战役档案墙：头图、全部阶段简报/战报、结果与奖励"),
         ("/api", "游戏 API 变动监测：效果与接口变更从主仓 Issue 实时抓取"),
     ]),
     ("星球情报", "PLANET INTEL", [

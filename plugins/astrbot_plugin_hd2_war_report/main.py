@@ -18,7 +18,7 @@ from astrbot_plugin_hd2_common.sources import (
 from astrbot_plugin_hd2_common.diagnostics import hd2_log as _log
 
 GALAXY_MAP_REPLY = "🌌 中文银河星图\n" + data.site_url("galaxy-map-v2.html")
-WAR_KINDS = {"report", "campaigns", "dss", "briefing", "analysis", "api", "map"}
+WAR_KINDS = {"report", "mo", "campaigns", "dss", "briefing", "analysis", "api", "map"}
 _fmt_big_num = data.fmt_big_num
 
 
