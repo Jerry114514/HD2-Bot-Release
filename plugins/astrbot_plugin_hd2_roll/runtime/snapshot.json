@@ -1,6 +1,6 @@
 {
   "repository": "Jerry114514/Jerry114514.github.io",
-  "commit": "476389fb46e284fd2cb9b9359a5d5d80f628beb6",
+  "commit": "f4aedc754efe8e31a2aed01a44b18e66f904d5d3",
   "files": {
     "assessment-v2/draw.mjs": "dd40bdaa34840714da167d5cd9adcafef8c4fbb5799f5e76a806eec95a8d5665",
     "engine/common.mjs": "4e3fea5496f7d4cec14a25c09e3ba377a1f728158c4400db9fe7296be3882002",
@@ -55,9 +55,9 @@
     "assessment-v2/strategic-adjustments.mjs": "22cc2eb34741df5375cffb51048ee75ca6d3a040b62ae65e8f710571d43279c5",
     "assessment-v2/grenade-chaff.mjs": "3540c035733ae3fbf2c72edcd14035eb5019d0d4c41ae1bf8cf9ee5dde494c9c",
     "assessment-v2/automatic.mjs": "42ff200baedb561bbd9af67e31b12fb989fb1ff52e1ef086619a3877644a30d8",
-    "assessment-v2/loadout-endurance.mjs": "88b42f268f9598033ff64b86ef1a922b25ae5d1d90cfefb6c059e51eea5dca6b",
+    "assessment-v2/loadout-endurance.mjs": "8cad61a6bc41520a1303800a94d1fe687ddd5bceb7aea0eda2184f774ef4cf7f",
     "assessment-v2/repair.mjs": "a9017023c7effebda2b58eb6d3172329901ab4b544f9426a206f3e430ed157c0",
-    "assessment-v2/equipment.json": "f21dc1e3277edbc1b57927ff10eb874512e00ea9e9654da05b5fab5fa911e1de",
+    "assessment-v2/equipment.json": "467a96f464d4f4b95fda4faa5b40b561adac024e3a2e5329b21611643f423f3c",
     "data/catalog.json": "54d89df24f0bef72826c652de224a6e0f6f8ee9da5cdb4e3684e864316e8fba5"
   }
 }
