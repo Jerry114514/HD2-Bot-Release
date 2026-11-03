@@ -1,8 +1,10 @@
 # Published loadout runtime
 
-Source: local site commit `f4aedc754efe8e31a2aed01a44b18e66f904d5d3` (not pushed; waiting for this iteration to be finalized).
+Source: local site commit `14fb0a1e3fcf7f85c61a9b4636029b399271b403` (not pushed; waiting for this iteration to be finalized).
 
 The catalog, assessment model and 55 transitive runtime modules/data files are pinned together. `snapshot.json` records their SHA256 digests. Source bytes are preserved, including line endings; the bridge verifies every entry before returning a result. The bot does not maintain a separate scoring implementation. Initial balanced draws use bounded seven-slot candidate repair, separate routine/additive bottleneck ranking, and complete six-dimension/physical admission checks; ranking alone never admits a result.
+
+Repair rewards only remaining score deficits in every dimension. Ablation loss, candidate sampling, routine/additive nominations and retained trials grant no credit above the actual pass thresholds. Physical failures remain separate checks rather than invented score deficits; already passing strong loadouts are still returned immediately.
 
 Initial pure and balanced draws now share one 20% admission decision for all mechs and tanks. A successful admission only makes them eligible; internal retries and local repair retain the same decision. Recon and supply vehicles remain in the normal pool, and the single-mech limit still applies. No scores or admission details are exposed by the bridge.
 
