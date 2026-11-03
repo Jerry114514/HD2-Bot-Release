@@ -37,11 +37,14 @@ class LoadoutTests(unittest.TestCase):
             self.assertEqual(set(value),{"primary","secondary","grenade","stratagems"})
             self.assertEqual(len(set([value["primary"],value["secondary"],value["grenade"],*value["stratagems"]])),7)
             self.assertLessEqual(sum(x.startswith("vehicle_exo_") for x in value["stratagems"]),1)
+            self.assertFalse({"vehicle_m_102_gunner_fast_recon_vehicle","vehicle_m_103_supply_fast_recon_vehicle"}.issubset(value["stratagems"]))
             samples.append(value)
         # Internal-only verification against the pinned published evaluator.
         script="""import{readFileSync}from'node:fs';import{evaluateAssessment,assessmentLegality}from'./plugins/astrbot_plugin_hd2_roll/runtime/assessment-v2/evaluate.mjs';
 const base='./plugins/astrbot_plugin_hd2_roll/runtime/';const model=JSON.parse(readFileSync(base+'assessment-v2/equipment.json'));const catalog=JSON.parse(readFileSync(base+'data/catalog.json'));
 const values=JSON.parse(readFileSync(process.argv[1]));
+const pair={...values[0],stratagems:['vehicle_m_102_gunner_fast_recon_vehicle','vehicle_m_103_supply_fast_recon_vehicle','deployable_gas_mines','deployable_flame_sentry']};
+if(assessmentLegality(pair,catalog,model).reason!=='MULTIPLE_RECON_VEHICLES')throw Error('recon mutual exclusion missing from pinned runtime');
 for(let i=0;i<values.length;i++){
   if(assessmentLegality(values[i],catalog,model).status!=='PASS')throw Error('illegal');
   if(i<5){

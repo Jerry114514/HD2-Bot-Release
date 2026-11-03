@@ -1,5 +1,9 @@
 export const VERSION = '3.0.0';
 export const withinExosuitLimit = ids => ids.filter(id=>/^vehicle_exo_/.test(id)).length<=1;
+// Recon variants share one selection slot; tanks and exosuits are separate.
+export const withinReconVehicleLimit = ids => ids.filter(id=>[
+  'vehicle_m_102_gunner_fast_recon_vehicle','vehicle_m_103_supply_fast_recon_vehicle'
+].includes(id)).length<=1;
 export const DIMENSIONS = Object.freeze(['anti_heavy', 'chaff', 'sustain', 'anti_medium', 'close_defense', 'demolition']);
 export const SLOTS = Object.freeze(['primary', 'secondary', 'grenade']);
 export const clone = value => structuredClone(value);
