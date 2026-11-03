@@ -19635,25 +19635,34 @@
       "strategic_source": null,
       "dimensions": {
         "chaff": {
-          "state": "UNRESOLVED",
-          "score": null,
+          "state": "MANUAL_CALIBRATED",
+          "score": 6,
           "contribution_kind": "AUXILIARY_ADDITION",
           "reason": "REARM_AND_TARGET_SWITCH_TIMING_REQUIRED",
-          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN"
+          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN",
+          "calculated_score": null,
+          "score_origin": "MANUAL_CALIBRATED",
+          "calculated_state": "UNRESOLVED"
         },
         "close_defense": {
-          "state": "UNRESOLVED",
-          "score": null,
+          "state": "MANUAL_CALIBRATED",
+          "score": 4,
           "contribution_kind": "AUXILIARY_ADDITION",
           "reason": "AUTOMATIC_CLOSE_RESPONSE_AND_TARGET_SWITCH_REQUIRED",
-          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN"
+          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN",
+          "calculated_score": null,
+          "score_origin": "MANUAL_CALIBRATED",
+          "calculated_state": "UNRESOLVED"
         },
         "anti_medium": {
-          "state": "UNRESOLVED",
-          "score": null,
+          "state": "MANUAL_CALIBRATED",
+          "score": 2,
           "contribution_kind": "AUXILIARY_ADDITION",
           "reason": "REARM_AND_TARGET_SWITCH_TIMING_REQUIRED",
-          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN"
+          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN",
+          "calculated_score": null,
+          "score_origin": "MANUAL_CALIBRATED",
+          "calculated_state": "UNRESOLVED"
         }
       },
       "endurance": {
@@ -19800,7 +19809,9 @@
         },
         "reason": "BELOW_HEAVY_PENETRATION; INCIDENTAL_WEAKPOINT_NOT_ANTI_HEAVY",
         "incidental_routes": [],
-        "scope": "USER_DEFAULT_ZERO; INCIDENTAL_ROUTES_HAVE_NO_SCORE_OR_HEAVY_GATE_CREDIT"
+        "scope": "USER_DEFAULT_ZERO; INCIDENTAL_ROUTES_HAVE_NO_SCORE_OR_HEAVY_GATE_CREDIT",
+        "calculated_score": 0,
+        "score_origin": "MANUAL_CALIBRATED"
       },
       "demolition_assessment": {
         "state": "KNOWN_ZERO",
@@ -19921,6 +19932,18 @@
         "anti_heavy": 0,
         "endurance": 50.23,
         "demolition": 0
+      },
+      "manual_calibration": {
+        "scores": {
+          "chaff": 6,
+          "close_defense": 4,
+          "anti_medium": 2,
+          "anti_heavy": 0
+        },
+        "mode": "auto",
+        "note": "",
+        "updated_at": "2026-11-03T06:15:39.126Z",
+        "score_scale_id": "review-65-as-60"
       }
     },
     {
@@ -20136,23 +20159,32 @@
       "strategic_source": null,
       "dimensions": {
         "chaff": {
-          "state": "ENGINEERING_ESTIMATE",
-          "score": 0.18676009000015933,
+          "state": "MANUAL_CALIBRATED",
+          "score": 9,
           "contribution_kind": "AUXILIARY_ADDITION",
-          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN"
+          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN",
+          "calculated_score": 0.18676009000015933,
+          "score_origin": "MANUAL_CALIBRATED",
+          "calculated_state": "ENGINEERING_ESTIMATE"
         },
         "close_defense": {
-          "state": "UNRESOLVED",
-          "score": null,
+          "state": "MANUAL_CALIBRATED",
+          "score": 4,
           "contribution_kind": "AUXILIARY_ADDITION",
           "reason": "AUTOMATIC_CLOSE_RESPONSE_AND_TARGET_SWITCH_REQUIRED",
-          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN"
+          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN",
+          "calculated_score": null,
+          "score_origin": "MANUAL_CALIBRATED",
+          "calculated_state": "UNRESOLVED"
         },
         "anti_medium": {
-          "state": "ENGINEERING_ESTIMATE",
-          "score": 0.2417913310097738,
+          "state": "MANUAL_CALIBRATED",
+          "score": 7,
           "contribution_kind": "AUXILIARY_ADDITION",
-          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN"
+          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN",
+          "calculated_score": 0.2417913310097738,
+          "score_origin": "MANUAL_CALIBRATED",
+          "calculated_state": "ENGINEERING_ESTIMATE"
         }
       },
       "endurance": {
@@ -20240,7 +20272,7 @@
           "basis": "USER_MINIMUM_HEAVY_PENETRATION; DIRECT_OR_EXPLOSION; STATUS_AP_DOES_NOT_QUALIFY",
           "scope": "ELIGIBILITY_ONLY; NOT_A_DAMAGE_TIME_OR_INVENTORY_GUARANTEE"
         },
-        "score": null,
+        "score": 1,
         "score_basis": "HEAVY_PENETRATION_GATE_THEN_KNOWN_TWO_KILL_PERFORMANCE; NO_COVERAGE_DIVISOR",
         "score_lower_bound": false,
         "scored_targets": 0,
@@ -20249,7 +20281,9 @@
         "conditional_only": false,
         "covered_targets": 0,
         "passed_pairs": 0,
-        "scope": "TWO_IDENTICAL_TARGETS_IN_20S; EACH_CASE_FULL_STOCK_RESET; THREE_TARGET_SAMPLE_ONLY"
+        "scope": "TWO_IDENTICAL_TARGETS_IN_20S; EACH_CASE_FULL_STOCK_RESET; THREE_TARGET_SAMPLE_ONLY",
+        "calculated_score": null,
+        "score_origin": "MANUAL_CALIBRATED"
       },
       "demolition_assessment": {
         "state": "KNOWN_ZERO",
@@ -20380,6 +20414,18 @@
         "anti_heavy": null,
         "endurance": 100,
         "demolition": 0
+      },
+      "manual_calibration": {
+        "scores": {
+          "chaff": 9,
+          "close_defense": 4,
+          "anti_medium": 7,
+          "anti_heavy": 1
+        },
+        "mode": "auto",
+        "note": "",
+        "updated_at": "2026-11-03T06:15:53.372Z",
+        "score_scale_id": "review-65-as-60"
       }
     },
     {
@@ -20689,25 +20735,34 @@
       "strategic_source": null,
       "dimensions": {
         "chaff": {
-          "state": "UNRESOLVED",
-          "score": null,
+          "state": "MANUAL_CALIBRATED",
+          "score": 9,
           "contribution_kind": "AUXILIARY_ADDITION",
           "reason": "AUTOMATIC_FLAME_EMISSION_AND_REFILL_TIMING_REQUIRED",
-          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN"
+          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN",
+          "calculated_score": null,
+          "score_origin": "MANUAL_CALIBRATED",
+          "calculated_state": "UNRESOLVED"
         },
         "close_defense": {
-          "state": "UNRESOLVED",
-          "score": null,
+          "state": "MANUAL_CALIBRATED",
+          "score": 3,
           "contribution_kind": "AUXILIARY_ADDITION",
           "reason": "AUTOMATIC_CLOSE_RESPONSE_AND_TARGET_SWITCH_REQUIRED",
-          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN"
+          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN",
+          "calculated_score": null,
+          "score_origin": "MANUAL_CALIBRATED",
+          "calculated_state": "UNRESOLVED"
         },
         "anti_medium": {
-          "state": "UNRESOLVED",
-          "score": null,
+          "state": "MANUAL_CALIBRATED",
+          "score": 4,
           "contribution_kind": "AUXILIARY_ADDITION",
           "reason": "AUTOMATIC_FLAME_EMISSION_AND_REFILL_TIMING_REQUIRED",
-          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN"
+          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN",
+          "calculated_score": null,
+          "score_origin": "MANUAL_CALIBRATED",
+          "calculated_state": "UNRESOLVED"
         }
       },
       "endurance": {
@@ -20797,7 +20852,7 @@
           "basis": "USER_MINIMUM_HEAVY_PENETRATION; DIRECT_OR_EXPLOSION; STATUS_AP_DOES_NOT_QUALIFY",
           "scope": "ELIGIBILITY_ONLY; NOT_A_DAMAGE_TIME_OR_INVENTORY_GUARANTEE"
         },
-        "score": null,
+        "score": 1,
         "score_basis": "HEAVY_PENETRATION_GATE_THEN_KNOWN_TWO_KILL_PERFORMANCE; NO_COVERAGE_DIVISOR",
         "score_lower_bound": false,
         "scored_targets": 0,
@@ -20806,7 +20861,9 @@
         "conditional_only": false,
         "covered_targets": 0,
         "passed_pairs": 0,
-        "scope": "TWO_IDENTICAL_TARGETS_IN_20S; EACH_CASE_FULL_STOCK_RESET; THREE_TARGET_SAMPLE_ONLY"
+        "scope": "TWO_IDENTICAL_TARGETS_IN_20S; EACH_CASE_FULL_STOCK_RESET; THREE_TARGET_SAMPLE_ONLY",
+        "calculated_score": null,
+        "score_origin": "MANUAL_CALIBRATED"
       },
       "demolition_assessment": {
         "state": "KNOWN_ZERO",
@@ -20865,6 +20922,18 @@
         "anti_heavy": null,
         "endurance": null,
         "demolition": 0
+      },
+      "manual_calibration": {
+        "scores": {
+          "chaff": 9,
+          "close_defense": 3,
+          "anti_medium": 4,
+          "anti_heavy": 1
+        },
+        "mode": "auto",
+        "note": "",
+        "updated_at": "2026-11-03T06:17:38.370Z",
+        "score_scale_id": "review-65-as-60"
       }
     },
     {
@@ -21079,25 +21148,34 @@
       "strategic_source": null,
       "dimensions": {
         "chaff": {
-          "state": "UNRESOLVED",
-          "score": null,
+          "state": "MANUAL_CALIBRATED",
+          "score": 8,
           "contribution_kind": "AUXILIARY_ADDITION",
           "reason": "AUTOMATIC_LASER_DWELL_HEAT_AND_SWITCH_REQUIRED",
-          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN"
+          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN",
+          "calculated_score": null,
+          "score_origin": "MANUAL_CALIBRATED",
+          "calculated_state": "UNRESOLVED"
         },
         "close_defense": {
-          "state": "UNRESOLVED",
-          "score": null,
+          "state": "MANUAL_CALIBRATED",
+          "score": 2,
           "contribution_kind": "AUXILIARY_ADDITION",
           "reason": "AUTOMATIC_CLOSE_RESPONSE_AND_TARGET_SWITCH_REQUIRED",
-          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN"
+          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN",
+          "calculated_score": null,
+          "score_origin": "MANUAL_CALIBRATED",
+          "calculated_state": "UNRESOLVED"
         },
         "anti_medium": {
-          "state": "UNRESOLVED",
-          "score": null,
+          "state": "MANUAL_CALIBRATED",
+          "score": 1,
           "contribution_kind": "AUXILIARY_ADDITION",
           "reason": "AUTOMATIC_LASER_DWELL_HEAT_AND_SWITCH_REQUIRED",
-          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN"
+          "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN",
+          "calculated_score": null,
+          "score_origin": "MANUAL_CALIBRATED",
+          "calculated_state": "UNRESOLVED"
         }
       },
       "endurance": {
@@ -21163,7 +21241,9 @@
         },
         "reason": "BELOW_HEAVY_PENETRATION; INCIDENTAL_WEAKPOINT_NOT_ANTI_HEAVY",
         "incidental_routes": [],
-        "scope": "USER_DEFAULT_ZERO; INCIDENTAL_ROUTES_HAVE_NO_SCORE_OR_HEAVY_GATE_CREDIT"
+        "scope": "USER_DEFAULT_ZERO; INCIDENTAL_ROUTES_HAVE_NO_SCORE_OR_HEAVY_GATE_CREDIT",
+        "calculated_score": 0,
+        "score_origin": "MANUAL_CALIBRATED"
       },
       "demolition_assessment": {
         "state": "KNOWN_ZERO",
@@ -21222,6 +21302,18 @@
         "anti_heavy": 0,
         "endurance": 100,
         "demolition": 0
+      },
+      "manual_calibration": {
+        "scores": {
+          "chaff": 8,
+          "close_defense": 2,
+          "anti_medium": 1,
+          "anti_heavy": 0
+        },
+        "mode": "auto",
+        "note": "",
+        "updated_at": "2026-11-03T06:16:17.218Z",
+        "score_scale_id": "review-65-as-60"
       }
     },
     {
@@ -21479,7 +21571,7 @@
       "dimensions": {
         "chaff": {
           "state": "MANUAL_CALIBRATED",
-          "score": 20,
+          "score": 12,
           "contribution_kind": "AUXILIARY_ADDITION",
           "reason": "AUTOMATIC_GAS_EMISSION_AND_REFILL_TIMING_REQUIRED",
           "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN",
@@ -21499,7 +21591,7 @@
         },
         "anti_medium": {
           "state": "MANUAL_CALIBRATED",
-          "score": 2,
+          "score": 1,
           "contribution_kind": "AUXILIARY_ADDITION",
           "reason": "AUTOMATIC_GAS_EMISSION_AND_REFILL_TIMING_REQUIRED",
           "scope": "AUTOMATIC_BACKPACK; NOT_HELD_GUN",
@@ -21666,13 +21758,13 @@
       },
       "manual_calibration": {
         "scores": {
-          "chaff": 20,
+          "chaff": 12,
           "close_defense": 10,
-          "anti_medium": 2
+          "anti_medium": 1
         },
         "mode": "additive",
         "note": "",
-        "updated_at": "2026-10-28T11:55:28.434Z",
+        "updated_at": "2026-11-03T06:17:22.982Z",
         "score_scale_id": "review-65-as-60"
       }
     },
@@ -113729,8 +113821,8 @@
         "chaff": {
           "mode_id": "LAS-13_TRIDENT_B",
           "ratio": 1.756115467666778,
-          "score": 90.08,
-          "state": "ENGINEERING_ESTIMATE",
+          "score": 80,
+          "state": "MANUAL_CALIBRATED",
           "candidates": [
             {
               "mode_id": "LAS-13_TRIDENT_B",
@@ -113739,13 +113831,16 @@
             }
           ],
           "primary_index_factor": 1.25,
-          "reference_index_factor": 1
+          "reference_index_factor": 1,
+          "calculated_score": 90.08,
+          "score_origin": "MANUAL_CALIBRATED",
+          "calculated_state": "ENGINEERING_ESTIMATE"
         },
         "close_defense": {
           "mode_id": "LAS-13_TRIDENT_B",
           "ratio": 1.97,
-          "score": 92.45,
-          "state": "ENGINEERING_ESTIMATE",
+          "score": 80,
+          "state": "MANUAL_CALIBRATED",
           "candidates": [
             {
               "mode_id": "LAS-13_TRIDENT_B",
@@ -113754,13 +113849,16 @@
             }
           ],
           "primary_index_factor": 1.25,
-          "reference_index_factor": 1.25
+          "reference_index_factor": 1.25,
+          "calculated_score": 92.45,
+          "score_origin": "MANUAL_CALIBRATED",
+          "calculated_state": "ENGINEERING_ESTIMATE"
         },
         "anti_medium": {
           "mode_id": "LAS-13_TRIDENT_B",
           "ratio": 1.1958828719284529,
-          "score": 75.44,
-          "state": "ENGINEERING_ESTIMATE",
+          "score": 60,
+          "state": "MANUAL_CALIBRATED",
           "candidates": [
             {
               "mode_id": "LAS-13_TRIDENT_B",
@@ -113769,7 +113867,10 @@
             }
           ],
           "primary_index_factor": 1.25,
-          "reference_index_factor": 1.25
+          "reference_index_factor": 1.25,
+          "calculated_score": 75.44,
+          "score_origin": "MANUAL_CALIBRATED",
+          "calculated_state": "ENGINEERING_ESTIMATE"
         }
       },
       "endurance": {
@@ -114128,6 +114229,17 @@
         "anti_heavy": 0,
         "endurance": 100,
         "demolition": 0
+      },
+      "manual_calibration": {
+        "scores": {
+          "chaff": 80,
+          "close_defense": 80,
+          "anti_medium": 60
+        },
+        "mode": "auto",
+        "note": "",
+        "updated_at": "2026-11-03T08:02:10.401Z",
+        "score_scale_id": "review-65-as-60"
       }
     },
     {
@@ -290062,7 +290174,7 @@
     "shared/hd2-loadout/assessment-v2/demolition.mjs": "ce257117f8c73c7f33a10917fa8d35d081dcfc239c7aee2a7988022fe6aee75e",
     "shared/hd2-loadout/assessment-v2/heavy-eligibility.mjs": "d2356f2b4430bc657ebb6bc63cee28a9d38550d4087b8b4987f3b4b8e5484754",
     "shared/hd2-loadout/assessment-v2/manual-scores.mjs": "8c791e0ab91077e009cb922e953d7e748ca21b2cc0c9415cafbf2de4f9914822",
-    "shared/hd2-loadout/assessment-v2/manual-scores.json": "13cea2e09d7fede30c2ee84c8acdf3df5e02c01e0e45a5d999950abd318e487f",
+    "shared/hd2-loadout/assessment-v2/manual-scores.json": "3bbe8e21bf214b38faab006fdaddc41a4905aff6c12a479d0847724bb475e34b",
     "shared/hd2-loadout/assessment-v2/dimension-scores.mjs": "8d3fe37edce631369decda46667105498d30b12911819d7e890e105225c85776",
     "shared/hd2-loadout/assessment-v2/endurance-total.mjs": "e7ce041decf361dc16c6e6c4d953c32f6dd61e86ba9719f1fbfe2bf66e6944cc",
     "shared/hd2-loadout/assessment-v2/loadout-endurance.mjs": "da3367882944e34ff2c3456af47bb5bf1e69788b32ae70a4438834666aab9b79",
@@ -290077,8 +290189,8 @@
   "manual_calibration": {
     "schema": 1,
     "path": "shared/hd2-loadout/assessment-v2/manual-scores.json",
-    "edited_equipment": 70,
-    "history_entries": 85,
+    "edited_equipment": 75,
+    "history_entries": 96,
     "scope": "SCORE_AND_CONTRIBUTION_MODE_ONLY; NO_DAMAGE_INVENTORY_LEGALITY_OR_PHYSICAL_GATE_OVERRIDE"
   }
 }
