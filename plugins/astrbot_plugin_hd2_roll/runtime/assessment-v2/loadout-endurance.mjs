@@ -5,11 +5,11 @@ import {isMeleeEquipment} from './score-exclusions.mjs';
 // shooting time; the finite-ammunition ledger remains a separate admission gate.
 export const DEFAULT_LOADOUT_ENDURANCE_POLICY={
   id:'routine-role-weighted-v3',role_weights:{chaff:.5,close_defense:.35,anti_medium:.15},
-  endurance_tendency:.35,
+  endurance_tendency:.5,
   throwable_bonus:'ROLE_ADDITION_TIMES_ENDURANCE_OVER_100',
   ceiling:100,pass_threshold:55,supply_final_floor:100,
   scope:'DETERMINISTIC_RESOURCE_INDEX; NO_LLM; FINAL_SCORE_PARTICIPATES_IN_SIX_DIMENSION_GATE',
-  parameters_status:'USER_SELECTED_ROLE_PROPORTIONS_AND_65_35_TENDENCY_20261103'
+  parameters_status:'USER_SELECTED_ROLE_PROPORTIONS_AND_50_50_TENDENCY_20261103'
 };
 const finite=n=>Number.isFinite(n)&&n>=0;
 const policyFor=model=>model.scenario.loadout_endurance??DEFAULT_LOADOUT_ENDURANCE_POLICY;

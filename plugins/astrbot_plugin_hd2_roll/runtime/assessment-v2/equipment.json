@@ -78,13 +78,13 @@
         "close_defense": 0.35,
         "anti_medium": 0.15
       },
-      "endurance_tendency": 0.35,
+      "endurance_tendency": 0.5,
       "throwable_bonus": "ROLE_ADDITION_TIMES_ENDURANCE_OVER_100",
       "ceiling": 100,
       "pass_threshold": 55,
       "supply_final_floor": 100,
       "scope": "DETERMINISTIC_RESOURCE_INDEX; NO_LLM; FINAL_SCORE_PARTICIPATES_IN_SIX_DIMENSION_GATE",
-      "parameters_status": "USER_SELECTED_ROLE_PROPORTIONS_AND_65_35_TENDENCY_20261103"
+      "parameters_status": "USER_SELECTED_ROLE_PROPORTIONS_AND_50_50_TENDENCY_20261103"
     },
     "throwable_endurance": {
       "basis": "WEIGHTED_CARRIED_PLUS_FINITE_REPLENISHED_USES",
@@ -290065,7 +290065,7 @@
     "shared/hd2-loadout/assessment-v2/manual-scores.json": "13cea2e09d7fede30c2ee84c8acdf3df5e02c01e0e45a5d999950abd318e487f",
     "shared/hd2-loadout/assessment-v2/dimension-scores.mjs": "8d3fe37edce631369decda46667105498d30b12911819d7e890e105225c85776",
     "shared/hd2-loadout/assessment-v2/endurance-total.mjs": "e7ce041decf361dc16c6e6c4d953c32f6dd61e86ba9719f1fbfe2bf66e6944cc",
-    "shared/hd2-loadout/assessment-v2/loadout-endurance.mjs": "4d788e7a905a0951a37a06cabaf8aa1c448ae416109b2ee5c20e028810d6f162",
+    "shared/hd2-loadout/assessment-v2/loadout-endurance.mjs": "88b42f268f9598033ff64b86ef1a922b25ae5d1d90cfefb6c059e51eea5dca6b",
     "shared/hd2-loadout/assessment-v2/score-exclusions.mjs": "adc12116308a68959366e5c8606bc74909b1558d390b301e70f114cd791914bf",
     "shared/hd2-loadout/calibration/practical/endurance-capacity.mjs": "d3f6de602380e5cb550c0c42192d03818b70c8ec57b1b9daec91d5fda706eb5b",
     "shared/hd2-loadout/calibration/practical/attack-mode-core.mjs": "61ccd280d5d10f0ca9c014d2672f7b1757d0cde8e68f8cc3459e4e646a1bdd79",
