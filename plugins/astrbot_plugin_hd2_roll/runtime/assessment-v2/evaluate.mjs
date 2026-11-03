@@ -8,7 +8,7 @@ import {suppliedGrenadeAdditions,grenadeChaffAddition} from './grenade-chaff.mjs
 import {assessAutomatic} from './automatic.mjs';
 import {manualValue,contributionKind} from './manual-scores.mjs';
 import {originalScore,contributionScore} from './score-scale.mjs';
-import {assessLoadoutEndurance,applySupplyEnduranceFloor} from './loadout-endurance.mjs';
+import {assessLoadoutEndurance,applySupplyEnduranceFloor,isHeldEnduranceWeapon} from './loadout-endurance.mjs';
 import {isMeleeEquipment} from './score-exclusions.mjs';
 
 export function assessmentLegality(loadout, catalog, model, options) {
@@ -135,7 +135,8 @@ function evaluateCore(loadout, model, catalog, options, ranking) {
     shared_resources: ordinaryPlan, close_safety: closeSafety(ordinaryRows, model)};
   // Every final dimension must pass, in addition to the independent physical gates.
   // Medium route selection still uses physical response, not slot display preference.
-  const thresholds = {chaff:60,close_defense:60,anti_medium:60,anti_heavy:60,endurance:60,demolition:60};
+  const thresholds = {chaff:60,close_defense:60,anti_medium:60,anti_heavy:60,
+    endurance:model.scenario.loadout_endurance?.pass_threshold??55,demolition:60};
   // A grenade's auxiliary display score cannot lower the physical gun-only
   // floor without a paid combined plan. The stock ledger remains conservative.
   const candidates=[...ordinary.map(r=>({...r,default_kind:'BASE_CAPABILITY'})),
@@ -152,7 +153,7 @@ function evaluateCore(loadout, model, catalog, options, ranking) {
     const row=byId.get(candidate.equipment_id),kind=row?contributionKind(row,candidate.role):candidate.default_kind;
     if(candidate.role==='endurance'&&(row?.category==='throwables'||isMeleeEquipment(row)))continue;
     if(candidate.role==='endurance'&&(row?.manual_calibration?.mode!=='additive'
-      ||row.endurance.state==='SUPPLY_PROVIDER'))continue;
+      ||row.endurance.state==='SUPPLY_PROVIDER'||isHeldEnduranceWeapon(row)))continue;
     if(kind==='AUXILIARY_ADDITION')additions.push({equipment_id:candidate.equipment_id,role:candidate.role,
       contribution:{...candidate.contribution,value:candidate.score,status:Number.isFinite(candidate.score)?'KNOWN':'UNKNOWN',
         score_origin:candidate.score_origin,source:row?.manual_calibration?.mode==='additive'?'MANUAL_EQUIPMENT_ADDITION':candidate.contribution?.source}});
@@ -171,7 +172,7 @@ function evaluateCore(loadout, model, catalog, options, ranking) {
   return {...summary, loadout, gates, medium_routes: medium,
     endurance_assessment:enduranceAssessment,
     throwable_endurance:rows.filter(r=>r.category==='throwables').map(r=>({equipment_id:r.equipment_id,
-      score:contributionScore(r.endurance.score,r.endurance.score_origin,scale),scope:'SLOT_USES_ONLY; NOT_GUN_ENDURANCE'})),
+      score:contributionScore(r.endurance.score,r.endurance.score_origin,scale),scope:'FINITE_USES_SCORE; SCALES_ROLE_ENDURANCE_ADDITIONS; NOT_GUN_MEAN'})),
     strategic_assessments: strategic,
     grenade_assessments: grenadeAdditions,
     automatic_assessments:automatic,

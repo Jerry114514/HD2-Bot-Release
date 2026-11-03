@@ -22,9 +22,10 @@ export function repairMeasure(value) {
       ?Math.max(0,score-(dimension.supply_adjustment.before_score??0)):0;
     groups.routine[role]=Math.max(0,base)+supply;
     groups.addition[role]=Math.max(0,addition);
-    needs[role]=Math.max(0,60-score);
+    const threshold=Number.isFinite(dimension.threshold)?dimension.threshold:60;
+    needs[role]=Math.max(0,threshold-score);
     deficit+=needs[role];
-    surplus+=Math.min(REPAIR_POLICY.surplus_cap,Math.max(0,score-60));
+    surplus+=Math.min(REPAIR_POLICY.surplus_cap,Math.max(0,score-threshold));
     if(dimension.status==='PASS')passed.push('score:'+role);
   }
   let pending_physical=0;

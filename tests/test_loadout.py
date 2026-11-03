@@ -49,7 +49,8 @@ for(let i=0;i<values.length;i++){
     if(result.status!=='ESTIMATED_PASS'||!result.acceptance_ready)throw Error('rejected');
     for(const role of ['chaff','close_defense','anti_medium','anti_heavy','endurance','demolition']){
       const d=result.dimensions[role];
-      if(d.threshold!==60||d.status!=='PASS'||!(d.score>=60-1e-10))throw Error('below final threshold: '+role);
+      const threshold=role==='endurance'?55:60;
+      if(d.threshold!==threshold||d.status!=='PASS'||!(d.score>=threshold-1e-10))throw Error('below final threshold: '+role);
     }
   }
 }"""
