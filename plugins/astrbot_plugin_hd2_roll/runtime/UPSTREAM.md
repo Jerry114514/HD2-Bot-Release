@@ -1,8 +1,10 @@
 # Published loadout runtime
 
-Source: https://github.com/Jerry114514/Jerry114514.github.io/tree/921f3c913a7fe73e34ad049fb9b36ea045d57423/shared/hd2-loadout
+Source: https://github.com/Leeroysunfury/Jerry114514.github.io/tree/ac1197fdd46f2aa11b76e3860bf835c5447507bf/shared/hd2-loadout
 
 The catalog, assessment model and 55 transitive runtime modules/data files are pinned together. `snapshot.json` records their SHA256 digests. Source bytes are preserved, including line endings; the bridge verifies every entry before returning a result. The bot does not maintain a separate scoring implementation. Initial balanced draws use bounded seven-slot candidate repair, separate routine/additive bottleneck ranking, and complete six-dimension/physical admission checks; ranking alone never admits a result.
+
+Initial pure and balanced draws now share one 20% admission decision for all mechs and tanks. A successful admission only makes them eligible; internal retries and local repair retain the same decision. Recon and supply vehicles remain in the normal pool, and the single-mech limit still applies. No scores or admission details are exposed by the bridge.
 
 Regenerate from an existing clone without changing its checkout:
 

@@ -12,6 +12,10 @@ const lockAt = (locks, slot) => slot.startsWith('stratagem:') ? locks.stratagems
 const at = (loadout, slot) => slot.startsWith('stratagem:') ? loadout.stratagems[Number(slot.split(':')[1])] : loadout[slot];
 const validSlot = slot => SLOTS.includes(slot) || /^stratagem:[0-3]$/.test(slot);
 const allSlots = [...SLOTS,...[0,1,2,3].map(n=>'stratagem:'+n)];
+// One shared admission decision per initial draw, not per vehicle or retry.
+// Recon/supply vehicles are outside this pool; the single-mech limit is separate.
+export const isArmoredVehicle = id => /^vehicle_(?:exo_|td_)/.test(id);
+export const ARMORED_POOL_DENOMINATOR = 5;
 
 export function assessmentView(value) {
   return {...value, evidence_grade:EVIDENCE_GRADE,
@@ -35,6 +39,16 @@ export function beginAssessmentDraw(model, catalog, options = {}) {
   const fixedLegality=assessmentHoldingLegality(fixed,catalog,model);
   if(fixedLegality.status==='FAIL'){
     task.result={status:'INVALID_LOCKS',reason:fixedLegality.reason};return task;
+  }
+  task.armored_pool={enabled:uniformInt(ARMORED_POOL_DENOMINATOR,task.rng)===0};
+  if(!task.armored_pool.enabled) {
+    // Explicit locks remain fixed; user exclusions/unlocks were already validated.
+    // All later proposals, enumeration and repair draw from this same frozen pool.
+    const locked=new Set(prepared.locks.stratagems.filter(Boolean));
+    prepared.values.stratagem=prepared.values.stratagem.filter(id=>!isArmoredVehicle(id)||locked.has(id));
+    if(prepared.values.stratagem.length<4) {
+      task.result={status:'EMPTY_SLOT_POOL',reason:'ARMORED_POOL_CLOSED'};return task;
+    }
   }
   task.space_size=spaceSize(prepared);
   if(BigInt(task.space_size)<=SMALL_SPACE){
