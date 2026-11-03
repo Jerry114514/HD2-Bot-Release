@@ -1,6 +1,6 @@
 # Published loadout runtime
 
-Source: [site commit 950b76a5e55f94534f3c8fbe3478d9ef827f9c7c](https://github.com/Leeroysunfury/Jerry114514.github.io/commit/950b76a5e55f94534f3c8fbe3478d9ef827f9c7c), submitted in [upstream PR #66](https://github.com/Jerry114514/Jerry114514.github.io/pull/66).
+Source: [site commit 5e813e03e4b4517d5a64603a1000c18f55161e9d](https://github.com/Leeroysunfury/Jerry114514.github.io/commit/5e813e03e4b4517d5a64603a1000c18f55161e9d), submitted in [upstream PR #66](https://github.com/Jerry114514/Jerry114514.github.io/pull/66).
 
 The catalog, assessment model and 55 transitive runtime modules/data files are pinned together. `snapshot.json` records their SHA256 digests. Source bytes are preserved, including line endings; the bridge verifies every entry before returning a result. The bot does not maintain a separate scoring implementation. Initial balanced draws use bounded seven-slot candidate repair, separate routine/additive bottleneck ranking, and complete six-dimension/physical admission checks; ranking alone never admits a result.
 
@@ -17,3 +17,5 @@ python scripts/update_loadout_runtime.py --source-repo <site-clone> --ref <commi
 ```
 
 Update all files as one deployment and reload the plugins. The bot's process boundary returns equipment IDs only. It exposes whole-loadout assessment/pure draws; replacement, locking, manual equipment selection and explanation interfaces are not enabled. Shared upstream modules retain their original exports for reproducible updates.
+
+AR-23L Liberator Legacy now has computed role scores and is in the ordinary primary pool. It uses its sourced ergonomics of 60, the bounded recoil projection, and the default 45-round magazine reload; there is no manual score or sampling bonus.

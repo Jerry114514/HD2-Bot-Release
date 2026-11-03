@@ -287456,7 +287456,7 @@
           "public_full_upgrade": false,
           "basis": "SOURCE_READING"
         },
-        "reload_ms": null,
+        "reload_ms": 3000,
         "modes": [
           {
             "mode_id": "AR-23_P",
@@ -287470,13 +287470,13 @@
             "rpm": 660,
             "capacity": 45,
             "total": 405,
-            "reload_ms": null,
+            "reload_ms": 3000,
             "traits": "",
             "disposable": false,
             "handling": {
               "ergonomics": 60,
-              "recoil_horizontal": null,
-              "recoil_vertical": null
+              "recoil_horizontal": 10,
+              "recoil_vertical": 26
             },
             "explosion": null,
             "charge_ms": null,
@@ -287510,8 +287510,8 @@
         "ergonomic": 60,
         "handling": {
           "ergonomics": 60,
-          "recoil_horizontal": null,
-          "recoil_vertical": null
+          "recoil_horizontal": 10,
+          "recoil_vertical": 26
         },
         "handling_source": {
           "ergonomics": {
@@ -287527,16 +287527,22 @@
             "source_ref": "wiki:ar_23l_liberator_legacy@140750"
           },
           "recoil_horizontal": {
-            "selected": null,
+            "selected": "10",
             "detailed": null,
             "infobox": null,
-            "source_ref": "wiki:ar_23l_liberator_legacy@140750"
+            "source_ref": "wiki:ar_23l_liberator_legacy@140750",
+            "drift_raw": "↔[10.00] ↕[13.00]",
+            "climb_raw": "↔[7.00] ↕[26.00]",
+            "basis": "ENGINEERING_AXIS_MAX_OF_DRIFT_AND_CLIMB; NOT_LEGACY_FIELD_EQUIVALENCE"
           },
           "recoil_vertical": {
-            "selected": null,
+            "selected": "26",
             "detailed": null,
             "infobox": null,
-            "source_ref": "wiki:ar_23l_liberator_legacy@140750"
+            "source_ref": "wiki:ar_23l_liberator_legacy@140750",
+            "drift_raw": "↔[10.00] ↕[13.00]",
+            "climb_raw": "↔[7.00] ↕[26.00]",
+            "basis": "ENGINEERING_AXIS_MAX_OF_DRIFT_AND_CLIMB; NOT_LEGACY_FIELD_EQUIVALENCE"
           }
         },
         "source_ref": "wiki:ar_23l_liberator_legacy@140750",
@@ -287546,7 +287552,13 @@
         "combat_exclusion": null,
         "areas": [],
         "effects": [],
-        "supplements": {},
+        "supplements": {
+          "reload_ms": 3000,
+          "partial_reload_ms": 2000,
+          "source_url": "https://helldivers.wiki.gg/wiki/AR-23L_Liberator_Legacy",
+          "evidence": "docs/ai/assessment-v2-liberator-legacy-20261103/evidence.json",
+          "basis": "Default level-1 Extended Magazine:45 rounds,8 spare magazines,3s full/2s partial reload. Evaluation retains full empty reload; no short/drum magazine modifiers."
+        },
         "listed_fire_rate": 660,
         "fire_damage_multiplier": 1,
         "stamina_cost_percent": null,
@@ -287558,66 +287570,977 @@
           {
             "mode_id": "AR-23_P",
             "chaff": {
-              "status": "UNKNOWN",
-              "reason": "HANDLING_SOURCE_FIELDS_REQUIRED"
+              "status": "ESTIMATE",
+              "shots": 68,
+              "count": 28,
+              "first_to_last_ms": 15061,
+              "neutralized_at_ms": 15061,
+              "resolution_basis": "SOURCE_PANEL_NEUTRALIZATION_ESTIMATE",
+              "cycle_ms": 15365,
+              "interval_ms": 91,
+              "mechanical_interval_ms": 90.9090909090909,
+              "recovery_after_ms": 304,
+              "next_round_needs_reload": false,
+              "reloads": 1,
+              "partial_inserts": 0,
+              "entries": [
+                {
+                  "target_id": "scavenger",
+                  "part_id": "main",
+                  "count": 12,
+                  "aimed_target": "scavenger:main",
+                  "damage_route": "LOCAL_PART",
+                  "btk": 1,
+                  "rounds": 12,
+                  "per_round_damage": 90,
+                  "fragment_damage_per_round": 0,
+                  "fragment_contacts": 0,
+                  "acquire_ms": 304,
+                  "residual_threat_ms": 0
+                },
+                {
+                  "target_id": "hunter",
+                  "part_id": "main",
+                  "count": 8,
+                  "aimed_target": "hunter:main",
+                  "damage_route": "LOCAL_PART",
+                  "btk": 2,
+                  "rounds": 16,
+                  "per_round_damage": 90,
+                  "fragment_damage_per_round": 0,
+                  "fragment_contacts": 0,
+                  "acquire_ms": 304,
+                  "residual_threat_ms": 0
+                },
+                {
+                  "target_id": "warrior",
+                  "part_id": "main",
+                  "count": 8,
+                  "aimed_target": "warrior:main",
+                  "damage_route": "LOCAL_PART",
+                  "btk": 5,
+                  "rounds": 40,
+                  "per_round_damage": 76,
+                  "fragment_damage_per_round": 0,
+                  "fragment_contacts": 0,
+                  "acquire_ms": 304,
+                  "residual_threat_ms": 0
+                }
+              ],
+              "handling": {
+                "status": "ESTIMATE",
+                "calibration": "ENGINEERING_PARAMETERS_NOT_MEASURED",
+                "acquire_ms": 303.46153846153845,
+                "recoil_settle_ms": 46,
+                "source_fields": {
+                  "ergonomics": 60,
+                  "recoil_horizontal": 10,
+                  "recoil_vertical": 26
+                },
+                "policy": {
+                  "status": "USER_SIMPLIFIED_SMALL_CORRECTION; NO_HIT_PROBABILITY",
+                  "reference_ergonomics": 65,
+                  "reference_acquire_ms": 300,
+                  "low_ergo_gain": 0.15,
+                  "horizontal_ms_per_unit": 2,
+                  "vertical_ms_per_unit": 1,
+                  "max_recoil_interval_extra_fraction": 0.15
+                }
+              },
+              "sustained": {
+                "status": "ESTIMATE",
+                "strategy": "full_empty",
+                "pattern_ms": 16415.288888888877,
+                "shots_per_pattern": 68,
+                "targets_per_pattern": 28,
+                "targets_per_second": 1.7057269104141408,
+                "candidates": [
+                  {
+                    "strategy": "full_empty",
+                    "pattern_ms": 16415.288888888877
+                  }
+                ],
+                "scope": "REPEATING_FEED_TEMPO_ONLY; FINITE_STOCK_CHECK_REQUIRED"
+              },
+              "firing_rate_targets_s": 1.8223234624145785,
+              "inventory_required": 68,
+              "overlap": null,
+              "assumptions": [
+                "SOURCE_PART_ALL_HITS",
+                "ONE_BOUND_EXPLOSION_PER_PRIMARY_TARGET",
+                "NO_EXTRA_PART_OR_NEIGHBOUR_HITS",
+                "READINESS_CONSTRAINTS_OVERLAP; CHARGE_AFTER_RELOAD",
+                "NO_DAMAGE_OR_BTK_HANDLING_PENALTY"
+              ]
             },
             "close_defense": {
-              "status": "UNKNOWN",
-              "reason": "HANDLING_SOURCE_FIELDS_REQUIRED"
+              "status": "ESTIMATE",
+              "shots": 8,
+              "count": 4,
+              "first_to_last_ms": 1580,
+              "neutralized_at_ms": 1580,
+              "resolution_basis": "SOURCE_PANEL_NEUTRALIZATION_ESTIMATE",
+              "cycle_ms": 1884,
+              "interval_ms": 91,
+              "mechanical_interval_ms": 90.9090909090909,
+              "recovery_after_ms": 304,
+              "next_round_needs_reload": false,
+              "reloads": 0,
+              "partial_inserts": 0,
+              "entries": [
+                {
+                  "target_id": "hunter",
+                  "part_id": "main",
+                  "count": 4,
+                  "aimed_target": "hunter:main",
+                  "damage_route": "LOCAL_PART",
+                  "btk": 2,
+                  "rounds": 8,
+                  "per_round_damage": 90,
+                  "fragment_damage_per_round": 0,
+                  "fragment_contacts": 0,
+                  "acquire_ms": 304,
+                  "residual_threat_ms": 0
+                }
+              ],
+              "handling": {
+                "status": "ESTIMATE",
+                "calibration": "ENGINEERING_PARAMETERS_NOT_MEASURED",
+                "acquire_ms": 303.46153846153845,
+                "recoil_settle_ms": 46,
+                "source_fields": {
+                  "ergonomics": 60,
+                  "recoil_horizontal": 10,
+                  "recoil_vertical": 26
+                },
+                "policy": {
+                  "status": "USER_SIMPLIFIED_SMALL_CORRECTION; NO_HIT_PROBABILITY",
+                  "reference_ergonomics": 65,
+                  "reference_acquire_ms": 300,
+                  "low_ergo_gain": 0.15,
+                  "horizontal_ms_per_unit": 2,
+                  "vertical_ms_per_unit": 1,
+                  "max_recoil_interval_extra_fraction": 0.15
+                }
+              },
+              "sustained": {
+                "status": "ESTIMATE",
+                "strategy": "full_empty",
+                "pattern_ms": 2078.222222222222,
+                "shots_per_pattern": 8,
+                "targets_per_pattern": 4,
+                "targets_per_second": 1.924721984602224,
+                "candidates": [
+                  {
+                    "strategy": "full_empty",
+                    "pattern_ms": 2078.222222222222
+                  }
+                ],
+                "scope": "REPEATING_FEED_TEMPO_ONLY; FINITE_STOCK_CHECK_REQUIRED"
+              },
+              "firing_rate_targets_s": 2.1231422505307855,
+              "inventory_required": 8,
+              "overlap": null,
+              "assumptions": [
+                "SOURCE_PART_ALL_HITS",
+                "ONE_BOUND_EXPLOSION_PER_PRIMARY_TARGET",
+                "NO_EXTRA_PART_OR_NEIGHBOUR_HITS",
+                "READINESS_CONSTRAINTS_OVERLAP; CHARGE_AFTER_RELOAD",
+                "NO_DAMAGE_OR_BTK_HANDLING_PENALTY"
+              ]
             },
             "anti_medium": [
               {
-                "status": "UNKNOWN",
-                "reason": "HANDLING_SOURCE_FIELDS_REQUIRED",
+                "status": "ESTIMATE",
+                "shots": 18,
+                "count": 1,
+                "first_to_last_ms": 2154,
+                "neutralized_at_ms": 2266,
+                "effective_response_ms": 2266,
+                "first_part_break_ms": 1426,
+                "resolution_basis": "BLEED_MAIN_TRANSFER_BOUND_CLEAVE_AND_CONTROL_ESTIMATE",
+                "cycle_ms": 2761,
+                "interval_ms": 91,
+                "mechanical_interval_ms": 90.9090909090909,
+                "recovery_after_ms": 607,
+                "next_round_needs_reload": false,
+                "reloads": 0,
+                "partial_inserts": 0,
+                "entries": [
+                  {
+                    "target_id": "alpha_commander",
+                    "part_id": "head",
+                    "count": 1,
+                    "aimed_target": "alpha_commander:head",
+                    "damage_route": "LOCAL_PART",
+                    "btk": 18,
+                    "rounds": 18,
+                    "per_round_damage": 27,
+                    "fragment_damage_per_round": 0,
+                    "fragment_contacts": 0,
+                    "acquire_ms": 607,
+                    "residual_threat_ms": 112,
+                    "resolution": {
+                      "status": "ESTIMATE",
+                      "part_break_ms": 1426,
+                      "death_ms": 2266,
+                      "effective_response_ms": 2266,
+                      "last_shot_ms": 2154,
+                      "natural_bleed_death_ms": 2266,
+                      "constitution": {
+                        "hp": 300,
+                        "decay_per_second": 100,
+                        "after_break_hp": 300,
+                        "after_burst_hp": 11.20000000000001,
+                        "overflow_enabled": false
+                      },
+                      "main_after_shots": 514,
+                      "main_damage": {
+                        "transferred": 486,
+                        "redirected_blast": 0,
+                        "cleave": 0,
+                        "separate_fragment_main": 0,
+                        "gas_before_death": 0,
+                        "fire_before_death": 0
+                      },
+                      "packet": {
+                        "status": "ESTIMATE",
+                        "direct": 27,
+                        "blast_part": 0,
+                        "local": 27,
+                        "fragment_main": 0,
+                        "fragments": {
+                          "status": "KNOWN",
+                          "damage": 0,
+                          "contacts": 0
+                        },
+                        "redirected_blast_main": 0,
+                        "cleave": {
+                          "damage": 0,
+                          "status": "NO_BOUND_CHAIN"
+                        },
+                        "transfer_fraction": 1,
+                        "transfer_limit": null
+                      },
+                      "control": null,
+                      "fire": null,
+                      "basis": "SOURCE_POOLS; BOUND_COLLISION_AND_STATUS_ROUTE; ENGINEERING_THREAT_EQUIVALENT",
+                      "assumptions": [
+                        "STOP_AFTER_SELECTED_BURST",
+                        "BLEED_AND_GAS_DO_NOT_OCCUPY_HANDS",
+                        "GAS_MAIN_ONLY_NONSTACKING",
+                        "CONTROL_DOES_NOT_REMOVE_HP",
+                        "EFFECTIVE_RESPONSE_IS_NOT_A_DEATH_OR_SAFETY_TIMESTAMP"
+                      ]
+                    }
+                  }
+                ],
+                "handling": {
+                  "status": "ESTIMATE",
+                  "calibration": "ENGINEERING_PARAMETERS_NOT_MEASURED",
+                  "acquire_ms": 303.46153846153845,
+                  "recoil_settle_ms": 46,
+                  "source_fields": {
+                    "ergonomics": 60,
+                    "recoil_horizontal": 10,
+                    "recoil_vertical": 26
+                  },
+                  "policy": {
+                    "status": "USER_SIMPLIFIED_SMALL_CORRECTION; NO_HIT_PROBABILITY",
+                    "reference_ergonomics": 65,
+                    "reference_acquire_ms": 300,
+                    "low_ergo_gain": 0.15,
+                    "horizontal_ms_per_unit": 2,
+                    "vertical_ms_per_unit": 1,
+                    "max_recoil_interval_extra_fraction": 0.15
+                  }
+                },
+                "sustained": {
+                  "status": "ESTIMATE",
+                  "strategy": "full_empty",
+                  "pattern_ms": 3214.4,
+                  "shots_per_pattern": 18,
+                  "targets_per_pattern": 1,
+                  "targets_per_second": 0.31110004977600797,
+                  "candidates": [
+                    {
+                      "strategy": "full_empty",
+                      "pattern_ms": 3214.4
+                    }
+                  ],
+                  "scope": "REPEATING_FEED_TEMPO_ONLY; FINITE_STOCK_CHECK_REQUIRED"
+                },
+                "firing_rate_targets_s": 0.36218761318362913,
+                "inventory_required": 18,
+                "overlap": null,
+                "assumptions": [
+                  "SOURCE_PART_ALL_HITS",
+                  "ONE_BOUND_EXPLOSION_PER_PRIMARY_TARGET",
+                  "ONLY_EXPLICIT_BOUND_CLEAVE; NO_NEIGHBOUR_HITS",
+                  "READINESS_CONSTRAINTS_OVERLAP; CHARGE_AFTER_RELOAD",
+                  "NO_DAMAGE_OR_BTK_HANDLING_PENALTY"
+                ],
                 "target_id": "alpha_commander:head",
                 "cohort_count": 3,
                 "route": {
                   "kind": "DEFAULT_FRONT_PART",
                   "measured_target": "alpha_commander:head",
                   "acquire_multiplier": 2,
-                  "aim_class": "PRECISE_PART"
+                  "aim_class": "PRECISE_PART",
+                  "burst_policy": "FOLLOWUP_ON_CONSTITUTION_ZONE",
+                  "aimed_target": "alpha_commander:head",
+                  "damage_route": "LOCAL_PART"
                 },
                 "response": {
-                  "status": "UNKNOWN",
-                  "reason": "POSITIVE_HANDLED_RESPONSE_TIME_REQUIRED"
+                  "status": "ESTIMATE",
+                  "value": 0.40875471235574073,
+                  "unit": "weighted_responses_per_second",
+                  "first_weight": 0.75,
+                  "first_part_break_ms": 1426,
+                  "last_shot_ms": 2154,
+                  "effective_response_ms": 2266,
+                  "full_threat_resolution_ms": 2266,
+                  "repeat_cycle_ms": 3214.4,
+                  "repeat_available": true,
+                  "recovery_after_ms": 607,
+                  "one_shot": false,
+                  "rapid_reference_ms": 2000,
+                  "rapid": false,
+                  "repeat_basis": "PERIODIC_FEED_TEMPO; BLEED_AND_STATUS_CAN_OVERLAP_RELOAD_AND_RETARGET",
+                  "caveat": "THREAT_EQUIVALENT_TIME; CONTROL_IS_NOT_DEATH_OR_GUARANTEED_SAFETY"
                 }
               },
               {
-                "status": "UNKNOWN",
-                "reason": "HANDLING_SOURCE_FIELDS_REQUIRED",
+                "status": "ESTIMATE",
+                "shots": 12,
+                "count": 1,
+                "first_to_last_ms": 1608,
+                "neutralized_at_ms": 1608,
+                "effective_response_ms": 1608,
+                "first_part_break_ms": 1608,
+                "resolution_basis": "BLEED_MAIN_TRANSFER_BOUND_CLEAVE_AND_CONTROL_ESTIMATE",
+                "cycle_ms": 2215,
+                "interval_ms": 91,
+                "mechanical_interval_ms": 90.9090909090909,
+                "recovery_after_ms": 607,
+                "next_round_needs_reload": false,
+                "reloads": 0,
+                "partial_inserts": 0,
+                "entries": [
+                  {
+                    "target_id": "hive_guard",
+                    "part_id": "main",
+                    "count": 1,
+                    "aimed_target": "hive_guard:main",
+                    "damage_route": "LOCAL_PART",
+                    "btk": 12,
+                    "rounds": 12,
+                    "per_round_damage": 45,
+                    "fragment_damage_per_round": 0,
+                    "fragment_contacts": 0,
+                    "acquire_ms": 607,
+                    "residual_threat_ms": 0,
+                    "resolution": {
+                      "status": "ESTIMATE",
+                      "part_break_ms": 1608,
+                      "death_ms": 1608,
+                      "effective_response_ms": 1608,
+                      "last_shot_ms": 1608,
+                      "natural_bleed_death_ms": 1608,
+                      "constitution": {
+                        "hp": 0,
+                        "decay_per_second": 0,
+                        "after_break_hp": 0,
+                        "after_burst_hp": 0,
+                        "overflow_enabled": false
+                      },
+                      "main_after_shots": 0,
+                      "main_damage": {
+                        "transferred": 540,
+                        "redirected_blast": 0,
+                        "cleave": 0,
+                        "separate_fragment_main": 0,
+                        "gas_before_death": 0,
+                        "fire_before_death": 0
+                      },
+                      "packet": {
+                        "status": "ESTIMATE",
+                        "direct": 45,
+                        "blast_part": 0,
+                        "local": 45,
+                        "fragment_main": 0,
+                        "fragments": {
+                          "status": "KNOWN",
+                          "damage": 0,
+                          "contacts": 0
+                        },
+                        "redirected_blast_main": 0,
+                        "cleave": {
+                          "damage": 0,
+                          "status": "NO_BOUND_CHAIN"
+                        },
+                        "transfer_fraction": 1,
+                        "transfer_limit": null
+                      },
+                      "control": null,
+                      "fire": null,
+                      "basis": "SOURCE_POOLS; BOUND_COLLISION_AND_STATUS_ROUTE; ENGINEERING_THREAT_EQUIVALENT",
+                      "assumptions": [
+                        "STOP_AFTER_SELECTED_BURST",
+                        "BLEED_AND_GAS_DO_NOT_OCCUPY_HANDS",
+                        "GAS_MAIN_ONLY_NONSTACKING",
+                        "CONTROL_DOES_NOT_REMOVE_HP",
+                        "EFFECTIVE_RESPONSE_IS_NOT_A_DEATH_OR_SAFETY_TIMESTAMP"
+                      ]
+                    }
+                  }
+                ],
+                "handling": {
+                  "status": "ESTIMATE",
+                  "calibration": "ENGINEERING_PARAMETERS_NOT_MEASURED",
+                  "acquire_ms": 303.46153846153845,
+                  "recoil_settle_ms": 46,
+                  "source_fields": {
+                    "ergonomics": 60,
+                    "recoil_horizontal": 10,
+                    "recoil_vertical": 26
+                  },
+                  "policy": {
+                    "status": "USER_SIMPLIFIED_SMALL_CORRECTION; NO_HIT_PROBABILITY",
+                    "reference_ergonomics": 65,
+                    "reference_acquire_ms": 300,
+                    "low_ergo_gain": 0.15,
+                    "horizontal_ms_per_unit": 2,
+                    "vertical_ms_per_unit": 1,
+                    "max_recoil_interval_extra_fraction": 0.15
+                  }
+                },
+                "sustained": {
+                  "status": "ESTIMATE",
+                  "strategy": "full_empty",
+                  "pattern_ms": 2349.3333333333335,
+                  "shots_per_pattern": 12,
+                  "targets_per_pattern": 1,
+                  "targets_per_second": 0.4256526674233825,
+                  "candidates": [
+                    {
+                      "strategy": "full_empty",
+                      "pattern_ms": 2349.3333333333335
+                    }
+                  ],
+                  "scope": "REPEATING_FEED_TEMPO_ONLY; FINITE_STOCK_CHECK_REQUIRED"
+                },
+                "firing_rate_targets_s": 0.45146726862302483,
+                "inventory_required": 12,
+                "overlap": null,
+                "assumptions": [
+                  "SOURCE_PART_ALL_HITS",
+                  "ONE_BOUND_EXPLOSION_PER_PRIMARY_TARGET",
+                  "ONLY_EXPLICIT_BOUND_CLEAVE; NO_NEIGHBOUR_HITS",
+                  "READINESS_CONSTRAINTS_OVERLAP; CHARGE_AFTER_RELOAD",
+                  "NO_DAMAGE_OR_BTK_HANDLING_PENALTY"
+                ],
                 "target_id": "hive_guard:head",
                 "cohort_count": 3,
                 "route": {
-                  "kind": "DEFAULT_FRONT_PART",
-                  "measured_target": "hive_guard:head",
+                  "kind": "FRONTAL_WEAKPOINT",
+                  "measured_target": "hive_guard:main",
+                  "condition": "AIM_THROUGH_FRONT_LEG_HEAD_GAP",
                   "acquire_multiplier": 2,
-                  "aim_class": "PRECISE_PART"
+                  "aim_class": "PRECISE_PART",
+                  "source_url": "https://helldivers.wiki.gg/wiki/Hive_Guard",
+                  "blast_policy": "LOCAL_EXDR; REDIRECT_ONCE_TO_MAIN; NO_DUPLICATE_PART_DAMAGE",
+                  "aimed_target": "hive_guard:main",
+                  "damage_route": "LOCAL_PART"
                 },
                 "response": {
-                  "status": "UNKNOWN",
-                  "reason": "POSITIVE_HANDLED_RESPONSE_TIME_REQUIRED"
+                  "status": "ESTIMATE",
+                  "value": 0.5728310773036068,
+                  "unit": "weighted_responses_per_second",
+                  "first_weight": 0.75,
+                  "first_part_break_ms": 1608,
+                  "last_shot_ms": 1608,
+                  "effective_response_ms": 1608,
+                  "full_threat_resolution_ms": 1608,
+                  "repeat_cycle_ms": 2349.3333333333335,
+                  "repeat_available": true,
+                  "recovery_after_ms": 607,
+                  "one_shot": false,
+                  "rapid_reference_ms": 2000,
+                  "rapid": true,
+                  "repeat_basis": "PERIODIC_FEED_TEMPO; BLEED_AND_STATUS_CAN_OVERLAP_RELOAD_AND_RETARGET",
+                  "caveat": "THREAT_EQUIVALENT_TIME; CONTROL_IS_NOT_DEATH_OR_GUARANTEED_SAFETY"
                 }
               },
               {
-                "status": "UNKNOWN",
-                "reason": "HANDLING_SOURCE_FIELDS_REQUIRED",
+                "status": "ESTIMATE",
+                "shots": 3,
+                "count": 1,
+                "first_to_last_ms": 1700,
+                "neutralized_at_ms": 1700,
+                "effective_response_ms": 1700,
+                "first_part_break_ms": 1700,
+                "resolution_basis": "BLEED_MAIN_TRANSFER_BOUND_CLEAVE_AND_CONTROL_ESTIMATE",
+                "cycle_ms": 3218,
+                "interval_ms": 91,
+                "mechanical_interval_ms": 90.9090909090909,
+                "recovery_after_ms": 1518,
+                "next_round_needs_reload": false,
+                "reloads": 0,
+                "partial_inserts": 0,
+                "entries": [
+                  {
+                    "target_id": "bile_spewer",
+                    "part_id": "mouth",
+                    "count": 1,
+                    "aimed_target": "bile_spewer:mouth",
+                    "damage_route": "LOCAL_PART",
+                    "btk": 3,
+                    "rounds": 3,
+                    "per_round_damage": 90,
+                    "fragment_damage_per_round": 0,
+                    "fragment_contacts": 0,
+                    "acquire_ms": 1518,
+                    "residual_threat_ms": 0,
+                    "resolution": {
+                      "status": "ESTIMATE",
+                      "part_break_ms": 1700,
+                      "death_ms": 1700,
+                      "effective_response_ms": 1700,
+                      "last_shot_ms": 1700,
+                      "natural_bleed_death_ms": 1700,
+                      "constitution": {
+                        "hp": 0,
+                        "decay_per_second": 0,
+                        "after_break_hp": 0,
+                        "after_burst_hp": 0,
+                        "overflow_enabled": false
+                      },
+                      "main_after_shots": 500,
+                      "main_damage": {
+                        "transferred": 250,
+                        "redirected_blast": 0,
+                        "cleave": 0,
+                        "separate_fragment_main": 0,
+                        "gas_before_death": 0,
+                        "fire_before_death": 0
+                      },
+                      "packet": {
+                        "status": "ESTIMATE",
+                        "direct": 90,
+                        "blast_part": 0,
+                        "local": 90,
+                        "fragment_main": 0,
+                        "fragments": {
+                          "status": "KNOWN",
+                          "damage": 0,
+                          "contacts": 0
+                        },
+                        "redirected_blast_main": 0,
+                        "cleave": {
+                          "damage": 0,
+                          "status": "NO_BOUND_CHAIN"
+                        },
+                        "transfer_fraction": 1,
+                        "transfer_limit": 250
+                      },
+                      "control": null,
+                      "fire": null,
+                      "basis": "SOURCE_POOLS; BOUND_COLLISION_AND_STATUS_ROUTE; ENGINEERING_THREAT_EQUIVALENT",
+                      "assumptions": [
+                        "STOP_AFTER_SELECTED_BURST",
+                        "BLEED_AND_GAS_DO_NOT_OCCUPY_HANDS",
+                        "GAS_MAIN_ONLY_NONSTACKING",
+                        "CONTROL_DOES_NOT_REMOVE_HP",
+                        "EFFECTIVE_RESPONSE_IS_NOT_A_DEATH_OR_SAFETY_TIMESTAMP"
+                      ]
+                    }
+                  }
+                ],
+                "handling": {
+                  "status": "ESTIMATE",
+                  "calibration": "ENGINEERING_PARAMETERS_NOT_MEASURED",
+                  "acquire_ms": 303.46153846153845,
+                  "recoil_settle_ms": 46,
+                  "source_fields": {
+                    "ergonomics": 60,
+                    "recoil_horizontal": 10,
+                    "recoil_vertical": 26
+                  },
+                  "policy": {
+                    "status": "USER_SIMPLIFIED_SMALL_CORRECTION; NO_HIT_PROBABILITY",
+                    "reference_ergonomics": 65,
+                    "reference_acquire_ms": 300,
+                    "low_ergo_gain": 0.15,
+                    "horizontal_ms_per_unit": 2,
+                    "vertical_ms_per_unit": 1,
+                    "max_recoil_interval_extra_fraction": 0.15
+                  }
+                },
+                "sustained": {
+                  "status": "ESTIMATE",
+                  "strategy": "full_empty",
+                  "pattern_ms": 1798.8,
+                  "shots_per_pattern": 3,
+                  "targets_per_pattern": 1,
+                  "targets_per_second": 0.5559261730042251,
+                  "candidates": [
+                    {
+                      "strategy": "full_empty",
+                      "pattern_ms": 1798.8
+                    }
+                  ],
+                  "scope": "REPEATING_FEED_TEMPO_ONLY; FINITE_STOCK_CHECK_REQUIRED"
+                },
+                "firing_rate_targets_s": 0.3107520198881293,
+                "inventory_required": 3,
+                "overlap": null,
+                "assumptions": [
+                  "SOURCE_PART_ALL_HITS",
+                  "ONE_BOUND_EXPLOSION_PER_PRIMARY_TARGET",
+                  "ONLY_EXPLICIT_BOUND_CLEAVE; NO_NEIGHBOUR_HITS",
+                  "READINESS_CONSTRAINTS_OVERLAP; CHARGE_AFTER_RELOAD",
+                  "NO_DAMAGE_OR_BTK_HANDLING_PENALTY"
+                ],
                 "target_id": "bile_spewer:head",
                 "cohort_count": 2,
                 "route": {
-                  "kind": "DEFAULT_FRONT_PART",
-                  "measured_target": "bile_spewer:head",
-                  "acquire_multiplier": 4,
-                  "aim_class": "PRECISE_PART"
+                  "kind": "FRONTAL_WEAKPOINT",
+                  "measured_target": "bile_spewer:mouth",
+                  "condition": "AIM_AT_UNARMORED_MOUTH",
+                  "acquire_multiplier": 5,
+                  "aim_class": "PRECISE_PART",
+                  "source_url": "https://helldivers.wiki.gg/wiki/Bile_Spewer",
+                  "blast_policy": "LOCAL_EXDR; REDIRECT_ONCE_TO_MAIN; NO_DUPLICATE_PART_DAMAGE",
+                  "aimed_target": "bile_spewer:mouth",
+                  "damage_route": "LOCAL_PART"
                 },
                 "response": {
-                  "status": "UNKNOWN",
-                  "reason": "POSITIVE_HANDLED_RESPONSE_TIME_REQUIRED"
+                  "status": "ESTIMATE",
+                  "value": 0.5801580138392916,
+                  "unit": "weighted_responses_per_second",
+                  "first_weight": 0.75,
+                  "first_part_break_ms": 1700,
+                  "last_shot_ms": 1700,
+                  "effective_response_ms": 1700,
+                  "full_threat_resolution_ms": 1700,
+                  "repeat_cycle_ms": 1798.8,
+                  "repeat_available": true,
+                  "recovery_after_ms": 1518,
+                  "one_shot": false,
+                  "rapid_reference_ms": 2000,
+                  "rapid": true,
+                  "repeat_basis": "PERIODIC_FEED_TEMPO; BLEED_AND_STATUS_CAN_OVERLAP_RELOAD_AND_RETARGET",
+                  "caveat": "THREAT_EQUIVALENT_TIME; CONTROL_IS_NOT_DEATH_OR_GUARANTEED_SAFETY"
                 }
               }
             ],
             "mixed_ammo": {
-              "status": "UNKNOWN",
-              "reason": "HANDLING_SOURCE_FIELDS_REQUIRED"
+              "status": "ESTIMATE",
+              "shots": 164,
+              "count": 36,
+              "first_to_last_ms": 35565,
+              "neutralized_at_ms": 35565,
+              "effective_response_ms": 35565,
+              "first_part_break_ms": 35565,
+              "resolution_basis": "BLEED_MAIN_TRANSFER_BOUND_CLEAVE_AND_CONTROL_ESTIMATE",
+              "cycle_ms": 35869,
+              "interval_ms": 91,
+              "mechanical_interval_ms": 90.9090909090909,
+              "recovery_after_ms": 304,
+              "next_round_needs_reload": false,
+              "reloads": 3,
+              "partial_inserts": 0,
+              "entries": [
+                {
+                  "target_id": "scavenger",
+                  "part_id": "main",
+                  "count": 12,
+                  "aimed_target": "scavenger:main",
+                  "damage_route": "LOCAL_PART",
+                  "btk": 1,
+                  "rounds": 12,
+                  "per_round_damage": 90,
+                  "fragment_damage_per_round": 0,
+                  "fragment_contacts": 0,
+                  "acquire_ms": 304,
+                  "residual_threat_ms": 0
+                },
+                {
+                  "target_id": "hunter",
+                  "part_id": "main",
+                  "count": 8,
+                  "aimed_target": "hunter:main",
+                  "damage_route": "LOCAL_PART",
+                  "btk": 2,
+                  "rounds": 16,
+                  "per_round_damage": 90,
+                  "fragment_damage_per_round": 0,
+                  "fragment_contacts": 0,
+                  "acquire_ms": 304,
+                  "residual_threat_ms": 0
+                },
+                {
+                  "target_id": "warrior",
+                  "part_id": "main",
+                  "count": 8,
+                  "aimed_target": "warrior:main",
+                  "damage_route": "LOCAL_PART",
+                  "btk": 5,
+                  "rounds": 40,
+                  "per_round_damage": 76,
+                  "fragment_damage_per_round": 0,
+                  "fragment_contacts": 0,
+                  "acquire_ms": 304,
+                  "residual_threat_ms": 0
+                },
+                {
+                  "target_id": "alpha_commander",
+                  "part_id": "head",
+                  "count": 3,
+                  "aimed_target": "alpha_commander:head",
+                  "damage_route": "LOCAL_PART",
+                  "btk": 18,
+                  "rounds": 54,
+                  "per_round_damage": 27,
+                  "fragment_damage_per_round": 0,
+                  "fragment_contacts": 0,
+                  "acquire_ms": 607,
+                  "residual_threat_ms": 112,
+                  "resolution": {
+                    "status": "ESTIMATE",
+                    "part_break_ms": 23704,
+                    "death_ms": 24544,
+                    "effective_response_ms": 24544,
+                    "last_shot_ms": 24432,
+                    "natural_bleed_death_ms": 24544,
+                    "constitution": {
+                      "hp": 300,
+                      "decay_per_second": 100,
+                      "after_break_hp": 300,
+                      "after_burst_hp": 11.20000000000001,
+                      "overflow_enabled": false
+                    },
+                    "main_after_shots": 514,
+                    "main_damage": {
+                      "transferred": 486,
+                      "redirected_blast": 0,
+                      "cleave": 0,
+                      "separate_fragment_main": 0,
+                      "gas_before_death": 0,
+                      "fire_before_death": 0
+                    },
+                    "packet": {
+                      "status": "ESTIMATE",
+                      "direct": 27,
+                      "blast_part": 0,
+                      "local": 27,
+                      "fragment_main": 0,
+                      "fragments": {
+                        "status": "KNOWN",
+                        "damage": 0,
+                        "contacts": 0
+                      },
+                      "redirected_blast_main": 0,
+                      "cleave": {
+                        "damage": 0,
+                        "status": "NO_BOUND_CHAIN"
+                      },
+                      "transfer_fraction": 1,
+                      "transfer_limit": null
+                    },
+                    "control": null,
+                    "fire": null,
+                    "basis": "SOURCE_POOLS; BOUND_COLLISION_AND_STATUS_ROUTE; ENGINEERING_THREAT_EQUIVALENT",
+                    "assumptions": [
+                      "STOP_AFTER_SELECTED_BURST",
+                      "BLEED_AND_GAS_DO_NOT_OCCUPY_HANDS",
+                      "GAS_MAIN_ONLY_NONSTACKING",
+                      "CONTROL_DOES_NOT_REMOVE_HP",
+                      "EFFECTIVE_RESPONSE_IS_NOT_A_DEATH_OR_SAFETY_TIMESTAMP"
+                    ]
+                  }
+                },
+                {
+                  "target_id": "hive_guard",
+                  "part_id": "main",
+                  "count": 3,
+                  "aimed_target": "hive_guard:main",
+                  "damage_route": "LOCAL_PART",
+                  "btk": 12,
+                  "rounds": 36,
+                  "per_round_damage": 45,
+                  "fragment_damage_per_round": 0,
+                  "fragment_contacts": 0,
+                  "acquire_ms": 607,
+                  "residual_threat_ms": 0,
+                  "resolution": {
+                    "status": "ESTIMATE",
+                    "part_break_ms": 32165,
+                    "death_ms": 32165,
+                    "effective_response_ms": 32165,
+                    "last_shot_ms": 32165,
+                    "natural_bleed_death_ms": 32165,
+                    "constitution": {
+                      "hp": 0,
+                      "decay_per_second": 0,
+                      "after_break_hp": 0,
+                      "after_burst_hp": 0,
+                      "overflow_enabled": false
+                    },
+                    "main_after_shots": 0,
+                    "main_damage": {
+                      "transferred": 540,
+                      "redirected_blast": 0,
+                      "cleave": 0,
+                      "separate_fragment_main": 0,
+                      "gas_before_death": 0,
+                      "fire_before_death": 0
+                    },
+                    "packet": {
+                      "status": "ESTIMATE",
+                      "direct": 45,
+                      "blast_part": 0,
+                      "local": 45,
+                      "fragment_main": 0,
+                      "fragments": {
+                        "status": "KNOWN",
+                        "damage": 0,
+                        "contacts": 0
+                      },
+                      "redirected_blast_main": 0,
+                      "cleave": {
+                        "damage": 0,
+                        "status": "NO_BOUND_CHAIN"
+                      },
+                      "transfer_fraction": 1,
+                      "transfer_limit": null
+                    },
+                    "control": null,
+                    "fire": null,
+                    "basis": "SOURCE_POOLS; BOUND_COLLISION_AND_STATUS_ROUTE; ENGINEERING_THREAT_EQUIVALENT",
+                    "assumptions": [
+                      "STOP_AFTER_SELECTED_BURST",
+                      "BLEED_AND_GAS_DO_NOT_OCCUPY_HANDS",
+                      "GAS_MAIN_ONLY_NONSTACKING",
+                      "CONTROL_DOES_NOT_REMOVE_HP",
+                      "EFFECTIVE_RESPONSE_IS_NOT_A_DEATH_OR_SAFETY_TIMESTAMP"
+                    ]
+                  }
+                },
+                {
+                  "target_id": "bile_spewer",
+                  "part_id": "mouth",
+                  "count": 2,
+                  "aimed_target": "bile_spewer:mouth",
+                  "damage_route": "LOCAL_PART",
+                  "btk": 3,
+                  "rounds": 6,
+                  "per_round_damage": 90,
+                  "fragment_damage_per_round": 0,
+                  "fragment_contacts": 0,
+                  "acquire_ms": 1518,
+                  "residual_threat_ms": 0,
+                  "resolution": {
+                    "status": "ESTIMATE",
+                    "part_break_ms": 35565,
+                    "death_ms": 35565,
+                    "effective_response_ms": 35565,
+                    "last_shot_ms": 35565,
+                    "natural_bleed_death_ms": 35565,
+                    "constitution": {
+                      "hp": 0,
+                      "decay_per_second": 0,
+                      "after_break_hp": 0,
+                      "after_burst_hp": 0,
+                      "overflow_enabled": false
+                    },
+                    "main_after_shots": 500,
+                    "main_damage": {
+                      "transferred": 250,
+                      "redirected_blast": 0,
+                      "cleave": 0,
+                      "separate_fragment_main": 0,
+                      "gas_before_death": 0,
+                      "fire_before_death": 0
+                    },
+                    "packet": {
+                      "status": "ESTIMATE",
+                      "direct": 90,
+                      "blast_part": 0,
+                      "local": 90,
+                      "fragment_main": 0,
+                      "fragments": {
+                        "status": "KNOWN",
+                        "damage": 0,
+                        "contacts": 0
+                      },
+                      "redirected_blast_main": 0,
+                      "cleave": {
+                        "damage": 0,
+                        "status": "NO_BOUND_CHAIN"
+                      },
+                      "transfer_fraction": 1,
+                      "transfer_limit": 250
+                    },
+                    "control": null,
+                    "fire": null,
+                    "basis": "SOURCE_POOLS; BOUND_COLLISION_AND_STATUS_ROUTE; ENGINEERING_THREAT_EQUIVALENT",
+                    "assumptions": [
+                      "STOP_AFTER_SELECTED_BURST",
+                      "BLEED_AND_GAS_DO_NOT_OCCUPY_HANDS",
+                      "GAS_MAIN_ONLY_NONSTACKING",
+                      "CONTROL_DOES_NOT_REMOVE_HP",
+                      "EFFECTIVE_RESPONSE_IS_NOT_A_DEATH_OR_SAFETY_TIMESTAMP"
+                    ]
+                  }
+                }
+              ],
+              "handling": {
+                "status": "ESTIMATE",
+                "calibration": "ENGINEERING_PARAMETERS_NOT_MEASURED",
+                "acquire_ms": 303.46153846153845,
+                "recoil_settle_ms": 46,
+                "source_fields": {
+                  "ergonomics": 60,
+                  "recoil_horizontal": 10,
+                  "recoil_vertical": 26
+                },
+                "policy": {
+                  "status": "USER_SIMPLIFIED_SMALL_CORRECTION; NO_HIT_PROBABILITY",
+                  "reference_ergonomics": 65,
+                  "reference_acquire_ms": 300,
+                  "low_ergo_gain": 0.15,
+                  "horizontal_ms_per_unit": 2,
+                  "vertical_ms_per_unit": 1,
+                  "max_recoil_interval_extra_fraction": 0.15
+                }
+              },
+              "sustained": {
+                "status": "ESTIMATE",
+                "strategy": "full_empty",
+                "pattern_ms": 37174.93333333344,
+                "shots_per_pattern": 164,
+                "targets_per_pattern": 36,
+                "targets_per_second": 0.9683944736955339,
+                "candidates": [
+                  {
+                    "strategy": "full_empty",
+                    "pattern_ms": 37174.93333333344
+                  }
+                ],
+                "scope": "REPEATING_FEED_TEMPO_ONLY; FINITE_STOCK_CHECK_REQUIRED"
+              },
+              "firing_rate_targets_s": 1.0036521787616046,
+              "inventory_required": 164,
+              "overlap": null,
+              "assumptions": [
+                "SOURCE_PART_ALL_HITS",
+                "ONE_BOUND_EXPLOSION_PER_PRIMARY_TARGET",
+                "ONLY_EXPLICIT_BOUND_CLEAVE; NO_NEIGHBOUR_HITS",
+                "READINESS_CONSTRAINTS_OVERLAP; CHARGE_AFTER_RELOAD",
+                "NO_DAMAGE_OR_BTK_HANDLING_PENALTY"
+              ]
             },
             "full_stock_standard_damage": 36450,
             "full_stock_durable_damage": 8910
@@ -287629,19 +288552,49 @@
       "strategic_source": null,
       "dimensions": {
         "chaff": {
-          "state": "UNRESOLVED",
-          "score": null,
-          "reason": "NO_COMPARABLE_ROLE_MEASUREMENT"
+          "mode_id": "AR-23_P",
+          "ratio": 1.0344189389063538,
+          "score": 63.78,
+          "state": "ENGINEERING_ESTIMATE",
+          "candidates": [
+            {
+              "mode_id": "AR-23_P",
+              "ratio": 1.0344189389063538,
+              "score": 63.783049838689045
+            }
+          ],
+          "primary_index_factor": 1.25,
+          "reference_index_factor": 1
         },
         "close_defense": {
-          "state": "UNRESOLVED",
-          "score": null,
-          "reason": "NO_COMPARABLE_ROLE_MEASUREMENT"
+          "mode_id": "AR-23_P",
+          "ratio": 0.9974683544303797,
+          "score": 59.7,
+          "state": "ENGINEERING_ESTIMATE",
+          "candidates": [
+            {
+              "mode_id": "AR-23_P",
+              "ratio": 0.9974683544303797,
+              "score": 59.69658708540298
+            }
+          ],
+          "primary_index_factor": 1.25,
+          "reference_index_factor": 1.25
         },
         "anti_medium": {
-          "state": "UNRESOLVED",
-          "score": null,
-          "reason": "NO_COMPARABLE_ROLE_MEASUREMENT"
+          "mode_id": "AR-23_P",
+          "ratio": 0.8720592464380347,
+          "score": 45.63,
+          "state": "ENGINEERING_ESTIMATE",
+          "candidates": [
+            {
+              "mode_id": "AR-23_P",
+              "ratio": 0.8720592464380347,
+              "score": 45.62923975788438
+            }
+          ],
+          "primary_index_factor": 1.25,
+          "reference_index_factor": 1.25
         }
       },
       "endurance": {
@@ -287670,7 +288623,7 @@
             "plus_one_box_standard_damage": 68850,
             "plus_one_box_durable_damage": 16830,
             "fragment_potential": null,
-            "reload_or_cooldown_ms": null,
+            "reload_or_cooldown_ms": 3000,
             "scope": "DIRECT_PLUS_BOUND_BLAST_FULL_STOCK; NO_FREE_DOT_FRAGMENT_OR_MULTIPART_MULTIPLIER",
             "limitations": []
           }
@@ -287678,13 +288631,169 @@
         "combat_trials": [
           {
             "role": "chaff",
-            "state": "UNRESOLVED",
-            "reason": "EXECUTABLE_ROLE_PLAN_REQUIRED"
+            "state": "EXECUTED_FINITE_RESOURCE_PROBE",
+            "targets_per_wave": 28,
+            "rounds_per_wave": 68,
+            "modes": [
+              "AR-23_P"
+            ],
+            "probe_limit_waves": 4,
+            "actions_per_wave": 28,
+            "scenarios": {
+              "initial": {
+                "status": "COMPLETED",
+                "reason": null,
+                "completed_waves": 4,
+                "completed_actions": 112,
+                "probe_completed": true,
+                "elapsed_ms": 65849,
+                "actions_elapsed_ms": 65849,
+                "completed_effect_actions_at_stop": 112,
+                "progress_basis": "COMMITTED_PAID_ACTIONS; ELAPSED_INCLUDES_DECLARED_EFFECT_HORIZON",
+                "supplies_taken": [],
+                "remaining_stock": {
+                  "ammo:ar_23l_liberator_legacy": 90,
+                  "loaded:ar_23l_liberator_legacy": 43
+                }
+              },
+              "public": {
+                "status": "COMPLETED",
+                "reason": null,
+                "completed_waves": 4,
+                "completed_actions": 112,
+                "probe_completed": true,
+                "elapsed_ms": 65849,
+                "actions_elapsed_ms": 65849,
+                "completed_effect_actions_at_stop": 112,
+                "progress_basis": "COMMITTED_PAID_ACTIONS; ELAPSED_INCLUDES_DECLARED_EFFECT_HORIZON",
+                "supplies_taken": [],
+                "remaining_stock": {
+                  "ammo:ar_23l_liberator_legacy": 90,
+                  "loaded:ar_23l_liberator_legacy": 43,
+                  "supply:public": 1
+                }
+              },
+              "pack": {
+                "status": "COMPLETED",
+                "reason": null,
+                "completed_waves": 4,
+                "completed_actions": 112,
+                "probe_completed": true,
+                "elapsed_ms": 65849,
+                "actions_elapsed_ms": 65849,
+                "completed_effect_actions_at_stop": 112,
+                "progress_basis": "COMMITTED_PAID_ACTIONS; ELAPSED_INCLUDES_DECLARED_EFFECT_HORIZON",
+                "supplies_taken": [],
+                "remaining_stock": {
+                  "ammo:ar_23l_liberator_legacy": 90,
+                  "loaded:ar_23l_liberator_legacy": 43,
+                  "supply:public": 1,
+                  "supply:backpack_b_1_supply_pack": 4
+                }
+              },
+              "vehicle": {
+                "status": "COMPLETED",
+                "reason": null,
+                "completed_waves": 4,
+                "completed_actions": 112,
+                "probe_completed": true,
+                "elapsed_ms": 65849,
+                "actions_elapsed_ms": 65849,
+                "completed_effect_actions_at_stop": 112,
+                "progress_basis": "COMMITTED_PAID_ACTIONS; ELAPSED_INCLUDES_DECLARED_EFFECT_HORIZON",
+                "supplies_taken": [],
+                "remaining_stock": {
+                  "ammo:ar_23l_liberator_legacy": 90,
+                  "loaded:ar_23l_liberator_legacy": 43,
+                  "supply:public": 1,
+                  "supply:vehicle_m_103_supply_fast_recon_vehicle": 8
+                }
+              }
+            },
+            "scope": "ROLE_SPECIFIC_STOCK_RESET; PACK_OR_CAR_VARIANTS_INCLUDE_ONE_PUBLIC_BOX; NO_GLOBAL_SUPPLY_GUARANTEE"
           },
           {
             "role": "anti_medium",
-            "state": "UNRESOLVED",
-            "reason": "EXECUTABLE_ROLE_PLAN_REQUIRED"
+            "state": "EXECUTED_FINITE_RESOURCE_PROBE",
+            "targets_per_wave": 8,
+            "rounds_per_wave": 96,
+            "modes": [
+              "AR-23_P"
+            ],
+            "probe_limit_waves": 4,
+            "actions_per_wave": 8,
+            "scenarios": {
+              "initial": {
+                "status": "COMPLETED",
+                "reason": null,
+                "completed_waves": 4,
+                "completed_actions": 32,
+                "probe_completed": true,
+                "elapsed_ms": 80073,
+                "actions_elapsed_ms": 80073,
+                "completed_effect_actions_at_stop": 32,
+                "progress_basis": "COMMITTED_PAID_ACTIONS; ELAPSED_INCLUDES_DECLARED_EFFECT_HORIZON",
+                "supplies_taken": [],
+                "remaining_stock": {
+                  "ammo:ar_23l_liberator_legacy": 0,
+                  "loaded:ar_23l_liberator_legacy": 21
+                }
+              },
+              "public": {
+                "status": "COMPLETED",
+                "reason": null,
+                "completed_waves": 4,
+                "completed_actions": 32,
+                "probe_completed": true,
+                "elapsed_ms": 80073,
+                "actions_elapsed_ms": 80073,
+                "completed_effect_actions_at_stop": 32,
+                "progress_basis": "COMMITTED_PAID_ACTIONS; ELAPSED_INCLUDES_DECLARED_EFFECT_HORIZON",
+                "supplies_taken": [],
+                "remaining_stock": {
+                  "ammo:ar_23l_liberator_legacy": 0,
+                  "loaded:ar_23l_liberator_legacy": 21,
+                  "supply:public": 1
+                }
+              },
+              "pack": {
+                "status": "COMPLETED",
+                "reason": null,
+                "completed_waves": 4,
+                "completed_actions": 32,
+                "probe_completed": true,
+                "elapsed_ms": 80073,
+                "actions_elapsed_ms": 80073,
+                "completed_effect_actions_at_stop": 32,
+                "progress_basis": "COMMITTED_PAID_ACTIONS; ELAPSED_INCLUDES_DECLARED_EFFECT_HORIZON",
+                "supplies_taken": [],
+                "remaining_stock": {
+                  "ammo:ar_23l_liberator_legacy": 0,
+                  "loaded:ar_23l_liberator_legacy": 21,
+                  "supply:public": 1,
+                  "supply:backpack_b_1_supply_pack": 4
+                }
+              },
+              "vehicle": {
+                "status": "COMPLETED",
+                "reason": null,
+                "completed_waves": 4,
+                "completed_actions": 32,
+                "probe_completed": true,
+                "elapsed_ms": 80073,
+                "actions_elapsed_ms": 80073,
+                "completed_effect_actions_at_stop": 32,
+                "progress_basis": "COMMITTED_PAID_ACTIONS; ELAPSED_INCLUDES_DECLARED_EFFECT_HORIZON",
+                "supplies_taken": [],
+                "remaining_stock": {
+                  "ammo:ar_23l_liberator_legacy": 0,
+                  "loaded:ar_23l_liberator_legacy": 21,
+                  "supply:public": 1,
+                  "supply:vehicle_m_103_supply_fast_recon_vehicle": 8
+                }
+              }
+            },
+            "scope": "ROLE_SPECIFIC_STOCK_RESET; PACK_OR_CAR_VARIANTS_INCLUDE_ONE_PUBLIC_BOX; NO_GLOBAL_SUPPLY_GUARANTEE"
           }
         ],
         "scope": "FULL_AMMO_TIMES_NOMINAL_DAMAGE; NO_TARGET_BTK_DPS_RELOAD_OR_ROLE_SELECTION",
@@ -287848,9 +288957,9 @@
       },
       "automatic_assessments": [],
       "calculated_scores": {
-        "chaff": null,
-        "close_defense": null,
-        "anti_medium": null,
+        "chaff": 63.78,
+        "close_defense": 59.7,
+        "anti_medium": 45.63,
         "anti_heavy": 0,
         "endurance": 60,
         "demolition": 0
@@ -290127,6 +291236,7 @@
     "shared/hd2-loadout/data/catalog.json": "54d89df24f0bef72826c652de224a6e0f6f8ee9da5cdb4e3684e864316e8fba5",
     "HD2_Wiki/data/wiki/zh/enemies.json": "519765efe74dbf898f76ec141b71257bef7e48e0484b88c7e0c9e0161f6da507",
     "shared/hd2-loadout/assessment-v2/automatic.mjs": "42ff200baedb561bbd9af67e31b12fb989fb1ff52e1ef086619a3877644a30d8",
+    "docs/ai/assessment-v2-liberator-legacy-20261103/evidence.json": "9cdabfc08300cfe350c22e13c25249748dcbb6e2d3ab41f156ee7f5f5618fad2",
     "shared/hd2-loadout/assessment-v2/children.mjs": "f8c1bce7069a8a4005bbd0b3ff4bbef0757ca6d18b6e0d1fee3aebf39bbc62ee",
     "shared/hd2-loadout/assessment-v2/score-scale.mjs": "a1549fed0595c078a81d738354330716df2fd86df971696be30202ded4fd7b81",
     "docs/ai/assessment-v2-pool-completion-20261028/fire-gas/evidence.json": "51142171d160a8d4241ee9fda005ff4ab242b2873b3a60f50a99caa91fab9859",
@@ -290142,7 +291252,7 @@
     "shared/hd2-loadout/calibration/anti-medium-conditions/armor-conditions.json": "ba00a286134187f608108d4588fc09114312aa4fc4bd9cb8f697c69a9331440a",
     "shared/hd2-loadout/calibration/anti-medium-conditions/raw/Template_Armor.wikitext": "64ec98b0c594f0c5b6d3a97c141482d2ed6ecff71cad50ac5015a8b1434bea59",
     "shared/hd2-loadout/calibration/ap-multipliers/source-archive.json": "06ef278a3b7a0581b701f9df065818e344aa422074a025d35e0d3b0fe32d44ac",
-    "shared/hd2-loadout/assessment-v2/facts.mjs": "34e9e76fe393a9b6b733a675352705ac107c874c19bd2b1d2ba15c8d077e335c",
+    "shared/hd2-loadout/assessment-v2/facts.mjs": "689b9a5329b23a0a636cfe03563a2e369df9a3e613d16953377ce1ad85ba08b9",
     "shared/hd2-loadout/assessment-v2/projectile.mjs": "8a363c417a46a442fcd3fe11380ed3c96c159aa0bf7f4ea746d0405cccf869cd",
     "shared/hd2-loadout/assessment-v2/formulas.mjs": "1de5891c979bb968a58758d45d2db1409393cd85c555591049f211335a1fd492",
     "shared/hd2-loadout/assessment-v2/handling.mjs": "dcb6cdedd17b9807800b6e9805d9ebbcf48c011896a257b6f07ef608f0c334a5",
@@ -290152,7 +291262,7 @@
     "shared/hd2-loadout/assessment-v2/area.mjs": "3d021b64b2cfb413f680d00af0d17652f0dbd44ec43711963851fac49868aa9d",
     "shared/hd2-loadout/assessment-v2/fragments.mjs": "392bcfa1cd69ce9efd16cd8352af54c102671bcedd72596ff9abdccf3985773c",
     "shared/hd2-loadout/assessment-v2/utility.mjs": "e71f0e7d13595e9a72665677a186def170e84b7f3568a0d954e97a6f6d5bccb6",
-    "shared/hd2-loadout/assessment-v2/integration-inputs.json": "56f2aad76f3b50ee7bc9f918e8cc7205191a78ac73876c950938f545a2b8ba84",
+    "shared/hd2-loadout/assessment-v2/integration-inputs.json": "4199c7b9ddd12d65ba3d211fbdb8d5a1e0568999a28f869bf57916eda57924c0",
     "shared/hd2-loadout/assessment-v2/cloud.mjs": "5497cf930d8ed181ad7ff0a4908a34f9d2f30e62980f41396d93ad2d3d59b1fb",
     "shared/hd2-loadout/assessment-v2/resources.mjs": "e6929c005d686fa3154af7f5cc5aa5e1c7c54f3e41b6abab532a65a39d9115ad",
     "shared/hd2-loadout/assessment-v2/blast-routes.json": "daf2673df39e13263178ce39320e607511b607c9c9ace6d17d5dec9bcd505e77",
