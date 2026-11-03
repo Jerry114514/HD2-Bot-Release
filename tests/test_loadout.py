@@ -37,6 +37,7 @@ class LoadoutTests(unittest.TestCase):
             self.assertEqual(set(value),{"primary","secondary","grenade","stratagems"})
             self.assertEqual(len(set([value["primary"],value["secondary"],value["grenade"],*value["stratagems"]])),7)
             self.assertLessEqual(sum(x.startswith("vehicle_exo_") for x in value["stratagems"]),1)
+            self.assertLessEqual(sum(x.startswith("vehicle_td_") for x in value["stratagems"]),1)
             self.assertFalse({"vehicle_m_102_gunner_fast_recon_vehicle","vehicle_m_103_supply_fast_recon_vehicle"}.issubset(value["stratagems"]))
             samples.append(value)
         # Internal-only verification against the pinned published evaluator.
@@ -45,6 +46,8 @@ const base='./plugins/astrbot_plugin_hd2_roll/runtime/';const model=JSON.parse(r
 const values=JSON.parse(readFileSync(process.argv[1]));
 const pair={...values[0],stratagems:['vehicle_m_102_gunner_fast_recon_vehicle','vehicle_m_103_supply_fast_recon_vehicle','deployable_gas_mines','deployable_flame_sentry']};
 if(assessmentLegality(pair,catalog,model).reason!=='MULTIPLE_RECON_VEHICLES')throw Error('recon mutual exclusion missing from pinned runtime');
+pair.stratagems.splice(0,2,'vehicle_td_110_maelstrom','vehicle_td_220_bastion_mk_xvi');
+if(assessmentLegality(pair,catalog,model).reason!=='MULTIPLE_TANKS')throw Error('tank mutual exclusion missing from pinned runtime');
 for(let i=0;i<values.length;i++){
   if(assessmentLegality(values[i],catalog,model).status!=='PASS')throw Error('illegal');
   if(i<5){

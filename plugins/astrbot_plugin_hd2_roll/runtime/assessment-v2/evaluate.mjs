@@ -1,4 +1,4 @@
-import {legality, equipmentIDs, canOccupy, withinExosuitLimit, withinReconVehicleLimit} from '../engine/common.mjs';
+import {legality, equipmentIDs, canOccupy, withinExosuitLimit, withinReconVehicleLimit, withinTankLimit} from '../engine/common.mjs';
 import {assessMixedEndurance, assessHeavyPairs} from './engagement.mjs';
 import {assessFiveHoles} from './demolition.mjs';
 import {summarizeLoadout,finalizeAssessmentSummary} from './aggregate.mjs';
@@ -28,6 +28,7 @@ export function assessmentHoldingLegality(ids,catalog,model) {
     && id!=='backpack_b_100_portable_hellbomb');
   if(!withinExosuitLimit(ids))return {status:'FAIL',reason:'MULTIPLE_EXOSUITS'};
   if(!withinReconVehicleLimit(ids))return {status:'FAIL',reason:'MULTIPLE_RECON_VEHICLES'};
+  if(!withinTankLimit(ids))return {status:'FAIL',reason:'MULTIPLE_TANKS'};
   if (supports.length > 1) return {status: 'FAIL', reason: 'MULTIPLE_SUPPORT_WEAPONS'};
   if (packs.length > 1) return {status: 'FAIL', reason: 'MULTIPLE_BACKPACKS'};
   if (supports.length && packs.some(id=>id!==supports[0])) {

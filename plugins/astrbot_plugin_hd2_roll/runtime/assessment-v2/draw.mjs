@@ -1,4 +1,4 @@
-import {SLOTS, equipmentIDs, withinExosuitLimit, withinReconVehicleLimit} from '../engine/common.mjs';
+import {SLOTS, equipmentIDs, withinExosuitLimit, withinReconVehicleLimit, withinTankLimit} from '../engine/common.mjs';
 import {pools, propose, spaceSize, enumerate, replaceAt} from '../engine/sampling.mjs';
 import {seeded, sample, uniformInt} from '../engine/rng.mjs';
 import {assessmentLegality, assessmentHoldingLegality, evaluateAssessment, previewAssessment} from './evaluate.mjs';
@@ -170,7 +170,7 @@ export function stepAssessmentDraw(task, evaluate=evaluateAssessment, preview=ev
   return searching(task);
 }
 
-// Output edits skip ability and holding checks, but retain mech and recon limits.
+// Output edits skip ability and holding checks, but retain vehicle class limits.
 // Keep the other six slots fixed; preserve slot identity, uniqueness and user locks.
 export function assessmentReplacements(loadout,slot,model,catalog,constraints={}) {
   if(!loadout||!validSlot(slot))return {status:'INVALID_INPUT'};
@@ -184,7 +184,7 @@ export function assessmentReplacements(loadout,slot,model,catalog,constraints={}
   const ids=prepared.values[slot.startsWith('stratagem:')?'stratagem':slot];
   const rows=ids.filter(id=>id!==at(loadout,slot)).map(id=>{
     const nextIds=equipmentIDs(replaceAt(loadout,slot,id));
-    const reason=new Set(nextIds).size!==7?'DUPLICATE_SELECTION':!withinExosuitLimit(nextIds)?'MULTIPLE_EXOSUITS':!withinReconVehicleLimit(nextIds)?'MULTIPLE_RECON_VEHICLES':null;
+    const reason=new Set(nextIds).size!==7?'DUPLICATE_SELECTION':!withinExosuitLimit(nextIds)?'MULTIPLE_EXOSUITS':!withinReconVehicleLimit(nextIds)?'MULTIPLE_RECON_VEHICLES':!withinTankLimit(nextIds)?'MULTIPLE_TANKS':null;
     return {id,status:reason?'REJECTED_ILLEGAL':'UNVERIFIED',...(reason?{reason}:{})};
   });
   return {status:'REPLACEMENTS',rows};
