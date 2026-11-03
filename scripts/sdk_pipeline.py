@@ -156,6 +156,7 @@ def main():
              patch.object(modules["roll"], "format_result", return_value="fixture seven slots"), \
              patch.object(modules["roll"], "render", side_effect=ImportError("text fallback fixture")), \
              patch.object(modules["btk"], "_run_bridge", return_value={"ok": True, "weapon": "AR-23 解放者", "enemy": "武斗虫", "part": "头部", "btk": 2, "ttk": 0.1, "path": "part", "label": "打爆致死部位", "perShotDamage": 150, "pelletsPerShot": 1, "stuck": None}), \
+             patch.object(modules["btk"], "render", side_effect=ImportError("text fallback fixture")), \
              patch.object(modules["lookup"], "_render_help_card", None), \
              patch.object(modules["lookup"], "_build_help_text", return_value="fixture help"):
             for platform in ("qq_official", "aiocqhttp"):
@@ -188,6 +189,8 @@ def main():
             PillowImage.new("RGB", (2, 2), "black").save(fixture_image)
             with patch.object(modules["roll"], "render", return_value=str(fixture_image)):
                 await check("/roll", image_pages=1)
+            with patch.object(modules["btk"], "render", return_value=str(fixture_image)):
+                await check("/btk AR-23 武斗虫 头部", image_pages=1)
             with patch.object(commands, "render_result", return_value=[str(fixture_image)] * 2):
                 await check("/战报", image_pages=2)
             from sdk_contracts import audit
