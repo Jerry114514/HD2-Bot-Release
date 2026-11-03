@@ -1,6 +1,6 @@
 # Published loadout runtime
 
-Source: local site commit `14fb0a1e3fcf7f85c61a9b4636029b399271b403` (not pushed; waiting for this iteration to be finalized).
+Source: local site commit `0dd7ab5cf0c9da4c3f609adc9b4b0eb3ba11b450` (not pushed; waiting for this iteration to be finalized).
 
 The catalog, assessment model and 55 transitive runtime modules/data files are pinned together. `snapshot.json` records their SHA256 digests. Source bytes are preserved, including line endings; the bridge verifies every entry before returning a result. The bot does not maintain a separate scoring implementation. Initial balanced draws use bounded seven-slot candidate repair, separate routine/additive bottleneck ranking, and complete six-dimension/physical admission checks; ranking alone never admits a result.
 
@@ -8,7 +8,7 @@ Repair rewards only remaining score deficits in every dimension. Ablation loss, 
 
 Initial pure and balanced draws now share one 20% admission decision for all mechs and tanks. A successful admission only makes them eligible; internal retries and local repair retain the same decision. Recon and supply vehicles remain in the normal pool, and the single-mech limit still applies. No scores or admission details are exposed by the bridge.
 
-Endurance weights each gun by (role ability + endurance) / sum(role ability + endurance), excluding guns whose ability in that role is zero. Unknown capability or endurance remains unknown. Chaff/close-defense/medium means still combine at 50%/35%/15%. Grenades add each role's displayed contribution multiplied by grenade endurance / 100 without entering gun denominators. Supply packs/vehicles retain the final floor of 100. Final endurance must reach 55; the other five scores still require 60, with unchanged physical gates. Local repair reads the actual thresholds as well. Individual equipment scores and the published manual calibration are unchanged.
+Endurance weights each gun by (role ability + endurance) / sum(role ability + endurance), excluding guns whose ability in that role is zero. Unknown capability or endurance remains unknown. Chaff/close-defense/medium means still combine at 50%/35%/15%. Grenades add each role's displayed contribution multiplied by grenade endurance / 100 without entering gun denominators. Supply packs/vehicles retain the final floor of 100. Final endurance must reach 50; the other five scores still require 60, with unchanged physical gates. Local repair reads the actual thresholds as well. Individual equipment scores and the published manual calibration are unchanged.
 
 Regenerate from an existing clone without changing its checkout:
 
