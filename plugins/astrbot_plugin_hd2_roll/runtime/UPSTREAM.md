@@ -1,6 +1,6 @@
 # Published loadout runtime
 
-Source: local site commit `0dd7ab5cf0c9da4c3f609adc9b4b0eb3ba11b450` (not pushed; waiting for this iteration to be finalized).
+Source: [site commit 0dd7ab5cf0c9da4c3f609adc9b4b0eb3ba11b450](https://github.com/Leeroysunfury/Jerry114514.github.io/commit/0dd7ab5cf0c9da4c3f609adc9b4b0eb3ba11b450), submitted in [upstream PR #66](https://github.com/Jerry114514/Jerry114514.github.io/pull/66).
 
 The catalog, assessment model and 55 transitive runtime modules/data files are pinned together. `snapshot.json` records their SHA256 digests. Source bytes are preserved, including line endings; the bridge verifies every entry before returning a result. The bot does not maintain a separate scoring implementation. Initial balanced draws use bounded seven-slot candidate repair, separate routine/additive bottleneck ranking, and complete six-dimension/physical admission checks; ranking alone never admits a result.
 
