@@ -1769,7 +1769,9 @@ HELP_SECTIONS = [
     ("伤害测试", "BALLISTICS", [
         ("/btk 武器 敌人 部位", "伤害 HUD 卡：BTK/TTK、打残/致死和卡阈值对比"
                           "（如 /btk AR-23 武斗虫 头部）"),
-        ("/btk 卡阈值 武器", "阈值矩阵卡：扫描哪些敌人致死部位接近少一发击杀"),
+        ("BTK 可选参数", "接在主命令后：距离=米；角度=0–3 或 正面/小角度/大角度/极端；"
+                         "破片=数量；波及=部位1,部位2。参数与主命令一起发送"),
+        ("/btk 卡阈值 武器 [全部]", "阈值矩阵卡：默认只扫致死部位；加“全部”扫描所有部位"),
         ("/btk DOT-FIRE 敌人", "持续伤害卡：每跳伤害、触发次数、总时长与元素倍率（无需部位）"),
         ("/btk 武器 / 敌人", "查看可测武器分类、敌人阵营和部位数据"),
     ]),
@@ -1785,7 +1787,7 @@ HELP_SECTIONS = [
 HELP_NOTES = [
     "官方平台需 @机器人；NapCat 可直接 /指令；名称支持中英文",
     "默认输出战术 HUD 图片卡，渲染失败自动回退文本；指令后加 t 可要纯文本",
-    "BTK 伤害结果输出图片卡；可加 距离=20 角度=1 破片=3 波及=部位1,部位2",
+    "名称无法确定时可先用 /wiki 查询标准写法，再执行 /btk 或 /拆毁值",
     "进群欢迎仅 NapCat；战况以源数据时间与陈旧提示为准",
 ]
 
@@ -1844,21 +1846,29 @@ def _draw_help(dr, img):
         dr.text((W - PAD - dr.textlength(idx, font=F(18, True)), y + 7),
                 idx, font=F(18, True), fill=BRASS)
         y += 48
-        col = min(330, max(int(dr.textlength(c, font=F(21, True)))
-                           for c, _ in rows) + 26)
+        command_font = F(19, True)
+        col = min(390, max(250, max(int(dr.textlength(c, font=command_font))
+                                    for c, _ in rows) + 30))
         for cmd, desc in rows:
-            bh = 34
+            command_lines = _help_wrap(cmd, command_font, col - 28, dr)
+            desc_font = F(18)
+            tx = PAD + col + 16
+            desc_lines = _help_wrap(desc, desc_font, W - PAD - tx, dr)
+            command_lh, desc_lh = 25, 26
+            command_h = command_lh * len(command_lines)
+            desc_h = desc_lh * len(desc_lines)
+            bh = max(42, max(command_h, desc_h) + 14)
             dr.rectangle([PAD, y, PAD + col, y + bh], fill=PANEL, outline=LINE2)
             dr.rectangle([PAD, y, PAD + 3, y + bh], fill=GOLD)
-            dr.text((PAD + 14, y + 5), cmd, font=F(21, True), fill=GOLD2)
-            tx = PAD + col + 16
-            dlines = _help_wrap(desc, F(19), W - PAD - tx, dr)
-            lh = 27
-            ty = y + (bh - lh * len(dlines)) // 2 + 2
-            for ln in dlines:
-                dr.text((tx, ty), ln, font=F(19), fill=TEXT)
-                ty += lh
-            y += max(bh, lh * len(dlines) + 6) + 10
+            cy = y + (bh - command_h) // 2
+            for line in command_lines:
+                dr.text((PAD + 14, cy), line, font=command_font, fill=GOLD2)
+                cy += command_lh
+            ty = y + (bh - desc_h) // 2
+            for line in desc_lines:
+                dr.text((tx, ty), line, font=desc_font, fill=TEXT)
+                ty += desc_lh
+            y += bh + 10
             dr.line([(PAD, y), (W - PAD, y)], fill=LINE)
             y += 6
         y += 4
@@ -1867,8 +1877,11 @@ def _draw_help(dr, img):
     y += 16
     for note in HELP_NOTES:
         dr.text((PAD, y), "·", font=F(18, True), fill=BRASS)
-        dr.text((PAD + 18, y), note, font=F(18), fill=DIM)
-        y += 28
+        note_lines = _help_wrap(note, F(18), W - PAD * 2 - 20, dr)
+        for line in note_lines:
+            dr.text((PAD + 18, y), line, font=F(18), fill=DIM)
+            y += 26
+        y += 4
     y += 12
     stripe_band(img, y, 40, alpha=22)
     tw = dr.textlength(HELP_TAGLINE, font=F(22, True))
@@ -1885,7 +1898,7 @@ def render_help_card(out_dir=None):
         return _render_cached(
             os.path.join(out_dir, "help_card.png"),
             os.path.join(out_dir, "help_card.meta.json"),
-            "help-v8", _draw_help)
+            "help-v10", _draw_help)
     except Exception:
         if os.environ.get("HD2_CARD_DEBUG"):
             import traceback

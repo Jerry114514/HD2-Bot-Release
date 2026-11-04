@@ -56,7 +56,10 @@ HELP_TEXT = """🎯 BTK 武器伤害测试
 
 伤害对比、DoT 与卡阈值结果输出战术 HUD 图片卡；资料菜单保持文字。
 裸敌人名默认低难；高难请写「（高难）」。默认距离 0m、正面命中。
-引擎版本：hd2-btk-sdk v0.12.2。"""
+名称不确定时，可先用 /wiki <关键词> 查询中文 Wiki 的标准名称和资料。
+引擎版本：hd2-btk-sdk v0.14.1。"""
+
+BTK_REFERENCE_HINT = "名称不确定时，可先用 /wiki <关键词> 查询中文 Wiki 的标准名称和资料。"
 
 
 def _norm(value):
@@ -114,16 +117,49 @@ def _unique_match(rows, query, aliases, label):
 
 def _resolve_weapon(query):
     weapons, _ = _data()
-    return _unique_match(weapons, query, _weapon_aliases, "武器")
+    query = str(query or "").strip()
+    try:
+        return _unique_match(weapons, query, _weapon_aliases, "武器")
+    except ValueError as error:
+        target = f"「{query}」" if query else ""
+        raise ValueError(
+            f"{error}。请发送 /btk 武器 查看武器 ID。{BTK_REFERENCE_HINT}"
+            + (f"\n建议查询：/wiki {query}" if target else "")
+        ) from error
 
 
 def _resolve_enemy(query):
     _, enemies = _data()
-    return _unique_match(enemies, query, _enemy_aliases, "敌人")
+    query = str(query or "").strip()
+    try:
+        return _unique_match(enemies, query, _enemy_aliases, "敌人")
+    except ValueError as error:
+        raise ValueError(
+            f"{error}。请发送 /btk 敌人 <关键词> 查看标准敌人名。{BTK_REFERENCE_HINT}"
+            + (f"\n建议查询：/wiki {query}" if query else "")
+        ) from error
 
 
 def _resolve_part(enemy, query):
-    return _unique_match(enemy.get("parts") or [], query, _part_aliases, "部位")
+    query = str(query or "").strip()
+    enemy_name = str(enemy.get("enemy") or "该敌人")
+    wiki_name = re.sub(r"\s*[（(](?:低难|高难)[）)]\s*$", "", enemy_name).strip() or enemy_name
+    if not query:
+        raise ValueError(
+            f"缺少部位。请按 /btk <武器> {enemy_name} <部位> 输入。"
+            f"可发送 /btk 敌人 {enemy_name} 查看可用部位；"
+            f"也可发送 /wiki {wiki_name} 查询该敌人的部位资料。"
+        )
+    try:
+        return _unique_match(enemy.get("parts") or [], query, _part_aliases, "部位")
+    except ValueError as error:
+        available = "、".join(str(part.get("part")) for part in (enemy.get("parts") or [])[:10])
+        suffix = "……" if len(enemy.get("parts") or []) > 10 else ""
+        raise ValueError(
+            f"{error}。可用部位：{available}{suffix}。"
+            f"可发送 /btk 敌人 {enemy_name} 查看完整列表；"
+            f"也可发送 /wiki {wiki_name} 查询部位资料。"
+        ) from error
 
 
 def _match_prefix(rows, text, aliases):
@@ -144,7 +180,14 @@ def _match_prefix(rows, text, aliases):
     if len(selected) != 1:
         names = "、".join(str(row.get("id") or row.get("enemy")) for row in selected[:8])
         raise ValueError("名称前缀有歧义：" + names)
-    return selected[0], wanted[best:]
+    raw_rest = wanted[best:]
+    normalized_prefix = ""
+    for index, char in enumerate(text):
+        normalized_prefix += _norm(char)
+        if len(normalized_prefix) >= best:
+            raw_rest = text[index + 1:].strip()
+            break
+    return selected[0], raw_rest
 
 
 def _parse_angle(value):
@@ -216,10 +259,26 @@ def _target(text):
         return weapon, enemy, part
     weapon, rest = _match_prefix(weapons, text, _weapon_aliases)
     if weapon is None:
-        raise ValueError("未识别武器；请使用 /btk 武器 查看 ID")
+        raise ValueError(
+            "未识别武器。请发送 /btk 武器 查看武器 ID。"
+            + BTK_REFERENCE_HINT
+        )
+    if not rest:
+        raise ValueError(
+            f"缺少敌人和部位。用法：/btk {weapon['id']} <敌人> <部位>。"
+            "请发送 /btk 敌人 <关键词> 查看敌人名称，"
+            f"或先用 /wiki {weapon['id']} 查询武器资料。"
+        )
+    enemy_text = rest
     enemy, rest = _match_prefix(enemies, rest, _enemy_aliases)
     if enemy is None:
-        raise ValueError("未识别敌人；请使用 /btk 敌人 查看名称")
+        enemy_hint = enemy_text.strip()
+        if len(enemy_hint.split()) > 1:
+            enemy_hint = enemy_hint.rsplit(None, 1)[0]
+        raise ValueError(
+            f"未识别敌人「{enemy_hint}」。请发送 /btk 敌人 <关键词> 查看标准名称。"
+            f"\n建议查询：/wiki {enemy_hint}"
+        )
     if weapon.get("type") == "dot":
         return weapon, enemy, None
     part = _resolve_part(enemy, rest)
