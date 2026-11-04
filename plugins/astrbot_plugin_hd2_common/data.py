@@ -411,6 +411,24 @@ def campaign_zh_document(force=False):
     )
 
 
+def official_texts_document(force=False):
+    return get_json(
+        site_url("data/translated/official_texts.json"),
+        ttl=setting("data", "official_texts_cache_ttl", default=300),
+        force=force,
+    )
+
+
+def enrich_official_texts(doc, force=False):
+    if isinstance(doc.get("official_texts"), dict):
+        return doc
+    try:
+        doc["official_texts"] = official_texts_document(force=force)
+    except (OSError, ValueError, TypeError):
+        doc["official_texts"] = {}
+    return doc
+
+
 def campaign_image_sources(campaign, phase=None):
     phase = phase or {}
     sources = []
@@ -484,7 +502,7 @@ def campaign_view(doc, translations=None):
         outcome = _plain_rich_text(phase.get("outcome"))
         if not outcome:
             outcome = {
-                "in_progress": "该阶段尚未结算",
+                "in_progress": "进行中，尚未发布最终战报",
                 "success": "该阶段已完成，战术目标达成。",
                 "failure": "该阶段未能达成全部目标。",
             }.get(status_key, "暂无可用战报。")

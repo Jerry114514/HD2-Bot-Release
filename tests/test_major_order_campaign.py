@@ -208,7 +208,7 @@ class CampaignArchiveTests(unittest.TestCase):
         self.assertEqual([phase["title_cn"] for phase in campaign["phases"]], ["突袭", "撤退", "保证"])
         self.assertEqual(campaign["phases"][0]["outcome"], "该阶段已完成，战术目标达成。")
         self.assertEqual(campaign["phases"][1]["outcome"], "该阶段未能达成全部目标。")
-        self.assertEqual(campaign["phases"][2]["outcome"], "该阶段尚未结算")
+        self.assertEqual(campaign["phases"][2]["outcome"], "进行中，尚未发布最终战报")
         self.assertEqual(campaign["phases"][2]["reward"]["amount"], 47)
         self.assertEqual(campaign["phases"][2]["image_sources"], [
             "./assets/campaign/phase_2.webp",

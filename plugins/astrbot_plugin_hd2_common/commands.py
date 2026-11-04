@@ -6,7 +6,7 @@ from pathlib import Path
 import re
 import unicodedata
 
-from . import data
+from . import data, orders
 
 ALIASES = {
     "战报": "report", "目前战况如何": "report", "现在在打哪里": "report",
@@ -109,7 +109,7 @@ def order_text(doc):
     mo, assignment = doc.get("major_order") or {}, doc.get("assignments") or {}
     content = data.major_order_content(doc)
     if not assignment and not mo:
-        return "🎖️ 当前没有进行中的重要指令。"
+        return "🎖️ 当前没有进行中的重要指令。\n\n" + orders.special_orders_text(doc)
     lines = ["🎖️ " + (content.get("title") or "重要指令"), content.get("text") or "暂缺正文"]
     if lines[1] and not re.search(r"[\u4e00-\u9fff]", lines[1]):
         lines.insert(1, "暂缺中文正文，以下为来源原文：")
@@ -121,6 +121,7 @@ def order_text(doc):
         lines.append("截止：" + assignment["deadline"])
         if data.timestamp(assignment["deadline"]) is not None and data.timestamp(doc.get("fetchedAt")) is not None and data.timestamp(assignment["deadline"]) <= data.timestamp(doc["fetchedAt"]):
             lines.append("该指令截止时间已过，等待新指令。")
+    lines.extend(["", orders.special_orders_text(doc)])
     return "\n".join(line for line in lines if line)
 
 
@@ -229,7 +230,10 @@ def briefing_text(doc):
 
 
 def news_text(doc):
-    return "\n\n".join(clean(n.get("translated") or n.get("message")) for n in (doc.get("news") or [])[:3])
+    return "\n\n".join(
+        clean(item.get("translated") or item.get("official_message") or item.get("message"))
+        for item in orders.filtered_news(doc)[:3]
+    )
 
 
 @dataclass
@@ -257,6 +261,8 @@ def result(kind, query="", doc=None):
             },
         )
     doc = data.site_doc() if doc is None else doc
+    if kind in ("report", "mo") and (doc.get("assignments_all") or doc.get("strategic")):
+        data.enrich_official_texts(doc)
     if kind == "planet":
         planet = find_planet(doc, query)
         query = planet["name"]

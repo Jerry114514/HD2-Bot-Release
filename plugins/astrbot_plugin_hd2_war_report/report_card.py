@@ -18,7 +18,7 @@ import hashlib
 import tempfile
 import threading
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from astrbot_plugin_hd2_common import api_watch
+from astrbot_plugin_hd2_common import api_watch, orders
 from astrbot_plugin_hd2_common import data as shared
 from astrbot_plugin_hd2_common.commands import mo_tasks
 _render_locks = {}
@@ -311,6 +311,96 @@ def _money_amount(reward):
         + (f" ×{reward.get('amount')}" if reward.get("amount") else "")
     )
 
+
+def _draw_special_orders(dr, img, document, y):
+    """Render directive/opportunity/minor channels as three independent cards."""
+    models = orders.special_orders(document)
+    dr.line([(PAD, y), (W - PAD, y)], fill=LINE2)
+    y += 12
+    dr.rectangle([PAD, y, PAD + 6, y + 30], fill=BLUE)
+    dr.text((PAD + 18, y + 2), "独立指令通道", font=F(24, True), fill=TEXT)
+    dr.text((PAD + 210, y + 10), "STRATEGIC ORDER CHANNELS", font=F(13), fill=MUTE)
+    y += 44
+    kinds = ("directive", "opportunity", "minor")
+    gap = 12
+    card_w = (W - PAD * 2 - gap * 2) // 3
+    body_font = F(13)
+    task_font = F(13)
+    title_font = F(17, True)
+    colors = {"directive": GOLD, "opportunity": BLUE, "minor": GREEN}
+    prepared = []
+    for kind in kinds:
+        model = models.get(kind) or {}
+        color = colors[kind]
+        title_lines = wrap(model.get("title") or orders.CHANNEL_META[kind]["cn"], 24)
+        body_lines = _wrap_rich_runs(
+            model.get("rich_text") or (), card_w - 24, body_font, dr
+        )
+        task_lines = []
+        for task in model.get("tasks") or []:
+            target = task.get("planet_name") or task.get("type_cn") or "目标"
+            suffix = f" · #{task['planet_index']}" if task.get("planet_index") is not None else ""
+            task_lines.extend(wrap(
+                f"{task.get('type_cn') or '目标'} {target} · {task.get('state_cn') or ''}{suffix}",
+                30,
+            ))
+        meta_h = 22 if model.get("deadline_text") else 0
+        empty_h = 34 if model.get("empty") else 0
+        body_h = 18 * len(body_lines)
+        locator_h = 15 * sum(1 for task in model.get("tasks") or [] if task.get("planet_index") is not None)
+        task_h = (24 + 19 * len(task_lines) + locator_h) if task_lines else 0
+        fallback_h = 18 * len(wrap("来源：重要指令附加目标 · 非官方独立 MINOR ORDER", 30)) if model.get("fallback") else 0
+        card_h = 54 + 22 * len(title_lines) + meta_h + body_h + (10 if body_h else 0) + task_h + empty_h + fallback_h + 16
+        prepared.append((model, color, title_lines, body_lines, task_lines, card_h))
+    card_h = max((row[-1] for row in prepared), default=120)
+    card_h = max(card_h, 190)
+    for index, (model, color, title_lines, body_lines, task_lines, _height) in enumerate(prepared):
+        x = PAD + index * (card_w + gap)
+        dr.rectangle([x, y, x + card_w, y + card_h], fill=PANEL, outline=LINE)
+        dr.rectangle([x, y, x + card_w, y + 4], fill=color)
+        meta = orders.CHANNEL_META[kinds[index]]
+        dr.text((x + 14, y + 12), meta["icon"] + " " + meta["cn"], font=F(17, True), fill=color)
+        dr.text((x + 14, y + 34), meta["en"], font=F(10), fill=MUTE)
+        state = model.get("status_cn") or "无记录"
+        state_w = dr.textlength(state, font=F(12, True))
+        dr.text((x + card_w - 12 - state_w, y + 15), state, font=F(12, True), fill=color)
+        yy = y + 56
+        for line in title_lines:
+            dr.text((x + 14, yy), line, font=title_font, fill=TEXT)
+            yy += 22
+        if model.get("deadline_text"):
+            dr.text((x + 14, yy), model["deadline_text"], font=F(12), fill=GOLD2)
+            yy += 22
+        if model.get("empty"):
+            dr.text((x + 14, yy + 4), "当前无" + meta["cn"], font=F(15, True), fill=DIM)
+            dr.text((x + 14, yy + 27), "等待最高指挥部发布。", font=F(12), fill=MUTE)
+        else:
+            yy = _draw_rich_lines(dr, x + 12, yy, body_lines, body_font, 18, color=DIM)
+            if body_lines:
+                yy += 8
+            if task_lines:
+                dr.line([(x + 14, yy), (x + card_w - 14, yy)], fill=LINE)
+                yy += 8
+                dr.text((x + 14, yy), "目标", font=F(12, True), fill=color)
+                yy += 20
+                for line in task_lines:
+                    dr.text((x + 14, yy), line, font=task_font, fill=TEXT)
+                    yy += 19
+                for task in model.get("tasks") or []:
+                    if task.get("planet_index") is None:
+                        continue
+                    locator = f"planet.html?idx={task['planet_index']}"
+                    dr.text((x + 14, yy), locator, font=F(10), fill=MUTE)
+                    yy += 15
+        if model.get("fallback"):
+            note = "来源：重要指令附加目标 · 非官方独立 MINOR ORDER"
+            note_lines = wrap(note, 30)
+            note_y = y + card_h - 12 - 15 * len(note_lines)
+            for line in note_lines:
+                dr.text((x + 14, note_y), line, font=F(10), fill=BRASS)
+                note_y += 15
+    return y + card_h + 18
+
 def render_report_card(out_dir=None):
     out_dir = out_dir or CACHE_DIR
     data = _site_get(DATA_URL)
@@ -328,7 +418,7 @@ def render_report_card(out_dir=None):
         war = data.get("war") or {}
         online = distribution["total"]
         campaigns = data.get("campaigns") or []
-        news = data.get("news") or []
+        news = orders.filtered_news(data)
 
         f_title = F(42, True); f_h2 = F(25, True); f_h3 = F(21, True)
         f_body = F(19); f_small = F(16); f_tiny = F(14)
@@ -419,6 +509,8 @@ def render_report_card(out_dir=None):
                 yy += 62
             y += panel_h + 18
 
+        y = _draw_special_orders(dr, img, data, y)
+
         # ══ 战区玩家分布 ══
         if dist_hist:
             latest = dist_hist[-1]
@@ -501,11 +593,13 @@ def render_major_order_card(out_dir=None):
         if not order.get("text") and not tasks:
             return None
         out_path = os.path.join(out_dir, "major_order_card.png")
-        revision = "mo-card-v1:" + hashlib.sha256(json.dumps({
+        special_models = orders.special_orders(document)
+        revision = "mo-card-v2:" + hashlib.sha256(json.dumps({
             "revision": order.get("revision"),
             "text": order.get("text"),
             "tasks": tasks,
             "deadline": assignment.get("deadline"),
+            "special_orders": special_models,
         }, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
 
         def draw(dr, img):
@@ -587,6 +681,7 @@ def render_major_order_card(out_dir=None):
                 dr.text((W - PAD - 20 - detail_w, yy + 3), detail, font=F(16), fill=MUTE)
                 yy += 44
             y += panel_h + 18
+            y = _draw_special_orders(dr, img, document, y)
             dr.text((PAD, y), "正文来源：当期 NEW MAJOR ORDER 官方中文公告；HTML 已净化。",
                     font=F(14), fill=MUTE)
             return y + 42
@@ -1750,8 +1845,8 @@ if __name__ == "__main__":
 
 HELP_SECTIONS = [
     ("战况速报", "INTEL", [
-        ("/战报", "银河战况速报卡：当期 MO、目标星球、四阵营兵力分布"),
-        ("/重要指令", "独立 MO 通知卡：官方中文全文、黄色重点、任务进度与独立横幅"),
+        ("/战报", "银河战况速报卡：MO、战略指令、战略机遇、次要指令、目标星球与兵力分布"),
+        ("/重要指令", "独立 MO 通知卡：官方中文全文、三类特别指令、任务状态与定位链接"),
         ("/战线", "全银河战线列表：各战区解放/防御进度与交战双方"),
         ("/dss", "民主空间站：停靠星球、生效行动效果、投票与捐献进度"),
         ("/战役", "活动战役档案墙：头图、全部阶段简报/战报、结果与奖励"),
@@ -1787,6 +1882,8 @@ HELP_SECTIONS = [
 HELP_NOTES = [
     "官方平台需 @机器人；NapCat 可直接 /指令；名称支持中英文",
     "默认输出战术 HUD 图片卡，渲染失败自动回退文本；指令后加 t 可要纯文本",
+    "新 MO 首次被战况命令发现时自动通知一次；/战报 和 /重要指令 始终显示当期内容",
+    "没有官方独立 MINOR ORDER 时，次要指令只标记为“重要指令附加目标”",
     "名称无法确定时可先用 /wiki 查询标准写法，再执行 /btk 或 /拆毁值",
     "进群欢迎仅 NapCat；战况以源数据时间与陈旧提示为准",
 ]

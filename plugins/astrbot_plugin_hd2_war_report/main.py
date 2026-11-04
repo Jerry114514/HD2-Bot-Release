@@ -13,13 +13,14 @@ except ImportError:
 from astrbot.api.star import Context, Star
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from astrbot_plugin_hd2_common import api_watch, commands, data
+from astrbot_plugin_hd2_common import api_watch, commands, data, orders
 from astrbot_plugin_hd2_common.runtime import blocking, text_reply, request_scope
 from astrbot_plugin_hd2_common.sources import (
     fetch_json as _fetch_json, fetch_official as _fetch_official,
     load_planet_map as _load_planet_map, PLANET_NAME_CN, OFFICIAL_WAR_ID, LIVE_API_URL,
 )
 from astrbot_plugin_hd2_common.diagnostics import LOG_FILE, hd2_log as _log
+from astrbot_plugin_hd2_war_report.mo_seen import MoSeenStore
 
 GALAXY_MAP_REPLY = "🌌 中文银河星图\n" + data.site_url("galaxy-map-v2.html")
 WAR_KINDS = {"report", "mo", "campaigns", "dss", "briefing", "analysis", "api", "map"}
@@ -67,6 +68,9 @@ class Hd2WarReportPlugin(Star):
         self._api_state = api_watch.ApiWatchState(
             os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache", "api_watch_state.json")
         )
+        self._mo_seen = MoSeenStore(
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache", "mo_seen.json")
+        )
 
     @filter.event_message_type(filter.EventMessageType.ALL)
     @request_scope
@@ -91,6 +95,15 @@ class Hd2WarReportPlugin(Star):
                 yield text_reply(event, await self._get_analysis(getattr(event,"unified_msg_origin",None)))
             else:
                 view = await blocking(commands.result, kind)
+                if self.context is not None:
+                    major = (orders.special_orders(view.document).get("major") or {})
+                    revision = str(major.get("id") or "")
+                    user_key = self._mo_seen.key_for(event)
+                    if kind in ("report", "mo"):
+                        await blocking(self._mo_seen.mark_seen, user_key, revision)
+                    else:
+                        for item in await self._new_mo_announcements(event, view.document):
+                            yield item
                 if kind == "api":
                     await blocking(
                         self._api_state.subscribe,
@@ -133,6 +146,26 @@ class Hd2WarReportPlugin(Star):
                           "未知速率、陈旧数据或缺失的补给线信息必须说明，不能补造。星球名沿用输入。",
         )
         return (response.completion_text or "").strip() or "⚠️ 分析暂不可用。"
+
+    async def _new_mo_announcements(self, event, document):
+        major = (orders.special_orders(document).get("major") or {})
+        revision = str(major.get("id") or "")
+        user_key = self._mo_seen.key_for(event)
+        if not await blocking(self._mo_seen.needs_announcement, user_key, revision):
+            return []
+        view = await blocking(commands.result, "mo", doc=document)
+        try:
+            images = await blocking(commands.render_result, view)
+        except Exception as error:
+            logger.warning(f"[HD2] MO 自动通知图片不可用，回退文字：{type(error).__name__}")
+            images = None
+        await blocking(self._mo_seen.mark_seen, user_key, revision)
+        if images:
+            return [
+                event.image_result(path)
+                for path in (images if isinstance(images, list) else [images])
+            ]
+        return [text_reply(event, view.text)]
 
     async def _get_campaign_brief(self):
         return (await blocking(commands.result, "briefing")).text
