@@ -242,11 +242,20 @@ class Result:
 
 def result(kind, query="", doc=None):
     if kind == "api":
-        issue = data.get_json("https://api.github.com/repos/Jerry114514/Jerry114514.github.io/issues/60", ttl=300) if doc is None else doc
+        from . import api_watch
+        issue = api_watch.fetch_issue60() if doc is None else doc
         body = str(issue.get("body") or "暂无变更记录")
-        url = issue.get("html_url") or "https://github.com/Jerry114514/Jerry114514.github.io/issues/60"
-        return Result(kind, "📡 API变更监测（主仓Issue #60）\n" + body[:6000] + ("\n……完整记录：" + url if len(body)>6000 else "\n"+url),
-                      {"fetchedAt":issue.get("updated_at") or "未知", "_issue_body":body})
+        revision = str(issue.get("revision") or api_watch.issue_revision(issue))
+        return Result(
+            kind,
+            api_watch.issue_text(issue),
+            {
+                "fetchedAt": issue.get("updated_at") or "未知",
+                "_issue_body": body,
+                "_issue_payload": issue,
+                "_issue_revision": revision,
+            },
+        )
     doc = data.site_doc() if doc is None else doc
     if kind == "planet":
         planet = find_planet(doc, query)

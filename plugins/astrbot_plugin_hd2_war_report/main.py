@@ -6,16 +6,20 @@ import time
 
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter
+try:
+    from astrbot.api.event import MessageChain
+except ImportError:
+    from astrbot.core.message.message_event_result import MessageChain
 from astrbot.api.star import Context, Star
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from astrbot_plugin_hd2_common import commands, data
+from astrbot_plugin_hd2_common import api_watch, commands, data
 from astrbot_plugin_hd2_common.runtime import blocking, text_reply, request_scope
 from astrbot_plugin_hd2_common.sources import (
     fetch_json as _fetch_json, fetch_official as _fetch_official,
     load_planet_map as _load_planet_map, PLANET_NAME_CN, OFFICIAL_WAR_ID, LIVE_API_URL,
 )
-from astrbot_plugin_hd2_common.diagnostics import hd2_log as _log
+from astrbot_plugin_hd2_common.diagnostics import LOG_FILE, hd2_log as _log
 
 GALAXY_MAP_REPLY = "🌌 中文银河星图\n" + data.site_url("galaxy-map-v2.html")
 WAR_KINDS = {"report", "mo", "campaigns", "dss", "briefing", "analysis", "api", "map"}
@@ -58,6 +62,11 @@ class Hd2WarReportPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
         self._warm_task = None
+        self._api_task = None
+        self._api_lock = None
+        self._api_state = api_watch.ApiWatchState(
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache", "api_watch_state.json")
+        )
 
     @filter.event_message_type(filter.EventMessageType.ALL)
     @request_scope
@@ -82,6 +91,12 @@ class Hd2WarReportPlugin(Star):
                 yield text_reply(event, await self._get_analysis(getattr(event,"unified_msg_origin",None)))
             else:
                 view = await blocking(commands.result, kind)
+                if kind == "api":
+                    await blocking(
+                        self._api_state.subscribe,
+                        getattr(event, "unified_msg_origin", ""),
+                        view.document.get("_issue_revision"),
+                    )
                 images = None
                 if not plain:
                     try:
@@ -133,11 +148,76 @@ class Hd2WarReportPlugin(Star):
                 logger.warning(f"[HD2] 快照预热失败：{error}")
             await asyncio.sleep(240)
 
+    async def _notify_api_sessions(self, issue):
+        if self.context is None or not issue:
+            return
+        view = await blocking(commands.result, "api", doc=issue)
+        images = None
+        try:
+            images = await blocking(commands.render_result, view)
+        except Exception as error:
+            logger.warning(f"[HD2] API 通知图片不可用，回退文字：{type(error).__name__}")
+        revision = str(issue.get("revision") or "")
+        for origin in self._api_state.pending_sessions(revision):
+            try:
+                chain = MessageChain()
+                if images:
+                    for path in images if isinstance(images, list) else [images]:
+                        chain.file_image(path)
+                else:
+                    chain.message(api_watch.issue_text(issue))
+                sent = await self.context.send_message(origin, chain)
+                if sent is False:
+                    logger.warning(f"[HD2] API 通知目标不可用：{origin}")
+                    continue
+                self._api_state.mark_delivered(origin, revision)
+                _log("api_push", plugin="war_report", target=origin, detail=revision)
+            except Exception as error:
+                logger.warning(f"[HD2] API 通知发送失败 {origin}：{type(error).__name__}")
+
+    async def _poll_api_watch(self):
+        async with self._api_lock:
+            issue = await blocking(api_watch.fetch_issue60)
+            revision = str(issue.get("revision") or "")
+            previous = self._api_state.last_revision()
+            changed = self._api_state.observe(issue)
+            if not previous:
+                for origin in self._api_state.pending_sessions(revision):
+                    self._api_state.mark_delivered(origin, revision)
+                return
+            if not changed and not self._api_state.pending_sessions(revision):
+                return
+            await self._notify_api_sessions(issue)
+
+    async def _api_watch_loop(self):
+        interval = max(60, int(data.setting(
+            "data", "api_watch_interval", default=api_watch.DEFAULT_INTERVAL_SECONDS
+        )))
+        while True:
+            try:
+                await self._poll_api_watch()
+            except asyncio.CancelledError:
+                raise
+            except Exception as error:
+                logger.warning(f"[HD2] API 每分钟巡检失败：{type(error).__name__}")
+            await asyncio.sleep(interval)
+
     async def initialize(self):
+        self._api_lock = asyncio.Lock()
+        self._api_state.discover_from_log(LOG_FILE)
+        if data.setting("data", "api_watch_enable", default=True):
+            self._api_task = asyncio.create_task(self._api_watch_loop())
         if data.setting("data", "report_warm_enable", default=True):
             self._warm_task = asyncio.create_task(self._warm_loop())
 
     async def terminate(self):
+        if self._api_task:
+            self._api_task.cancel()
+            try:
+                await self._api_task
+            except asyncio.CancelledError:
+                pass
+            self._api_task = None
         if self._warm_task:
             self._warm_task.cancel()
             try:

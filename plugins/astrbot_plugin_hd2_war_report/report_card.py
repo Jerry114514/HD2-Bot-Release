@@ -18,6 +18,7 @@ import hashlib
 import tempfile
 import threading
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from astrbot_plugin_hd2_common import api_watch
 from astrbot_plugin_hd2_common import data as shared
 from astrbot_plugin_hd2_common.commands import mo_tasks
 _render_locks = {}
@@ -1355,55 +1356,20 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
 # /api API 变动监测卡（来源：主仓 Issue #60 · CI 自动刷新）
 # ═══════════════════════════════════════════════════════════════
 
-ISSUE_URL = "https://api.github.com/repos/Jerry114514/Jerry114514.github.io/issues/60"
-_github_cache = {"etag": None, "body": None, "ts": 0}
+ISSUE_URL = api_watch.ISSUE_URL
 
 
 def _fetch_issue60():
     active = shared._snapshot.get() or {}
     if "_issue_body" in active:
         return active["_issue_body"]
-    """抓主仓 Issue #60（ETag 条件请求，304 不计 API 限额）+ 300s 进程缓存。"""
-    if time.time() - _github_cache["ts"] < 300 and _github_cache["body"]:
-        return _github_cache["body"]
-    headers = {"User-Agent": "HD2Bot/1.0 (api-watch)", "Accept": "application/vnd.github+json"}
-    if _github_cache["etag"]:
-        headers["If-None-Match"] = _github_cache["etag"]
-    import urllib.error
-    req = urllib.request.Request(ISSUE_URL, headers=headers)
-    try:
-        with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT) as r:
-            data = json.load(r)
-            _github_cache["etag"] = r.headers.get("ETag")
-            _github_cache["body"] = data.get("body") or ""
-            _github_cache["ts"] = time.time()
-    except urllib.error.HTTPError as e:
-        if e.code == 304 and _github_cache["body"] is not None:
-            _github_cache["ts"] = time.time()
-            return _github_cache["body"]
-        raise
-    return _github_cache["body"]
+    return api_watch.fetch_issue60(ttl=api_watch.DEFAULT_CACHE_SECONDS)["body"]
 
 
 def _parse_issue60(body):
     """解析 Issue #60 正文 → {detected, effect_count, changed, groups}。
     只解析分隔线之前的最新状态（--- 之后是手动重放的版式示例）。"""
-    import re as _re
-    part = (body or "").split("\n---")[0]
-    m = _re.search(r"检测时间（UTC）：(\S+)", part)
-    detected = m.group(1) if m else ""
-    m = _re.search(r"银河效果定义：(\d+) 条", part)
-    effect_count = int(m.group(1)) if m else None
-    no_change = "本次未检测到" in part
-    groups = []
-    chunks = _re.split(r"## 变更：", part)[1:]
-    for ch in chunks:
-        name = ch.split("\n")[0].strip()
-        added = _re.findall(r"`(\d+)` — (.+)", ch.split("### 移除的星球效果")[0])
-        removed = _re.findall(r"`(\d+)` — (.+)", ch.split("### 移除的星球效果")[1])             if "### 移除的星球效果" in ch else []
-        groups.append({"name": name, "added": added, "removed": removed})
-    return {"detected": detected, "effect_count": effect_count,
-            "no_change": no_change, "groups": groups}
+    return api_watch.parse_issue60(body)
 
 
 def render_api_card(out_dir=None):
@@ -1473,14 +1439,16 @@ def render_api_card(out_dir=None):
 
             # 页脚
             dr.line([(PAD, y), (W - PAD, y)], fill=LINE)
-            dr.text((PAD, y + 14), "来源：主仓 Issue #60（CI 每日自动检测并刷新）",
+            dr.text((PAD, y + 14), "来源：主仓 Issue #60（机器人每 60 秒检查，CI 自动刷新）",
                     font=F(14), fill=MUTE)
             ft = "明细与历史：github.com/Jerry114514/Jerry114514.github.io/issues/60"
             fw = dr.textlength(ft, font=F(14))
             dr.text((W - PAD - fw, y + 14), ft, font=F(14), fill=MUTE)
             dr.text((PAD, y + 40), "对照表口径：官方 API 结构（字段名 + 类型）比对，基线随 CI 更新",
                     font=F(14), fill=(80, 80, 80))
-            return y + 88
+            dr.text((PAD, y + 64), "本会话已登记自动监测；每 60 秒检查一次，内容变化时主动推送。",
+                    font=F(14), fill=GOLD2)
+            return y + 104
 
         return _render_cached(out_path, meta_path, rev, draw)
     except Exception:
@@ -1787,7 +1755,7 @@ HELP_SECTIONS = [
         ("/战线", "全银河战线列表：各战区解放/防御进度与交战双方"),
         ("/dss", "民主空间站：停靠星球、生效行动效果、投票与捐献进度"),
         ("/战役", "活动战役档案墙：头图、全部阶段简报/战报、结果与奖励"),
-        ("/api", "游戏 API 变动监测：效果与接口变更从主仓 Issue 实时抓取"),
+        ("/api", "每分钟监测主仓 Issue；当前会话在内容变化时自动接收，支持手动重播"),
     ]),
     ("星球情报", "PLANET INTEL", [
         ("/查询 星球名", "星球指挥台卡：解放环、兵力趋势、区域战况、环境词条"

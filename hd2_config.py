@@ -57,6 +57,8 @@ DEFAULTS = {
     "data": {
         "site_base": "https://jerry114514.github.io/HD2-Galatic_war-Map",
         "max_stale_seconds": 3600,
+        "api_watch_enable": True,
+        "api_watch_interval": 60,
         "translate_url": "https://api.mymemory.translated.net/get",
         "assignments_url": "https://cdn.helldiverscompanion.com/live/assignments/recent.json",
         "live_api_url": "https://helldiverscompanion.com/api/hell-divers-2-api/get-api-data-live",
