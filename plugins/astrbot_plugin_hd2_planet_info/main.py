@@ -19,7 +19,7 @@ except Exception:
         pass
 
 # 公共库（hd2_common）：共享常量/抓取/表加载/译名映射
-from astrbot_plugin_hd2_common import commands
+from astrbot_plugin_hd2_common import commands, errors
 from astrbot_plugin_hd2_common.runtime import blocking, text_reply, request_scope
 from astrbot_plugin_hd2_common.sources import (
     fetch_json as _fetch_json,
@@ -836,7 +836,8 @@ class Hd2PlanetInfoPlugin(Star):
             return
         _, query, plain = parsed
         if not query:
-            yield text_reply(event, "用法：/查询 星球名，例 /查询 X-45")
+            _, usage = errors.USAGE["planet"]
+            yield text_reply(event, "⚠️ 星球查询缺少星球名。\n💡 " + usage)
             event.stop_event()
             return
         try:
@@ -857,6 +858,6 @@ class Hd2PlanetInfoPlugin(Star):
                  source_time=view.document.get("fetchedAt"), output_mode="image" if images else "text",
                  stale=(view.document.get("_hd2") or {}).get("stale"))
         except Exception as error:
-            yield text_reply(event, "⚠️ " + str(error))
+            yield text_reply(event, errors.friendly("planet", error))
         finally:
             event.stop_event()

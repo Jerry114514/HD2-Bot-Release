@@ -24,9 +24,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ICON_DIR = os.path.join(HERE, "icons")
 CACHE_DIR = os.path.join(HERE, "cache")
 
-# ── 黑金 HUD tokens ──
+# ── 黑金 HUD tokens（DIM/MUTE 与 report_card 同步提亮，保证暗底可读性） ──
 BG = (10, 10, 10); PANEL = (18, 18, 18); LINE = (36, 36, 36); LINE2 = (42, 42, 42)
-TEXT = (242, 242, 242); DIM = (168, 168, 168); MUTE = (110, 110, 110)
+TEXT = (242, 242, 242); DIM = (188, 188, 188); MUTE = (132, 132, 132)
 GOLD = (255, 176, 0); GOLD2 = (255, 201, 74); BRASS = (200, 134, 42)
 W = 1080; PAD = 36; TALL = 1800
 

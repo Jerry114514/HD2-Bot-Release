@@ -13,7 +13,7 @@ except ImportError:
 from astrbot.api.star import Context, Star
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from astrbot_plugin_hd2_common import api_watch, commands, data, orders
+from astrbot_plugin_hd2_common import api_watch, commands, data, errors, orders
 from astrbot_plugin_hd2_common.runtime import blocking, text_reply, request_scope
 from astrbot_plugin_hd2_common.sources import (
     fetch_json as _fetch_json, fetch_official as _fetch_official,
@@ -82,7 +82,8 @@ class Hd2WarReportPlugin(Star):
             return
         kind, args, plain = parsed
         if args:
-            yield text_reply(event, "⚠️ 该命令不接受额外参数；可加 t 或文字查看纯文本。")
+            title, usage = errors.USAGE.get(kind, ("该命令", ""))
+            yield text_reply(event, f"⚠️ {title}不接受额外参数；加 t 或「文字」查看纯文本。\n💡 {usage}")
             event.stop_event()
             return
         begin = time.monotonic()
@@ -129,7 +130,7 @@ class Hd2WarReportPlugin(Star):
         except Exception as error:
             logger.warning(f"[HD2] 命令失败：{error}")
             _log("failed", plugin="war_report", detail=str(error), **fields)
-            yield text_reply(event, "⚠️ " + str(error))
+            yield text_reply(event, errors.friendly(kind, error))
         finally:
             event.stop_event()
 

@@ -25,6 +25,7 @@ if _PLUGINS_PARENT not in sys.path:
     sys.path.insert(0, _PLUGINS_PARENT)
 
 from astrbot_plugin_hd2_common.commands import parse_event  # noqa: E402
+from astrbot_plugin_hd2_common import errors  # noqa: E402
 from astrbot_plugin_hd2_common.data import setting  # noqa: E402
 from astrbot_plugin_hd2_common.diagnostics import hd2_log  # noqa: E402
 from astrbot_plugin_hd2_common.runtime import blocking, request_scope, text_reply  # noqa: E402
@@ -554,6 +555,6 @@ class Hd2BtkPlugin(Star):
             logger.warning(f"[HD2-BTK] {type(error).__name__}: {error}")
             hd2_log("failed", plugin="btk", detail=type(error).__name__,
                     group=getattr(event.message_obj, "group_id", ""), user=event.get_sender_id())
-            yield text_reply(event, "⚠️ BTK：" + str(error))
+            yield text_reply(event, errors.friendly("btk", error))
         finally:
             event.stop_event()

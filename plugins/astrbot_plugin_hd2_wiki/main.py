@@ -8,6 +8,7 @@ from astrbot.api import logger
 from astrbot.api.event import filter
 from astrbot.api.star import Star
 from astrbot_plugin_hd2_common.commands import parse_event
+from astrbot_plugin_hd2_common import errors
 from astrbot_plugin_hd2_common.runtime import wiki_blocking, singleflight, text_reply, request_scope
 from astrbot_plugin_hd2_common.diagnostics import hd2_log
 from astrbot_plugin_hd2_wiki.wiki_data import wiki_lookup, format_text, catalogue, RULE_VERSION
@@ -135,7 +136,10 @@ class Hd2WikiPlugin(Star):
                 choices.discard(menu)
             detail = "查询超时，尚不能判断是否存在该词条。" if isinstance(error,TimeoutError) else str(error)
             hd2_log("failed",plugin="wiki",detail=type(error).__name__,search={"status":"unavailable","complete":False})
-            yield text_reply(event, "⚠️ Wiki查询失败：" + detail)
+            if isinstance(error,TimeoutError):
+                yield text_reply(event, f"⚠️ Wiki 查询超时，尚不能判断是否存在该词条。\n💡 稍后重试；或加 t 请求纯文本结果。")
+            else:
+                yield text_reply(event, errors.friendly("wiki", error))
         finally:
             if owns_menu and menu is not None and menu.state in ("loading", "publishing"):
                 choices.discard(menu)

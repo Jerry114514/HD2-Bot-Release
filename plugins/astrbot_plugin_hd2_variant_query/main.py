@@ -7,7 +7,7 @@ import time
 sys.path.insert(0,os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from astrbot.api.event import filter
 from astrbot.api.star import Star
-from astrbot_plugin_hd2_common import commands
+from astrbot_plugin_hd2_common import commands, errors
 from astrbot_plugin_hd2_common.search import normalize
 from astrbot_plugin_hd2_common.runtime import blocking, singleflight, text_reply, request_scope
 from astrbot_plugin_hd2_common.sources import (
@@ -140,6 +140,6 @@ class Hd2VariantQueryPlugin(Star):
             hd2_log("generated",plugin="variant",source=scan["source"],source_time=scan["source_time"],
                     detail={"complete":scan["complete"],"unknown_effects":scan["unknown_effects"],"warnings":scan["warnings"]})
         except Exception as error:
-            yield text_reply(event, "⚠️ 变种数据不可用："+type(error).__name__)
+            yield text_reply(event, errors.friendly("variant", error))
         finally:
             event.stop_event()

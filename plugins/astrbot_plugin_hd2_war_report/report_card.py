@@ -36,14 +36,15 @@ FONT_CANDIDATES = [
     ("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",) * 2,
 ]
 
-# ── 主站 tokens（css/tokens.css 同源） ──
+# ── 主站 tokens（css/tokens.css 同源）；DIM/MUTE 按可读性要求提亮一档 ──
 BG = (10, 10, 10)
 PANEL = (18, 18, 18)
+PANEL2 = (24, 24, 24)   # 斑马纹偶数行
 LINE = (36, 36, 36)
 LINE2 = (42, 42, 42)
 TEXT = (242, 242, 242)
-DIM = (168, 168, 168)
-MUTE = (110, 110, 110)
+DIM = (188, 188, 188)   # 原 (168,168,168)：暗色底上对比不足
+MUTE = (132, 132, 132)  # 原 (110,110,110)：辅助标签提亮一档
 GOLD = (255, 176, 0)
 GOLD2 = (255, 201, 74)
 BRASS = (200, 134, 42)
@@ -421,7 +422,7 @@ def render_report_card(out_dir=None):
         news = orders.filtered_news(data)
 
         f_title = F(42, True); f_h2 = F(25, True); f_h3 = F(21, True)
-        f_body = F(19); f_small = F(16); f_tiny = F(14)
+        f_body = F(20); f_small = F(17); f_tiny = F(14)
         f_kpi = F(32, True); f_kpi_l = F(15)
 
 
@@ -458,10 +459,11 @@ def render_report_card(out_dir=None):
 
         # ══ 重要指令面板 ══
         if tasks:
-            brief_lines = wrap(brief, 46)
+            brief_lines = wrap(brief, 44)
             head_h = 52
-            brief_h = (16 + 25 * len(brief_lines) + 10) if brief_lines else 0
-            task_h = sum(100 for _ in tasks)
+            # brief 区：16 顶距 + 30/行 + 10 底距 + 分隔线 8
+            brief_h = (16 + 30 * len(brief_lines) + 18) if brief_lines else 0
+            task_h = sum(126 for _ in tasks)   # 每任务：任务名 38 + 进度条 24 + 数值行 64
             panel_h = head_h + brief_h + task_h + 16
             dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
             dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
@@ -480,10 +482,10 @@ def render_report_card(out_dir=None):
             if brief_lines:
                 for ln in brief_lines:
                     dr.text((PAD + 18, yy), ln, font=f_body, fill=DIM)
-                    yy += 25
+                    yy += 30
                 yy += 10
                 dr.line([(PAD + 18, yy), (W - PAD - 18, yy)], fill=LINE)
-                yy += 6
+                yy += 8
             for i, t in enumerate(tasks):
                 name = f"任务 {i + 1}：{t.get('name') or t.get('action') or ''}"
                 dr.text((PAD + 18, yy), name, font=f_h3, fill=TEXT)
@@ -499,15 +501,15 @@ def render_report_card(out_dir=None):
                 percentage = shared.percent(prog, goal)
                 r = (percentage or 0) / 100.0
                 done = percentage == 100
-                progress_bar(dr, PAD + 18, yy, W - PAD * 2 - 36, 14, r, fill=GREEN if done else GOLD)
-                yy += 24
+                progress_bar(dr, PAD + 18, yy, W - PAD * 2 - 36, 16, r, fill=GREEN if done else GOLD)
+                yy += 26
                 pt = ("未知" if percentage is None else "已完成" if done else f"{r * 100:.1f}%")
                 dr.text((PAD + 18, yy), pt, font=f_h3, fill=GREEN if done else GOLD)
                 sub = f"进度 {shared.fmt_big_num(prog)} / 目标 {shared.fmt_big_num(goal)}"
                 sw2 = dr.textlength(sub, font=f_small)
                 dr.text((W - PAD - 18 - sw2, yy + 6), sub, font=f_small, fill=MUTE)
                 yy += 62
-            y += panel_h + 18
+            y += panel_h + 20
 
         y = _draw_special_orders(dr, img, data, y)
 
@@ -520,7 +522,7 @@ def render_report_card(out_dir=None):
                     ("终结族", fac.get("Terminids"), (245, 197, 24)),
                     ("机器人", fac.get("Automatons"), (214, 128, 109)),
                     ("光能者", fac.get("Illuminate"), (207, 100, 248))]
-            panel_h = 60 + 54 * len(rows) + 44
+            panel_h = 60 + 58 * len(rows) + 44
             dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
             dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
             section_label(dr, PAD + 18, y + 14, "战区玩家分布", f_h2)
@@ -537,7 +539,7 @@ def render_report_card(out_dir=None):
                 vt = (f"{fmt(cnt)}（{r:.1f}%）" if measured_pct is not None else "未知")
                 vw = dr.textlength(vt, font=f_body)
                 dr.text((W - PAD - 18 - vw, yy), vt, font=f_body, fill=TEXT)
-                yy += 54
+                yy += 58
             total_t = f"总计在线：{fmt(total)} 名指挥官" + (f" · 采样 {u}" if u else "")
             tw2 = dr.textlength(total_t, font=f_small)
             dr.text((W - PAD - 18 - tw2, yy + 2), total_t, font=f_small, fill=DIM)
@@ -549,24 +551,24 @@ def render_report_card(out_dir=None):
         if news_show:
             blocks = []
             for n in news_show:
-                blocks.append(wrap(n.get("translated") or n.get("original") or n.get("message") or "", 48))
-            panel_h = 52 + sum(24 + 24 * len(ls) + 14 for ls in blocks) + 4
+                blocks.append(wrap(n.get("translated") or n.get("original") or n.get("message") or "", 44))
+            panel_h = 56 + sum(18 + 28 * len(ls) + 16 for ls in blocks) + 4
             dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
             dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
             section_label(dr, PAD + 18, y + 14, "最新要闻", f_h2)
-            yy = y + 52
+            yy = y + 56
             for lines in blocks:
                 first = True
                 for ln in lines:
                     if first:
-                        dr.rectangle([PAD + 18, yy + 9, PAD + 24, yy + 25], fill=BRASS)
+                        dr.rectangle([PAD + 18, yy + 11, PAD + 24, yy + 29], fill=BRASS)
                         dr.text((PAD + 34, yy), ln, font=f_body, fill=TEXT)
                         first = False
                     else:
                         dr.text((PAD + 34, yy), ln, font=f_body, fill=DIM)
-                    yy += 24
-                yy += 14
-            y_after_news = y + panel_h + 18
+                    yy += 28
+                yy += 16
+            y_after_news = y + panel_h + 20
 
         # ══ 页脚 ══
         y = (y_after_news if y_after_news else y) + 8
@@ -576,7 +578,7 @@ def render_report_card(out_dir=None):
         fw = dr.textlength(ft, font=f_tiny)
         dr.text((W - PAD - fw, y + 16), ft, font=f_tiny, fill=MUTE)
         dr.text((PAD, y + 42), "真理部 · 管理式民主 · 本站与 Arrowhead Game Studios 无隶属关系",
-                font=f_tiny, fill=(80, 80, 80))
+                font=f_tiny, fill=(115, 115, 115))
         return y + 88
     return _render_cached(os.path.join(out_dir, OUT_NAME), "", str(data.get("fetchedAt")), draw)
 
@@ -715,7 +717,8 @@ def _hud_head(dr, img, title, sub_en):
 
 def _render_cached(out_path, meta_path, rev, draw_fn, page_info=None):
     meta = shared._snapshot.get() or {}
-    digest = hashlib.sha256((str(rev) + json.dumps(meta.get("_hd2", {}), sort_keys=True) + "layout-v4" + (str(page_info) if page_info else "")).encode()).hexdigest()[:16]
+    # layout-v4-wide：多页合并单图（自左向右分区）+ 战略订单墙布局；版本号变化使旧分页缓存全部失效
+    digest = hashlib.sha256((str(rev) + json.dumps(meta.get("_hd2", {}), sort_keys=True) + "layout-v4-wide" + (str(page_info) if page_info else "")).encode()).hexdigest()[:16]
     stem, _ = os.path.splitext(out_path)
     out_path = stem + "_" + digest + ".png"
     meta_path = out_path + ".meta"
@@ -786,13 +789,16 @@ def render_campaigns_card(out_dir=None):
                 dr.text((kx + 16, y + 30), val, font=F(30, True), fill=TEXT)
             y += KPI_H + 18
 
-            panel_h = 52 + 46 * len(rows) + 34
+            ROW_H = 56
+            panel_h = 54 + ROW_H * len(rows) + 36
             dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
             dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
             section_label(dr, PAD + 18, y + 13, "全部战线（按在线人数排序）", F(25, True))
             yy = y + 54
             bw_x, bw_w = PAD + 320, W - PAD * 2 - 610
-            for cn, sector, fac, ratio, players, state in rows:
+            for ri, (cn, sector, fac, ratio, players, state) in enumerate(rows):
+                if ri % 2:  # 斑马纹：偶数行微亮，辅助横向追踪
+                    dr.rectangle([PAD + 6, yy - 8, W - PAD - 6, yy + ROW_H - 8], fill=PANEL2)
                 color = FACTION_COLOR.get(fac, GOLD)
                 dr.rectangle([PAD + 18, yy + 6, PAD + 22, yy + 30], fill=color)
                 dr.text((PAD + 32, yy), cn, font=F(20, True), fill=TEXT)
@@ -805,11 +811,11 @@ def render_campaigns_card(out_dir=None):
                         fill=BLUE if state["defending"] else GOLD)
                 pw = dr.textlength(fmt(players) + " 人", font=F(15))
                 dr.text((W - PAD - 18 - pw, yy - 2), fmt(players) + " 人", font=F(15), fill=DIM)
-                dr.text((PAD + 32, yy + 24), fac + " · " + state["status"] + (" · 截止 " + str(state["deadline"])[:16] if state["defending"] and state["deadline"] else ""), font=F(14), fill=color)
-                yy += 46
-            dr.text((PAD + 18, y + panel_h - 26),
+                dr.text((PAD + 32, yy + 26), fac + " · " + state["status"] + (" · 截止 " + str(state["deadline"])[:16] if state["defending"] and state["deadline"] else ""), font=F(14), fill=color)
+                yy += ROW_H
+            dr.text((PAD + 18, y + panel_h - 28),
                     "解放/防御使用对应战役进度 · 数据不足显示未知",
-                    font=F(13), fill=(80, 80, 80))
+                    font=F(13), fill=(115, 115, 115))
             return y + panel_h + 12
 
         return _render_cached(out_path, meta_path, rev, draw)
@@ -939,7 +945,7 @@ def render_dss_card(out_dir=None):
             if unknown:
                 note = "未收录效果 ID：" + "、".join("#" + str(i) for i in unknown) + "（照实显示）"
                 nw = dr.textlength(note, font=F(13))
-                dr.text((W - PAD - 18 - nw, y - 12), note, font=F(13), fill=(80, 80, 80))
+                dr.text((W - PAD - 18 - nw, y - 12), note, font=F(13), fill=(115, 115, 115))
             return y + 10
         return _render_cached(out_path, meta_path, rev, draw)
     except Exception:
@@ -1379,7 +1385,7 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
                         dr.text((PAD + 14, ry + 7), nm, font=F(17, True), fill=TEXT)
                         if en_nm and en_nm != nm:
                             dr.text((PAD + 14 + dr.textlength(nm, font=F(17, True)) + 10, ry + 11),
-                                    en_nm, font=F(11), fill=(80, 80, 80))
+                                    en_nm, font=F(11), fill=(115, 115, 115))
                         dr.text((c_owner, ry + 9), owner_cn + " · " + type_cn + "★" * stars,
                                 font=F(14), fill=DIM)
                         pw = dr.textlength(fmt(players) if players else "—", font=F(16, True))
@@ -1390,7 +1396,7 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
                                 fill=GREEN if p == 100 else TEXT)
                         rw = dr.textlength(rate_txt, font=F(15))
                         dr.text((c_rate - rw, ry + 9), rate_txt, font=F(15),
-                                fill=(80, 80, 80) if rate_txt == "—" else DIM)
+                                fill=(115, 115, 115) if rate_txt == "—" else DIM)
                     y += panel_h + 18
 
             # ══ 环境与作战词条（分组照主站：变种类 + 作战限制 保留组，其余平铺） ══
@@ -1540,7 +1546,7 @@ def render_api_card(out_dir=None):
             fw = dr.textlength(ft, font=F(14))
             dr.text((W - PAD - fw, y + 14), ft, font=F(14), fill=MUTE)
             dr.text((PAD, y + 40), "对照表口径：官方 API 结构（字段名 + 类型）比对，基线随 CI 更新",
-                    font=F(14), fill=(80, 80, 80))
+                    font=F(14), fill=(115, 115, 115))
             dr.text((PAD, y + 64), "本会话已登记自动监测；每 60 秒检查一次，内容变化时主动推送。",
                     font=F(14), fill=GOLD2)
             return y + 104
@@ -1868,7 +1874,7 @@ HELP_SECTIONS = [
                          "破片=数量；波及=部位1,部位2。参数与主命令一起发送"),
         ("/btk 卡阈值 武器 [全部]", "阈值矩阵卡：默认只扫致死部位；加“全部”扫描所有部位"),
         ("/btk DOT-FIRE 敌人", "持续伤害卡：每跳伤害、触发次数、总时长与元素倍率（无需部位）"),
-        ("/btk 武器 / 敌人", "查看可测武器分类、敌人阵营和部位数据"),
+        ("/btk 武器 / 敌人", "查看直击来源：可测武器分类、敌人阵营和部位数据"),
     ]),
     ("AI 增强", "AUGMENT", [
         ("/分析", "AI 战局分析：威胁评估与目标建议（需配置 LLM，失败时明确提示）"),
@@ -2004,39 +2010,76 @@ def render_help_card(out_dir=None):
 
 
 def save_pages(img, height, out_path, document=None, page_info=None):
-    """Split only near quiet rows, preserving text and adding page/source labels."""
+    """超长画布合并为单张宽图：按安静行均衡切段，从左向右排列成连续分区。
+
+    旧行为是竖切成多张 PNG 分多条消息发送（QQ 里刷屏且上下文割裂）；
+    现在拼成一张图，每列顶部带「分区 i/N」标签，列间加分隔线，底部统一页脚。
+    切段均衡化：先按总高算列数 N=ceil(H/2100)，每列目标高度 H/N，再在目标行
+    附近 ±100px 内回退找安静行，避免「首列塞满、末列只剩尾巴」的失衡观感。
+    单段内容（不超高）保持原单图输出，页脚同样收敛到底部条内。
+    page_info：遗留参数，兼容保留；若提供 (i, n, 标题) 则标题用作列标签前缀。
+    """
+    import math
+    n_pages = max(1, math.ceil(height / 2100))
+    ideal = math.ceil(height / n_pages)
     spans, start = [], 0
     while start < height:
-        end = min(height, start + 2100)
+        end = min(height, start + ideal)
         if end < height:
-            for row in range(end, max(start + 1000, end - 100), -1):
+            for row in range(end, max(start + ideal // 2, end - 100), -1):
                 band = img.crop((PAD + 28, row, W - PAD - 28, row + 2)).convert("L")
                 if band.point(lambda p: 255 if p > 100 else 0).getbbox() is None:
                     end = row
                     break
         spans.append((start, end))
         start = end
-    paths = []
-    if page_info and len(spans) != 1:
-        raise ValueError("预分页内容超出单页高度")
+    # 吸收过小残段（安静行回退留下的尾巴），避免产生近空的列
+    min_span = max(120, ideal // 8)
+    merged_spans = [spans[0]]
+    for s, e in spans[1:]:
+        if e - s < min_span:
+            ps, _pe = merged_spans[-1]
+            merged_spans[-1] = (ps, e)
+        else:
+            merged_spans.append((s, e))
+    spans = merged_spans
     doc = document or {}
     quality = " · 缓存/数据陈旧" if (doc.get("_hd2") or {}).get("stale") else ""
-    for i, (start, end) in enumerate(spans):
-        page = Image.new("RGB", (W, end - start + 64), BG)
-        page.paste(img.crop((0, start, W, end)), (0, 0))
-        dr = ImageDraw.Draw(page)
-        caption = f"第 {i+1}/{len(spans)} 页 · 数据时间 {doc.get('fetchedAt', '见正文')}" + quality
-        if page_info:
-            caption = f"第 {page_info[0]}/{page_info[1]} 页 · {page_info[2]}"
-        dr.text((PAD, end - start + 14), caption, font=F(18), fill=DIM)
-        path = os.path.splitext(out_path)[0] + f"_{i+1}.png"
-        fd, tmp = tempfile.mkstemp(prefix=".card_", dir=os.path.dirname(path))
-        os.close(fd)
-        try:
-            page.save(tmp, format="PNG")
-            os.replace(tmp, path)
-        finally:
-            if os.path.exists(tmp):
-                os.unlink(tmp)
-        paths.append(path)
-    return paths
+    ts = str(doc.get("fetchedAt") or "")[:16].replace("T", " ")
+    n = len(spans)
+
+    GUTTER, LABEL_H, FOOT_H = 28, (64 if n > 1 else 0), 56
+    col_h = max(e - s for s, e in spans)
+    total_w = n * W + (n - 1) * GUTTER
+    total_h = LABEL_H + col_h + FOOT_H
+    if total_w * total_h > 34_000_000:  # 约 15 段，防极端内容撑爆内存
+        raise ValueError("内容过长，请使用文字查询或原文链接")
+    canvas = Image.new("RGB", (total_w, total_h), BG)
+    dr = ImageDraw.Draw(canvas)
+    for i, (s, e) in enumerate(spans):
+        x = i * (W + GUTTER)
+        if n > 1:
+            if i:
+                gx = x - GUTTER // 2
+                dr.rectangle([gx - 1, 0, gx + 1, total_h - FOOT_H], fill=LINE)
+            prefix = f"{page_info[2]} " if (page_info and len(page_info) >= 3) else ""
+            dr.text((x + PAD, 18), f"{prefix}分区 {i + 1}/{n}", font=F(20, True), fill=GOLD)
+            if i == 0:
+                dr.text((x + PAD + 150, 26), "◄ 各分区自左向右连续阅读", font=F(13), fill=MUTE)
+            dr.line([(x, LABEL_H - 10), (x + W, LABEL_H - 10)], fill=LINE2)
+        canvas.paste(img.crop((0, s, W, e)), (x, LABEL_H))
+    cap = f"数据时间 {ts or '见正文'}" + quality + (" · 各分区自左向右连续阅读" if n > 1 else "")
+    dr.line([(0, total_h - FOOT_H), (total_w, total_h - FOOT_H)], fill=LINE)
+    dr.text((PAD, total_h - FOOT_H + 16), cap, font=F(16), fill=DIM)
+    mot_x = total_w - PAD - dr.textlength("真理部 · MOT", font=F(14))
+    dr.text((mot_x, total_h - FOOT_H + 20), "真理部 · MOT", font=F(14), fill=(115, 115, 115))
+    path = os.path.splitext(out_path)[0] + ".png"
+    fd, tmp = tempfile.mkstemp(prefix=".card_", dir=os.path.dirname(path))
+    os.close(fd)
+    try:
+        canvas.save(tmp, format="PNG")
+        os.replace(tmp, path)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+    return [path]
