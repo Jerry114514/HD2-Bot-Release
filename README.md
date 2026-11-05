@@ -60,17 +60,28 @@ python -m playwright install chromium
 
 复制 `config.example.json` 为 `config.json`，选择 `bot.platform`：
 
-| 能力 | qq_official | napcat |
+| 能力 | qq_official | napcat（OneBot 协议端：SnowLuma） |
 | --- | --- | --- |
 | 指令回复、图片上传 | 通过 AstrBot 官方 QQ 适配器，受平台权限约束 | 通过 AstrBot OneBot 适配器 |
-| 登录/凭据 | 在 AstrBot 适配器配置；本项目不使用旧模板的 qq_official 凭据字段 | 配置 NapCat 登录和本机 WebUI token |
+| 登录/凭据 | 在 AstrBot 适配器配置；本项目不使用旧模板的 qq_official 凭据字段 | 配置 SnowLuma（QQ 窗口扫码登录）与 OneBot accessToken |
 | 本控制台主动群推送/WS 测试 | 不支持；入口执行前提示，在 AstrBot 管理支持的会话能力 | 支持；要求明确目标群 |
 | 进群欢迎 | 不支持成员变动通知 | 支持 OneBot group_increase |
-| 启动器 | 启动 AstrBot/控制台，跳过 NapCat 和 WS 等待 | 启动已配置实例，提示在 NapCat 完成登录 |
+| 启动器 | 启动 AstrBot/控制台，跳过协议端和 WS 等待 | 启动已配置实例，自动拉起 SnowLuma 并提示扫码 |
 
-`astrbot.data_dir` 必须指向所选实例，`bot.platform_id` 填 AstrBot 中该适配器的确切 ID。控制台只管理选定平台；数字群号校验仅用于 NapCat。平台/群/用户 ID 在插件日志中保留字符串。
+`astrbot.data_dir` 必须指向所选实例，`bot.platform_id` 填 AstrBot 中该适配器的确切 ID。控制台只管理选定平台；数字群号校验仅用于协议端通道。平台/群/用户 ID 在插件日志中保留字符串。
 
-`bot.groups` 仅限制 `bot.platform` 对应通道的指令：NapCat 填群号，官方 QQ 填该机器人的群 OpenID，不能相互替换。旧配置未填写 `bot.platform` 时沿用 `napcat`，其数字名单不会拦截官方 QQ 事件；如需限制官方 QQ，显式选择 `qq_official` 并填写官方 OpenID，或使用 AstrBot 对应适配器的会话白名单。空列表表示本插件不额外限制群，AstrBot 自身的访问控制仍生效。
+`bot.groups` 仅限制 `bot.platform` 对应通道的指令：协议端通道（SnowLuma/NapCat）填群号，官方 QQ 填该机器人的群 OpenID，不能相互替换。旧配置未填写 `bot.platform` 时沿用 `napcat`，其数字名单不会拦截官方 QQ 事件；如需限制官方 QQ，显式选择 `qq_official` 并填写官方 OpenID，或使用 AstrBot 对应适配器的会话白名单。空列表表示本插件不额外限制群，AstrBot 自身的访问控制仍生效。
+
+### 协议端：SnowLuma（替代 NapCat）
+
+协议端从 NapCat 迁移到 **[SnowLuma](https://github.com/SnowLuma/SnowLuma)**（NapCat 同团队的新一代 OneBot v11 实现）。旧 `napcat.*` 配置段已废弃，统一为 `snowluma.*`；`bot.platform` 填 `napcat` 仍有效（也接受 `snowluma`/`onebot` 别名，运行时归一化）。
+
+1. 安装 Windows 桌面版 QQNT（官方渠道）
+2. 下载 SnowLuma release 的 `win-x64` Full 包，解压到固定目录（如 `C:\SnowLuma`），把路径填入 `snowluma.dir`
+3. 启动 `launcher.bat`（或用本项目「一键启动」自动拉起）；SnowLuma 会自动监视并注入 QQ 进程，QQ 先启或后启均可
+4. 首次启动从其控制台日志取**一次性临时密码**登录 WebUI（默认 `http://127.0.0.1:5099`）；扫码登录在桌面 QQ 窗口完成
+5. 在 SnowLuma WebUI 配置 OneBot 反向 WS 客户端（wsClients）：`ws://127.0.0.1:6199/ws`（指向 AstrBot，role 用 Universal）；再把它生成的 `accessToken` 填入 `config.json` 的 `snowluma.access_token`
+6. 控制台推送走 OneBot HTTP（默认 `http://127.0.0.1:3000`）；在 SnowLuma 的 onebot 配置里把 `messageFormat` 设为 `string`（CQ 码字符串消息）
 
 AstrBot 会从 `event.message_str` 移除唤醒前缀；插件统一使用原始消息文本识别 `/` 指令，无需删除框架的 `/` 唤醒设置。普通消息即使通过 @ 或私聊唤醒，也不会被补成指令。
 
@@ -145,4 +156,4 @@ Wiki 查询使用20秒总预算（含排队），单网络阶段最多8秒；最
 
 变种只查询活动战役，输出来源与采集时间；缺字段、未知效果和备用页面失败不视为完整的“没有变种”。词库由公共 `variant_terms.json` 统一维护，星球名称按现有ID与中英名称匹配，支持全角、横线与 `X45` 写法。
 
-搜索修复逐项验收见 [搜索验收](docs/搜索验收.md)。真实 QQ/NapCat 收发仍待验；Wiki `parse` 在部分网络环境返回403时保留正文与明确降级状态，离线表格验证不能代替目标环境的接口可用性。
+搜索修复逐项验收见 [搜索验收](docs/搜索验收.md)。真实 QQ 收发仍待验；Wiki `parse` 在部分网络环境返回403时保留正文与明确降级状态，离线表格验证不能代替目标环境的接口可用性。

@@ -2,16 +2,16 @@
 """伪装群成员消息注入测试：直接连 AstrBot OneBot WS(6199)，模拟群成员发指令，打印机器人回复。
 
 用法：
-  python napcat_ws_inject.py "指令文本" [群号]
+  python ws_inject.py "指令文本" [群号]
   示例：
-    python napcat_ws_inject.py "战报"                # 触发战况速报
-    python napcat_ws_inject.py "查表"                # 触发 /查表
-    python napcat_ws_inject.py "查表 孢裂变种"
-    python napcat_ws_inject.py "查表 星区 巴纳德"
+    python ws_inject.py "战报"                # 触发战况速报
+    python ws_inject.py "查表"                # 触发 /查表
+    python ws_inject.py "查表 孢裂变种"
+    python ws_inject.py "查表 星区 巴纳德"
 
 原理：
-- NapCat reportSelfMessage=false，主号自己发的群消息不会上报 AstrBot → 无法用推送测试响应
-- 本脚本伪装成一个 WS 客户端连接 AstrBot 的 6199 反向 WS 服务端（NapCat 同款角色）
+- 协议端（SnowLuma/NapCat）reportSelfMessage=false，主号自己发的群消息不会上报 AstrBot → 无法用推送测试响应
+- 本脚本伪装成一个 WS 客户端连接 AstrBot 的 6199 反向 WS 服务端（协议端同款角色）
 - 注入一条群消息事件（user_id 用假成员号，避免被 self 过滤拦截）
 - AstrBot 处理后会通过 WS 下发 API 调用（send_group_msg），打印出来即机器人回复
 """
@@ -32,8 +32,8 @@ except Exception:
     def _g(*k, d=None):
         return d
 
-WS_URL = _g("napcat", "ws_url", d="ws://127.0.0.1:6199/ws")
-SELF_ID = str(_g("bot", "self_id", d=""))   # 机器人 QQ（NapCat 登录号）
+WS_URL = _g("snowluma", "ws_url", d="ws://127.0.0.1:6199/ws")
+SELF_ID = str(_g("bot", "self_id", d=""))   # 机器人 QQ（协议端登录号）
 DEFAULT_GROUP = int(_g("bot", "default_group", d=0))
 FAKE_USER = int(_g("inject", "fake_user", d=2428164570))  # 伪装的群成员 user_id（≠ 机器人自己）
 FAKE_NAME = _g("inject", "fake_name", d="绝地潜兵·测试员")
@@ -95,8 +95,8 @@ def main():
     evt = build_event(group_id, text)
     print(f"WS 连接 {WS_URL} ...")
     # ⚠️ X-Self-ID 必须用独立测试 ID（不能与机器人 self_id 相同）：
-    # aiocqhttp 的 API 客户端表按 X-Self-ID 存 dict，同 ID 会覆盖/删除 NapCat 的注册，
-    # 导致 NapCat 发送通道丢失（ApiNotAvailable）
+    # aiocqhttp 的 API 客户端表按 X-Self-ID 存 dict，同 ID 会覆盖/删除协议端（SnowLuma）的注册，
+    # 导致协议端发送通道丢失（ApiNotAvailable）
     ws = websocket.create_connection(
         WS_URL, timeout=35,
         header=[

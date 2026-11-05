@@ -44,7 +44,7 @@ WELCOME_TEXT = (
 )
 
 CONF_FILE = "welcome_config.json"
-_DEDUPE_TTL = 120  # 秒：同群同员的去重窗口（防 NapCat 重推）
+_DEDUPE_TTL = 120  # 秒：同群同员的去重窗口（防协议端重推）
 
 
 @register("astrbot_plugin_hd2_welcome", "Jerry114514", "HD2 进群欢迎", "1.0.0")
@@ -70,7 +70,8 @@ class Hd2WelcomePlugin(Star):
     async def on_group_message(self, event: AstrMessageEvent):
         """群消息统一入口：快速过滤，只处理进群通知。"""
         from astrbot_plugin_hd2_common.data import setting
-        if event.get_platform_name() != "aiocqhttp" or setting("bot", "platform", default="napcat") != "napcat":
+        bot_platform = str(setting("bot", "platform", default="napcat") or "")
+        if event.get_platform_name() != "aiocqhttp" or bot_platform not in ("napcat", "snowluma", "onebot"):
             return
         raw = getattr(event.message_obj, "raw_message", None)
         if raw is None:

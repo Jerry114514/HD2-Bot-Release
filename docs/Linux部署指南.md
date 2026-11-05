@@ -10,7 +10,7 @@
 | Linux x86_64 / arm64 | Debian/Ubuntu、Fedora、Arch 等主流发行版均可 |
 | Python 3.11+ | 系统包或 AstrBot 自带均可 |
 | Pillow | 图卡渲染依赖（`pip install pillow`） |
-| NapCat（可选） | QQ 接入需要；推荐 Docker 方式运行 |
+| SnowLuma（可选协议端） | QQ 接入需要；推荐官方 Docker 镜像，或 linux-x64 包 ./launcher.sh |
 | AstrBot v4.x | QQ 机器人框架，官方支持 Linux（CLI / Docker / 源码） |
 
 ## 1. 字体（用户反馈的核心修复）
@@ -97,25 +97,44 @@ chmod +x start.sh
 | --- | --- | --- |
 | `astrbot.python` | `D:/AstrBot/backend/python/python.exe` | `/usr/bin/python3` 或 venv 内 python |
 | `astrbot.exe` | 桌面版 exe 路径 | 指向**可执行启动脚本**（AstrBot CLI 或自建 wrapper.sh），如 `~/astrbot/start.sh` |
-| `napcat.dir` | Windows NapCat 发行包目录 | Docker 部署时可留空（仅用于启动器，见下） |
-| `napcat.webui_url` | `http://127.0.0.1:6099` | 不变（Docker 映射到本机端口即可） |
+| `snowluma.dir` | Windows 解压目录（含 `launcher.bat`） | Linux 解压目录（含 `launcher.sh`）；Docker 部署时可留空（见下） |
+| `snowluma.webui_url` | `http://127.0.0.1:5099` | 不变（Docker 映射到本机端口即可） |
+| `snowluma.onebot_http` | `http://127.0.0.1:3000` | 不变（控制台推送走 OneBot HTTP） |
+| `snowluma.access_token` | SnowLuma 数据目录 config/onebot*.json 的 accessToken | 同左 |
 
-## 4. NapCat（Linux 用 Docker）
+## 4. 协议端 SnowLuma（Linux 用 Docker）
 
-`NapCatWinBootMain.exe` / `NapCatWinBootHook.dll` 是 Windows 发行包专属，**启动器在 Linux 下会自动跳过 NapCat 拉起**并给出提示。推荐用 NapCat 官方 Docker 镜像：
+协议端为 **SnowLuma**（NapCat 同团队新一代 OneBot v11 实现）。它通过 hook 注入真实 QQ 进程，
+扫码登录在 QQ 窗口完成；Linux 无桌面时用官方镜像自带的 noVNC 扫码：
 
 ```bash
-docker run -d --name napcat \
-  -e NAPCAT_UID=$(id -u) -e NAPCAT_GID=$(id -g) \
-  -p 6099:6099 -p 3000-3001:3000-3001 \
-  -v ./napcat:/app/napcat mlikiowa/napcat-docker:latest
+docker run -d --name snowluma \
+  --restart unless-stopped \
+  --shm-size=1g \
+  --cap-add=SYS_PTRACE \
+  --security-opt seccomp=unconfined \
+  -p 6081:6081 -p 5099:5099 -p 3000:3000 -p 3001:3001 \
+  -v qq-gateway-data:/app/data \
+  -v qq-client-config:/app/.config \
+  -v qq-client-data:/app/.local/share \
+  motricseven7/snowluma:latest
 ```
 
-容器内完成 QQ 扫码登录后，把 OneBot v11 反向 WS 指向 AstrBot（`ws://127.0.0.1:6199/ws`，
-`reportSelfMessage = false`），与 Windows 流程相同。
+> `--cap-add=SYS_PTRACE` 与 `--security-opt seccomp=unconfined` **不能省**（注入需要）；
+> QQ（Chromium）需要 `--shm-size=1g`。
 
-> 不用 Docker 也可以：napcat.launcher / 无头脚本等官方 Linux 方式均可，
-> 只要 `napcat.webui_url` 端口可达，控制台的"已监听"检测就能工作。
+三步完成接入：
+
+1. **扫码登录**：浏览器打开 `http://127.0.0.1:6081/`（noVNC），密码在容器日志：
+   `docker logs snowluma 2>&1 | grep -E "远程桌面密码:|remote desktop password:" | tail -n 1`，
+   在远程桌面里的 QQ 窗口用手机 QQ 扫码
+2. **WebUI 配置**：打开 `http://127.0.0.1:5099/`（首次临时密码在日志中打印一次），在 OneBot
+   网络配置里添加 **wsClients 反向 WS** 指向 AstrBot：`ws://127.0.0.1:6199/ws`（role: Universal）
+3. **回填 accessToken**：把 SnowLuma 生成的 accessToken 填入项目 `config.json` 的
+   `snowluma.access_token`；其 onebot 配置的 `messageFormat` 设为 `string`（控制台推送用 CQ 码字符串）
+
+> 不用 Docker 也可以：下载 SnowLuma 的 `linux-x64` 包解压后 `./launcher.sh`（启动器已支持直接拉起），
+> 或用一键安装脚本；只要 `snowluma.webui_url` 端口可达，控制台的"已监听"检测就能工作。
 
 ## 5. 跨平台化的技术点（本分支改动清单）
 
@@ -126,15 +145,17 @@ docker run -d --name napcat \
 | `plugins/astrbot_plugin_hd2_roll/roll_card.py` | 删除硬编码 `C:\Windows\Fonts` 常量，改走共享解析器 |
 | `scripts/render_report_card.py` | 同上（保留独立运行时的本地候选回退） |
 | `plugins/astrbot_plugin_hd2_planet_info/main.py` | DeepSeek 翻译配置读取路径 `C:\Users\<USERNAME>\...` → `~/.astrbot/data/cmd_config.json`（环境变量 `HD2_CMD_CONFIG` 优先不变） |
-| `scripts/launch.py` | 端口探测 PowerShell → 纯 socket；进程列表 → tasklist/ps；WebUI 后台启动参数分平台（DETACHED_PROCESS / start_new_session）；NapCat 拉起在非 Windows 下跳过并提示 |
+| `scripts/launch.py` | 端口探测 PowerShell → 纯 socket；进程列表 → tasklist/ps；WebUI 后台启动参数分平台（DETACHED_PROCESS / start_new_session）；start_snowluma 双平台统一（launcher.bat / launcher.sh） |
 | `scripts/instance.py` | 新增 /proc 实现的端口归属校验与 SIGTERM 停止；Windows 路径保持 PowerShell 原逻辑；路径归一化改 `os.path`（双平台各自正确） |
-| `scripts/hd2_webui.py` | 端口监听/WS 连接检测跨平台；进程列表跨平台；二维码打开 xdg-open；NapCat 启动按钮在 Linux 下给出提示 |
+| `scripts/hd2_webui.py` | 端口监听/WS 连接检测跨平台；进程列表跨平台；「协议端WebUI」按钮 xdg-open/startfile |
 | `start.sh` | **新增**：Linux 启动器 |
 | `.gitattributes` | 补 `*.sh text eol=lf`（防止 Windows 端提交把 CRLF 带进 shell 脚本） |
 
 ### 已知边界（Linux 下与 Windows 的行为差异）
 
-- NapCat 进程级管理（拉起/重启按钮）仅 Windows 可用；Linux 下按钮返回提示，状态监测（端口/WS 连接）正常。
+- 协议端已从 NapCat 迁移到 SnowLuma：旧 `napcat.*` 配置键失效，请改用 `snowluma.*`（webui 5099 / onebot_http 3000 / access_token）。
+
+- 协议端进程级管理依赖 snowluma.dir 指向本地解压目录（含 launcher.sh）；Docker 部署时请直接操作容器（docker restart snowluma），控制台状态监测（端口/WS 连接）正常。
 - `instance.stop()` 在 Linux 下只停止**与配置匹配**的进程；无权限读取的他人进程会被跳过，绝不误杀。
 - 加粗渲染：文泉驿等无独立 Bold 字重时用常规体渲染（与 Windows 雅黑加粗观感略有差异）。
 

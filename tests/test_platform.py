@@ -13,11 +13,11 @@ from scripts import instance, launch
 
 
 class PlatformTests(unittest.TestCase):
-    def test_official_start_skips_napcat_and_waits(self):
+    def test_official_start_skips_snowluma_and_waits(self):
         with tempfile.TemporaryDirectory() as temp:
             path=Path(temp,"config.json");path.write_text('{"bot":{"platform":"qq_official"}}')
-            with patch.dict("os.environ",{"HD2_CONFIG":str(path)}),patch.object(launch,"start_astrbot",return_value="ready"),patch.object(launch,"start_webui",return_value="ready"),patch.object(launch,"start_napcat") as napcat,patch.object(launch.time,"sleep"),patch.object(launch.webbrowser,"open"),contextlib.redirect_stdout(io.StringIO()):
-                launch.main();napcat.assert_not_called()
+            with patch.dict("os.environ",{"HD2_CONFIG":str(path)}),patch.object(launch,"start_astrbot",return_value="ready"),patch.object(launch,"start_webui",return_value="ready"),patch.object(launch,"start_snowluma") as snowluma,patch.object(launch.time,"sleep"),patch.object(launch.webbrowser,"open"),contextlib.redirect_stdout(io.StringIO()):
+                launch.main();snowluma.assert_not_called()
 
     def test_wrong_port_owner_is_never_selected(self):
         def get(*keys,default=None):
