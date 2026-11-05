@@ -91,7 +91,11 @@ def matches(record, kind):
         except ValueError:
             return False
     script = cfg.resolve("scripts/hd2_webui.py") if kind == "webui" else os.path.join(cfg.get("astrbot", "app_dir", default=""), "launch_backend.py")
-    return configured(script) in args
+    if configured(script) in args:
+        return True
+    # launch_backend.py 未必在 app_dir 下（如 D:\AstrBot\backend\launch_backend.py）：
+    # exe 已匹配配置的 python 时，命令行含 launch_backend.py 即认定为本项目 AstrBot 后端
+    return kind == "astrbot" and any(a.lower().endswith("launch_backend.py") for a in args)
 
 
 def select(records, owners, kind):
