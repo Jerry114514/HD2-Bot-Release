@@ -20,8 +20,8 @@ def preflight(path):
     mode = value["bot"]["platform"]
     if mode not in ("napcat", "qq_official"):
         raise ValueError("bot.platform 无效")
-    if mode == "napcat" and not value["napcat"]["token"]:
-        raise ValueError("NapCat 模式缺少 token；请在本机配置，勿提交凭据")
+    if mode in ("napcat", "snowluma", "onebot") and not value.get("snowluma", {}).get("access_token"):
+        raise ValueError("协议端（SnowLuma）缺少 snowluma.access_token；请在本机配置，勿提交凭据")
     if not value["astrbot"].get("data_dir"):
         raise ValueError("请指定 astrbot.data_dir")
     node = value.get("runtime", {}).get("node", "node")

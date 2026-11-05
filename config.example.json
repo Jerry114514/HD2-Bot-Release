@@ -12,12 +12,13 @@
     "platform_id": "",
     "allow_chat": false
   },
-  "napcat": {
-    "webui_url": "http://127.0.0.1:6099",
-    "token": "YOUR_NAPCAT_WEBUI_TOKEN",
-    "dir": "C:/NapCat/napcat",
+  "snowluma": {
+    "_说明": "OneBot 协议端使用 SnowLuma（NapCat 同团队新一代实现）。webui_url 默认 5099；onebot_http 是 OneBot v11 HTTP 服务（控制台推送用）；access_token 填 SnowLuma 数据目录 config/onebot*.json 里的 accessToken；dir 填 SnowLuma 解压目录（含 launcher.bat / launcher.sh / index.mjs）；扫码登录在桌面 QQ 窗口完成（SnowLuma 自动注入 QQ）。旧的 napcat.* 配置已废弃，请迁移到本段。",
+    "webui_url": "http://127.0.0.1:5099",
+    "onebot_http": "http://127.0.0.1:3000",
+    "access_token": "YOUR_SNOWLUMA_ONEBOT_ACCESS_TOKEN",
+    "dir": "C:/SnowLuma",
     "qq_exe": "C:/Program Files/Tencent/QQNT/QQ.exe",
-    "qrcode_rel": "cache/qrcode.png",
     "ws_url": "ws://127.0.0.1:6199/ws"
   },
   "astrbot": {

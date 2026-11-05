@@ -9,15 +9,16 @@ import hd2_config as cfg
 
 
 def platform():
-    mode = cfg.get("bot", "platform", default="napcat")
+    mode = cfg.norm_platform(cfg.get("bot", "platform", default="napcat"))
     if mode not in ("napcat", "qq_official"):
-        raise ValueError("bot.platform 必须为 napcat 或 qq_official")
+        raise ValueError("bot.platform 必须为 napcat(=OneBot协议端通道,接受别名 snowluma/onebot) 或 qq_official")
     return mode
 
 
 def port(kind):
     if kind == "napcat":
-        return urlsplit(cfg.get("napcat", "webui_url", default="http://127.0.0.1:6099")).port or 80
+        # OneBot 协议端（SnowLuma）WebUI 端口，默认 5099
+        return urlsplit(cfg.get("snowluma", "webui_url", default="http://127.0.0.1:5099")).port or 80
     return int(cfg.get("astrbot", "webui_port", default=6185) if kind == "astrbot" else cfg.get("webui", "port", default=8630))
 
 
@@ -32,12 +33,30 @@ def configured(path):
     return normalized(path if ntpath.isabs(path) else cfg.resolve(path))
 
 
+def _is_snowluma(record):
+    """OneBot 协议端（SnowLuma）进程判定：exe 在协议端目录下，或命令行含 snowluma/index.mjs"""
+    argv = record.get("Argv")
+    if argv is not None:
+        parts = [str(v) for v in argv]
+    else:
+        try:
+            parts = shlex.split(record.get("CommandLine") or "", posix=False)
+        except ValueError:
+            return False
+    joined = " ".join(parts).lower()
+    if "snowluma" in joined or "index.mjs" in joined:
+        return True
+    sdir = configured(cfg.get("snowluma", "dir", default="")).lower()
+    return bool(sdir) and sdir in normalized(record.get("ExecutablePath") or "").lower()
+
+
 def matches(record, kind):
     exe = normalized(record.get("ExecutablePath"))
     if not exe:
         return False
     if kind == "napcat":
-        return exe == configured(cfg.get("napcat", "qq_exe", default=""))
+        # 协议端端口（5099）由 SnowLuma 的 node 进程持有；QQ.exe 本体不监听该端口
+        return _is_snowluma(record) or exe == configured(cfg.get("snowluma", "qq_exe", default=""))
     expected = cfg.get("astrbot", "exe", default="")
     if kind == "astrbot" and expected and exe == configured(expected):
         return True

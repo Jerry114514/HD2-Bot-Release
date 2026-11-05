@@ -57,7 +57,7 @@ def _default_group() -> int:
 
 def _target_group(raw=None):
     if instance.platform() != "napcat":
-        raise ValueError("控制台主动推送只支持已配置的 NapCat 通道；官方 QQ 请在 AstrBot 适配器中配置支持的会话能力")
+        raise ValueError("控制台主动推送只支持已配置的协议端通道（SnowLuma）；官方 QQ 请在 AstrBot 适配器中配置支持的会话能力")
     value = _default_group() if raw is None or str(raw).strip() == "" else raw
     return int(_norm_gid(value))
 PORT = int(_g("webui", "port", d=8630))
@@ -69,10 +69,10 @@ from astrbot_plugin_hd2_common.runtime import new_request, request_id
 _CONFIG_LOCK = threading.RLock()
 CSRF_TOKEN = secrets.token_urlsafe(32)
 
-SEND_SCRIPT = os.path.join(BASE, "scripts", "napcat_send_msg.py")
+SEND_SCRIPT = os.path.join(BASE, "scripts", "onebot_send_msg.py")
 GEN_REPORT = os.path.join(BASE, "scripts", "gen_report_live.py")
 REPORT_FILE = os.path.join(TEMP, "report_live2.txt")
-WS_INJECT = os.path.join(BASE, "scripts", "napcat_ws_inject.py")
+WS_INJECT = os.path.join(BASE, "scripts", "ws_inject.py")
 RESTART_HELPER = os.path.join(BASE, "scripts", "restart_webui.py")
 GUIDE_FILE = _cfg.resolve(_g("paths", "guide", d="tables/群使用说明.txt")) if _cfg else os.path.join(BASE, "tables", "群使用说明.txt")
 
@@ -97,12 +97,9 @@ def _load_plugin(plugin_dir: str):
 
 # ===== 一键启动部署相关（配置化） =====
 ASTRBOT_EXE = _g("astrbot", "exe", d="")
-NAPCAT_DIR = _g("napcat", "dir", d="")
-QQ_EXE = _g("napcat", "qq_exe", d="")
-QRCODE_FILE = _cfg.resolve_napcat(_g("napcat", "qrcode_rel", d="cache/qrcode.png")) if _cfg else os.path.join(NAPCAT_DIR, "cache", "qrcode.png")
-LOAD_JS = os.path.join(NAPCAT_DIR, "loadNapCat.js")
-NAP_MAIN = os.path.join(NAPCAT_DIR, "NapCatWinBootMain.exe")
-NAP_HOOK = os.path.join(NAPCAT_DIR, "NapCatWinBootHook.dll")
+SNOWLUMA_DIR = _g("snowluma", "dir", d="")
+SNOWLUMA_QQ_EXE = _g("snowluma", "qq_exe", d="")
+SNOWLUMA_WEBUI_URL = _g("snowluma", "webui_url", d="http://127.0.0.1:5099")
 
 PS = ["powershell", "-NoProfile", "-Command"]
 
@@ -117,7 +114,7 @@ def _ps(cmd: str, timeout=20) -> str:
 
 
 def _proc_names() -> list:
-    out = _ps("Get-Process | Where-Object { $_.ProcessName -match 'astrbot|NapCat|QQ' } | Select-Object -ExpandProperty ProcessName")
+    out = _ps("Get-Process | Where-Object { $_.ProcessName -match 'astrbot|SnowLuma|node|QQ' } | Select-Object -ExpandProperty ProcessName")
     return [l.strip() for l in out.splitlines() if l.strip()]
 
 
@@ -144,31 +141,18 @@ def _start_astrbot():
     return "ℹ️ AstrBot 启动请求已提交，尚未确认平台在线"
 
 
-def _start_napcat() -> str:
-    if any(p.startswith("NapCat") for p in _proc_names()):
-        return "✅ NapCat 已在运行"
-    env = dict(os.environ)
-    env["NAPCAT_PATCH_PACKAGE"] = os.path.join(NAPCAT_DIR, "qqnt.json")
-    env["NAPCAT_LOAD_PATH"] = LOAD_JS
-    env["NAPCAT_INJECT_PATH"] = NAP_HOOK
-    env["NAPCAT_LAUNCHER_PATH"] = NAP_MAIN
-    env["NAPCAT_MAIN_PATH"] = os.path.join(NAPCAT_DIR, "napcat.mjs")
-    try:
-        with io.open(LOAD_JS, "w", encoding="utf-8") as f:
-            f.write('(async () => {await import("file:///' + NAPCAT_DIR.replace('\\', '/') + '/napcat.mjs")})()')
-        subprocess.Popen([NAP_MAIN, QQ_EXE, NAP_HOOK], env=env, cwd=NAPCAT_DIR)
-        return "✅ NapCat 启动指令已发出（等待约 25 秒生成二维码）"
-    except Exception as e:
-        return f"❌ 启动 NapCat 失败: {e}"
+def _start_snowluma() -> str:
+    """启动 OneBot 协议端 SnowLuma：直接复用启动器逻辑（端口检测 → launcher.bat/sh → 扫码提示）"""
+    from scripts.launch import start_snowluma
+    return start_snowluma()
 
 
 def action_boot_all():
     lines = [_start_astrbot()]
     if instance.platform() == "napcat":
-        from scripts.launch import start_napcat
-        lines.append(start_napcat())
+        lines.append(_start_snowluma())
     else:
-        lines.append("官方平台模式，请在 AstrBot 适配器完成认证；跳过 NapCat 登录")
+        lines.append("官方平台模式，请在 AstrBot 适配器完成认证；跳过协议端登录")
     return "\n".join(lines)
 
 
@@ -177,25 +161,28 @@ def action_status():
     lines = ["当前接入：" + instance.platform(), f"AstrBot {port}：" + ("已监听" if _port_listen(port) else "未监听")]
     if instance.platform() == "napcat":
         lines.append(f"OneBot {_g('astrbot','ws_port',d=6199)}：" + ("存在连接（不等于消息发送成功）" if _ws_connected() else "未连接"))
+        lines.append(f"协议端 WebUI {SNOWLUMA_WEBUI_URL}：" + ("已监听" if _port_listen(instance.port("napcat")) else "未监听"))
     else:
-        lines.append("官方平台认证和连接状态在 AstrBot 适配器中确认；控制台不使用 NapCat 推送/欢迎能力")
+        lines.append("官方平台认证和连接状态在 AstrBot 适配器中确认；控制台不使用协议端推送/欢迎能力")
     return "\n".join(lines)
 
 
-def action_restart_napcat():
+def action_restart_snowluma():
     if instance.platform() != "napcat":
-        return "❌ 当前是官方平台模式，不启动 NapCat"
+        return "❌ 当前是官方平台模式，不启动协议端"
     instance.stop("napcat")
-    from scripts.launch import start_napcat
-    return start_napcat()
+    return _start_snowluma()
 
 
-def action_open_qrcode() -> str:
-    if not os.path.exists(QRCODE_FILE):
-        return "❌ 二维码文件不存在：" + QRCODE_FILE
+def action_open_webui() -> str:
+    """SnowLuma 无二维码落盘文件：扫码在桌面 QQ 窗口完成；此按钮直达协议端 WebUI"""
     try:
-        os.startfile(QRCODE_FILE)
-        return "✅ 已打开二维码图片：" + QRCODE_FILE + f"\n（用手机 QQ 扫一扫登录主号 {_g('bot','self_id', d='机器人号')}）"
+        if os.name == "nt":
+            os.startfile(SNOWLUMA_WEBUI_URL)
+        else:
+            subprocess.Popen(["xdg-open", SNOWLUMA_WEBUI_URL])
+        return ("✅ 已打开协议端 WebUI：" + SNOWLUMA_WEBUI_URL
+                + f"\n（首次登录密码在其控制台日志；扫码在桌面 QQ 窗口完成，主号 {_g('bot','self_id', d='机器人号')}）")
     except Exception as e:
         return f"❌ 打开失败: {e}"
 
@@ -233,7 +220,7 @@ def action_push_all():
 
 def _push_text_all(title,text):
     if instance.platform() != "napcat":
-        return "❌ 控制台主动推送只支持已配置的 NapCat；官方平台能力在 AstrBot 管理"
+        return "❌ 控制台主动推送只支持已配置的协议端（SnowLuma）；官方平台能力在 AstrBot 管理"
     groups = [_target_group(g) for g in (_g("bot","groups",d=[]) or [])]
     if not groups:
         return "❌ 未配置推送目标"
@@ -359,7 +346,7 @@ def _local_ip() -> str:
 def _aiohttp_dashboard():
     """返回 Dashboard 的候选 base_url 列表（去掉重复、保序）"""
     port = int(_g("astrbot", "webui_port", d=6185) or 6185)
-    wl = str(_g("napcat", "webui_url", d="") or "")
+    wl = str(_g("snowluma", "webui_url", d="") or "")
     m = re.search(r"https?://([\d.]+)", wl)
     host = m.group(1) if m else "127.0.0.1"
     urls = []
@@ -858,8 +845,8 @@ def action_inject_push(cmd: str, group=None) -> str:
 ACTIONS = {
     "boot_all": action_boot_all,
     "status": action_status,
-    "restart_napcat": action_restart_napcat,
-    "open_qrcode": action_open_qrcode,
+    "restart_snowluma": action_restart_snowluma,
+    "open_webui": action_open_webui,
     "restart_webui": action_restart_webui,
     "send_guide": action_send_guide,
     "send_guide_to": action_send_guide_to,
@@ -980,16 +967,16 @@ PAGE = r"""<!DOCTYPE html>
 <div class="grid">
   <div class="card">
     <h3>🛠️ 一键启动部署</h3>
-    <p class="desc">启动 AstrBot + NapCat，自动打开二维码扫码登录 QQ，验证全链路（机器人上线）</p>
+    <p class="desc">启动 AstrBot + SnowLuma（自动注入 QQ），在 QQ 窗口扫码登录，验证全链路（机器人上线）</p>
     <div class="btn-row">
       <button onclick="run('boot_all')">🚀 一键启动</button>
-      <button class="sec" onclick="run('open_qrcode')">📱 打开二维码</button>
-      <button class="sec" onclick="run('restart_napcat')">🔄 重启NapCat</button>
+      <button class="sec" onclick="run('open_webui')">🌐 协议端WebUI</button>
+      <button class="sec" onclick="run('restart_snowluma')">🔄 重启SnowLuma</button>
       <button class="sec" onclick="run('restart_astrbot')">🔄 重启AstrBot</button>
       <button class="sec" onclick="run('restart_webui')">🔁 重启WebUI</button>
       <button onclick="run('status')">🔍 状态</button>
     </div>
-    <div class="hint">一键启动约 30~60 秒；「重启 NapCat」用于 QQ 掉线后重新扫码（会先关掉旧 QQ 进程）；「重启 WebUI」用于本页面卡死/服务被杀后自愈</div>
+    <div class="hint">一键启动约 30~60 秒；「重启 SnowLuma」用于 QQ 掉线后重新注入（会先关掉旧协议端进程）；「重启 WebUI」用于本页面卡死/服务被杀后自愈</div>
   </div>
 
   <div class="card">

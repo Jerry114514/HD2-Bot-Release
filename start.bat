@@ -2,7 +2,7 @@
 chcp 65001 >nul
 title HD2 Bot Launcher
 echo ============================================
-echo   HD2 Bot Launcher (AstrBot + NapCat + WebUI)
+echo   HD2 Bot Launcher (AstrBot + SnowLuma + WebUI)
 echo ============================================
 echo.
 
@@ -13,7 +13,7 @@ if not exist "%HD2_PROJECT_DIR%config.json" (
     echo [WARN] config.json not found.
     echo   Copy config.example.json to config.json first, then fill in:
     echo   - bot.self_id / bot.groups
-    echo   - napcat.dir / napcat.token
+    echo   - snowluma.dir / snowluma.access_token
     echo   - astrbot.exe / astrbot.python
     echo   - llm.api_key
     echo.

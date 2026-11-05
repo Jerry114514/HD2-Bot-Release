@@ -2,7 +2,7 @@
 """
 HD2 Bot 一键启动器
 ==================
-按顺序启动：AstrBot → NapCat(QQ) → Web 控制台 → 打开浏览器。
+按顺序启动：AstrBot → SnowLuma(QQ 协议端) → Web 控制台 → 打开浏览器。
 所有路径/账号从 config.json 读取（hd2_config），部署者只需配置一次。
 
 用法：
@@ -43,7 +43,7 @@ def proc_names() -> list:
     try:
         out = subprocess.run(
             ["powershell", "-NoProfile", "-Command",
-             "Get-Process | Where-Object { $_.ProcessName -match 'astrbot|NapCat|QQ' } | Select-Object -ExpandProperty ProcessName"],
+             "Get-Process | Where-Object { $_.ProcessName -match 'astrbot|SnowLuma|node|QQ' } | Select-Object -ExpandProperty ProcessName"],
             capture_output=True, text=True, timeout=15,
         )
         return [l.strip() for l in out.stdout.splitlines() if l.strip()]
@@ -73,35 +73,43 @@ def start_astrbot() -> str:
     return "⚠️ AstrBot 启动中，WebUI 尚未就绪（稍后可用）"
 
 
-def start_napcat() -> str:
+def start_snowluma() -> str:
+    """启动 OneBot 协议端 SnowLuma（NapCat 同团队新一代实现）。
+
+    SnowLuma 自动监视并注入 QQ.exe（hookAutoLoad），先启 QQ 或先启 SnowLuma 均可；
+    扫码登录在桌面 QQ 窗口完成，WebUI（默认 5099）做账号与 OneBot 网络配置。
+    """
     if instance.platform() != "napcat":
-        return "ℹ️ 官方平台模式，跳过 NapCat"
+        return "ℹ️ 官方平台模式，跳过协议端"
     if port_listen(instance.port("napcat")):
         instance.verified_pids("napcat")
-        return "✅ NapCat 已在运行"
-    ndir = _g("napcat", "dir", default="")
-    qq_exe = _g("napcat", "qq_exe", default="")
-    if not ndir or not os.path.exists(os.path.join(ndir, "NapCatWinBootMain.exe")):
-        return "⚠️ 未找到 NapCat（config.json 的 napcat.dir），跳过"
-    env = dict(os.environ)
-    env["NAPCAT_PATCH_PACKAGE"] = os.path.join(ndir, "qqnt.json")
-    env["NAPCAT_LOAD_PATH"] = os.path.join(ndir, "loadNapCat.js")
-    env["NAPCAT_INJECT_PATH"] = os.path.join(ndir, "NapCatWinBootHook.dll")
-    env["NAPCAT_LAUNCHER_PATH"] = os.path.join(ndir, "NapCatWinBootMain.exe")
-    env["NAPCAT_MAIN_PATH"] = os.path.join(ndir, "napcat.mjs")
-    loader = os.path.join(ndir,"loadNapCat.js")
-    from pathlib import Path
-    from urllib.parse import urljoin
-    text = '(async () => {await import(' + __import__('json').dumps(Path(ndir,"napcat.mjs").resolve().as_uri()) + ')})()'
-    if os.path.exists(loader) and Path(loader).read_text(encoding="utf-8") != text:
-        return "⚠️ 已有自定义 NapCat loader，请使用原启动方式或明确配置专用目录"
-    if not os.path.exists(loader):
-        Path(loader).write_text(text,encoding="utf-8")
-    subprocess.Popen(
-        [os.path.join(ndir, "NapCatWinBootMain.exe"), qq_exe, os.path.join(ndir, "NapCatWinBootHook.dll")],
-        env=env, cwd=ndir,
-    )
-    return "✅ NapCat 启动指令已发出（等待约 25 秒生成二维码）"
+        return "✅ SnowLuma 已在运行（WebUI " + str(instance.port("napcat")) + "）"
+    sdir = _g("snowluma", "dir", default="")
+    launcher = os.path.join(sdir, "launcher.bat" if os.name == "nt" else "launcher.sh")
+    if not sdir or not os.path.exists(launcher):
+        return ("⚠️ 未找到 SnowLuma（config.json 的 snowluma.dir，应含 launcher.bat / launcher.sh），"
+                "跳过；可手动启动或改用 Docker（Linux 见 docs/Linux部署指南.md）")
+    # QQ 未运行时顺手拉起（SnowLuma 会自动注入）；失败不阻塞
+    qq_exe = _g("snowluma", "qq_exe", default="")
+    if qq_exe and os.path.exists(qq_exe):
+        try:
+            subprocess.Popen([qq_exe])
+        except Exception:
+            pass
+    extra = {}
+    if os.name == "nt":
+        extra["creationflags"] = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    else:
+        extra["start_new_session"] = True
+    try:
+        subprocess.Popen([launcher], cwd=sdir, env=dict(os.environ, HD2_PROJECT_DIR=_ROOT), **extra)
+    except Exception as e:
+        return f"❌ 启动 SnowLuma 失败: {e}"
+    if wait_port(instance.port("napcat"), 60):
+        return ("✅ SnowLuma 已启动；首次启动请从其控制台日志取临时密码登录 WebUI，"
+                "并在桌面 QQ 窗口完成扫码登录")
+    return ("ℹ️ SnowLuma 启动中；扫码登录请在 QQ 窗口完成，"
+            f"WebUI 默认 {_g('snowluma', 'webui_url', default='http://127.0.0.1:5099')}")
 
 
 def start_webui() -> str:
@@ -140,13 +148,11 @@ def main():
     print("\n[1/4] AstrBot ...")
     print("  " + start_astrbot())
 
-    qr = ""
     if instance.platform() == "napcat":
-        print(start_napcat())
-        qr = cfg.resolve_napcat(_g("napcat","qrcode_rel",default="cache/qrcode.png"))
-        print("请在 NapCat 完成登录；状态和发送结果需分别确认。")
+        print(start_snowluma())
+        print("请在协议端（SnowLuma）WebUI 或桌面 QQ 窗口完成扫码登录；状态和发送结果需分别确认。")
     else:
-        print("官方平台模式：请在 AstrBot 适配器中配置凭据；跳过 NapCat 和 OneBot 等待。")
+        print("官方平台模式：请在 AstrBot 适配器中配置凭据；跳过协议端和 OneBot 等待。")
 
     # 4. WebUI + 浏览器
     print("\n[4/4] Web 控制台 ...")
@@ -160,8 +166,8 @@ def main():
         print(f"  🌐 请手动访问 {web_url}")
 
     print("\n" + "=" * 46)
-    print("  启动完成！若 QQ 需扫码，二维码在：")
-    print("  " + (qr if os.path.exists(qr) else "(未生成)"))
+    print("  启动完成！扫码登录：桌面 QQ 窗口（SnowLuma 自动注入），")
+    print("  WebUI 配置见 " + _g("snowluma", "webui_url", default="http://127.0.0.1:5099"))
     print("=" * 46)
 
 

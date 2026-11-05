@@ -29,9 +29,11 @@ class Hd2GuardPlugin(Star):
         parsed = parse_event(event)
         platform_name = event.get_platform_name()
         group_platform = GROUP_PLATFORMS.get(platform_name)
-        # Legacy configurations contain NapCat's numeric group IDs. Official QQ
+        # Legacy configurations contain NapCat/SnowLuma's numeric group IDs. Official QQ
         # uses a separate OpenID namespace; its allowlist must be configured as such.
-        applies = group_platform is None or group_platform == setting("bot", "platform", default="napcat")
+        selected_platform = setting("bot", "platform", default="napcat")
+        applies = group_platform is None or group_platform == selected_platform or (
+            group_platform == "napcat" and selected_platform in ("snowluma", "onebot"))
         if groups and applies and str(getattr(event.message_obj, "group_id", "")) not in groups:
             choices.cancel(event)
             if parsed or not setting("bot", "allow_chat", default=False):
