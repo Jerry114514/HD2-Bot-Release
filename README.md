@@ -2,6 +2,13 @@
 
 基于 AstrBot 的《绝地潜兵2》中文机器人，包含 10 个插件。战报、战线、DSS、战役、星球、Wiki 与配装支持黑金 HUD 图片；图片不可用时使用同一次查询的文字结果。
 
+## 最近更新（2026-11）
+
+- **协议端迁移 NapCat → SnowLuma**：OneBot v11 协议端改用 SnowLuma（NapCat 同团队新一代实现）。启动链路改为 `launcher.bat` / `launcher.sh`（自动注入 QQ）；推送改走标准 OneBot HTTP（3000 端口 + accessToken）；WebUI 5099；扫码在 QQ 窗口完成。配置键 `napcat.*` → `snowluma.*`，`bot.platform` 兼容 `snowluma`/`onebot` 别名。详见下文「协议端：SnowLuma」。
+- **消息卡片重构**：超长卡不再拆成多张图连发，合并为**单张宽图**，分区自左向右连续阅读（每列带分区标签，均衡切分）；可读性提升——次要文字对比度提亮、正文 20px/行距统一、战线列表斑马纹、修复任务面板高度溢出。
+- **报错提示统一**：新增 `astrbot_plugin_hd2_common/errors.py`，按「网络异常 / 参数与数据 / 未知错误」三类给出可操作提示，并附各指令用法示例；不再向群聊暴露异常类名。
+- **Linux 适配分支**：[`Linux-Branch`](https://github.com/Jerry114514/HD2-Bot-Release/tree/Linux-Branch) 提供 `start.sh`、跨平台 CJK 字体解析（`HD2_FONT` 环境变量可覆盖）与 /proc 进程管理，见 `docs/Linux部署指南.md`。
+
 ## 指令
 
 | 指令 | 内容 |
