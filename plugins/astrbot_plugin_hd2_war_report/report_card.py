@@ -28,12 +28,9 @@ DIST_URL = "https://jerry114514.github.io/HD2-Galatic_war-Map/data/history/playe
 CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache")
 OUT_NAME = "report_card.png"
 FETCH_TIMEOUT = 20
-FONT_CANDIDATES = [
-    (r"C:\Windows\Fonts\msyh.ttc", r"C:\Windows\Fonts\msyhbd.ttc"),
-    (r"C:\Windows\Fonts\simhei.ttf", r"C:\Windows\Fonts\simhei.ttf"),
-    (r"C:\Windows\Fonts\arial.ttf", r"C:\Windows\Fonts\arialbd.ttf"),
-    ("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",) * 2,
-]
+# 字体解析跨平台化：Windows / Linux / macOS 候选清单与 fc-match 动态发现
+# 收敛到共享解析器（astrbot_plugin_hd2_common/fonts.py），可用 HD2_FONT / HD2_FONT_BOLD 覆盖
+from astrbot_plugin_hd2_common.fonts import resolve_font_pair
 
 # ── 主站 tokens（css/tokens.css 同源） ──
 BG = (10, 10, 10)
@@ -59,7 +56,7 @@ def F(sz, bold=False):
         sz += 2
     key = (sz, bold)
     if key not in _fcache:
-        reg, bold_p = next((pair for pair in FONT_CANDIDATES if all(os.path.isfile(p) for p in pair)), ("DejaVuSans.ttf", "DejaVuSans.ttf"))
+        reg, bold_p = resolve_font_pair()
         _fcache[key] = ImageFont.truetype(bold_p if bold else reg, sz, index=0)
     return _fcache[key]
 

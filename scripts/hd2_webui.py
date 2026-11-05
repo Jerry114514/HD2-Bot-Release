@@ -117,19 +117,54 @@ def _ps(cmd: str, timeout=20) -> str:
 
 
 def _proc_names() -> list:
-    out = _ps("Get-Process | Where-Object { $_.ProcessName -match 'astrbot|NapCat|QQ' } | Select-Object -ExpandProperty ProcessName")
-    return [l.strip() for l in out.splitlines() if l.strip()]
+    if os.name == "nt":
+        out = _ps("Get-Process | Where-Object { $_.ProcessName -match 'astrbot|NapCat|QQ' } | Select-Object -ExpandProperty ProcessName")
+        return [l.strip() for l in out.splitlines() if l.strip()]
+    try:
+        out = subprocess.run(["ps", "-eo", "comm="], capture_output=True, text=True, timeout=15)
+        return [l.strip() for l in (out.stdout or "").splitlines()
+                if l.strip().lower().startswith(("astrbot", "napcat", "qq"))]
+    except Exception:
+        return []
 
 
 def _port_listen(port: int) -> bool:
-    return _ps(f"(Get-NetTCPConnection -State Listen -LocalPort {port} -ErrorAction SilentlyContinue | Measure-Object).Count") not in ("", "0")
+    """socket 探测，Windows / Linux 通用"""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(1.0)
+            return s.connect_ex(("127.0.0.1", int(port))) == 0
+    except Exception:
+        return False
+
+
+def _tcp_established_count(port: int) -> int:
+    """统计与本地 port 处于 ESTABLISHED 的连接数（Windows 用 PowerShell，Linux 用 /proc）"""
+    if os.name == "nt":
+        return 1 if _ps(f"(Get-NetTCPConnection -LocalPort {port} -State Established -ErrorAction SilentlyContinue | Measure-Object).Count") not in ("", "0") else 0
+    count = 0
+    local_hex = f"{int(port):04X}"
+    for table in ("/proc/net/tcp", "/proc/net/tcp6"):
+        try:
+            with open(table, encoding="ascii") as f:
+                for line in f:
+                    parts = line.split()
+                    if len(parts) < 4:
+                        continue
+                    if parts[3] != "01":  # 01 = ESTABLISHED
+                        continue
+                    if parts[1].rsplit(":", 1)[1].upper() == local_hex or parts[2].rsplit(":", 1)[1].upper() == local_hex:
+                        count += 1
+        except (OSError, ValueError, IndexError):
+            continue
+    return count
 
 
 def _ws_connected():
     if instance.platform() != "napcat":
         return False
     port = int(_g("astrbot","ws_port",d=6199))
-    return _ps(f"(Get-NetTCPConnection -LocalPort {port} -State Established -ErrorAction SilentlyContinue | Measure-Object).Count") not in ("","0")
+    return _tcp_established_count(port) > 0
 
 
 def _start_astrbot():
@@ -147,6 +182,10 @@ def _start_astrbot():
 def _start_napcat() -> str:
     if any(p.startswith("NapCat") for p in _proc_names()):
         return "✅ NapCat 已在运行"
+    if os.name != "nt":
+        # NapCatWinBootMain.exe / NapCatWinBootHook.dll 仅存在于 Windows 发行包
+        return ("ℹ️ Linux 平台请用 Docker 或官方脚本自行启动 NapCat"
+                "（参见 docs/Linux部署指南.md），本控制台仅监测其端口")
     env = dict(os.environ)
     env["NAPCAT_PATCH_PACKAGE"] = os.path.join(NAPCAT_DIR, "qqnt.json")
     env["NAPCAT_LOAD_PATH"] = LOAD_JS
@@ -194,7 +233,10 @@ def action_open_qrcode() -> str:
     if not os.path.exists(QRCODE_FILE):
         return "❌ 二维码文件不存在：" + QRCODE_FILE
     try:
-        os.startfile(QRCODE_FILE)
+        if os.name == "nt":
+            os.startfile(QRCODE_FILE)
+        else:
+            subprocess.Popen(["xdg-open", QRCODE_FILE])
         return "✅ 已打开二维码图片：" + QRCODE_FILE + f"\n（用手机 QQ 扫一扫登录主号 {_g('bot','self_id', d='机器人号')}）"
     except Exception as e:
         return f"❌ 打开失败: {e}"

@@ -1,5 +1,6 @@
 *.py text eol=lf
 *.mjs text eol=lf
 *.md text eol=lf
+*.sh text eol=lf
 plugins/astrbot_plugin_hd2_roll/runtime/** -text linguist-vendored
 plugins/astrbot_plugin_hd2_roll/runtime/**/*.json linguist-generated

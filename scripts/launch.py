@@ -10,6 +10,7 @@ HD2 Bot 一键启动器
   或直接双击项目根目录的 start.bat
 """
 import os
+import socket
 import sys
 import time
 import subprocess
@@ -28,25 +29,31 @@ def _g(*keys, default=None):
 
 
 def port_listen(port: int) -> bool:
+    """端口是否在监听（纯 socket 探测，Windows / Linux 通用）"""
     try:
-        out = subprocess.run(
-            ["powershell", "-NoProfile", "-Command",
-             f"(Get-NetTCPConnection -State Listen -LocalPort {port} -ErrorAction SilentlyContinue | Measure-Object).Count"],
-            capture_output=True, text=True, timeout=15,
-        )
-        return out.stdout.strip() not in ("", "0")
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(1.0)
+            return s.connect_ex(("127.0.0.1", int(port))) == 0
     except Exception:
         return False
 
 
 def proc_names() -> list:
     try:
-        out = subprocess.run(
-            ["powershell", "-NoProfile", "-Command",
-             "Get-Process | Where-Object { $_.ProcessName -match 'astrbot|NapCat|QQ' } | Select-Object -ExpandProperty ProcessName"],
-            capture_output=True, text=True, timeout=15,
-        )
-        return [l.strip() for l in out.stdout.splitlines() if l.strip()]
+        if os.name == "nt":
+            out = subprocess.run(
+                ["tasklist", "/FO", "CSV", "/NH"],
+                capture_output=True, text=True, timeout=15,
+            )
+            names = []
+            for line in (out.stdout or "").splitlines():
+                parts = line.split('","')
+                if parts and (parts[0].strip('" ').lower().startswith(("astrbot", "napcat", "qq"))):
+                    names.append(parts[0].strip('" '))
+            return names
+        out = subprocess.run(["ps", "-eo", "comm="], capture_output=True, text=True, timeout=15)
+        return [l.strip() for l in (out.stdout or "").splitlines()
+                if l.strip().lower().startswith(("astrbot", "napcat", "qq"))]
     except Exception:
         return []
 
@@ -66,7 +73,9 @@ def start_astrbot() -> str:
         return "✅ 已配置实例的 Dashboard 正在监听"
     exe = _g("astrbot", "exe", default="")
     if not exe or not os.path.exists(exe):
-        return "⚠️ 未找到 AstrBot（config.json 的 astrbot.exe），跳过"
+        hint = ("（Linux 下可将 astrbot.exe 配置为可执行启动脚本，"
+                "如 AstrBot 官方 CLI 或自建的 wrapper.sh）" if os.name != "nt" else "")
+        return f"⚠️ 未找到 AstrBot（config.json 的 astrbot.exe），跳过{hint}"
     subprocess.Popen([exe])
     if wait_port(int(_g("astrbot", "webui_port", default=6185)), 90):
         return "ℹ️ Dashboard 已监听，平台认证请在 AstrBot 中确认"
@@ -79,6 +88,10 @@ def start_napcat() -> str:
     if port_listen(instance.port("napcat")):
         instance.verified_pids("napcat")
         return "✅ NapCat 已在运行"
+    if os.name != "nt":
+        # NapCatWinBootMain.exe / NapCatWinBootHook.dll 仅存在于 Windows 发行包
+        return ("ℹ️ Linux 平台请用 Docker 或官方脚本自行启动 NapCat"
+                "（参见 docs/Linux部署指南.md），并确保 napcat.webui_url 可达")
     ndir = _g("napcat", "dir", default="")
     qq_exe = _g("napcat", "qq_exe", default="")
     if not ndir or not os.path.exists(os.path.join(ndir, "NapCatWinBootMain.exe")):
@@ -109,14 +122,19 @@ def start_webui() -> str:
         instance.verified_pids("webui")
         return "✅ 当前 Web 控制台已在运行"
     py = _g("astrbot", "python", default="python")
-    pyw = py.replace("python.exe", "pythonw.exe") if py.lower().endswith("python.exe") else py
+    pyw = py
+    extra = {}
+    if os.name == "nt":
+        pyw = py.replace("python.exe", "pythonw.exe") if py.lower().endswith("python.exe") else py
+        extra["creationflags"] = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    else:
+        extra["start_new_session"] = True
     webui = os.path.join(_ROOT, "scripts", "hd2_webui.py")
     try:
         subprocess.Popen(
             [pyw, "-X", "utf8", webui],
-            creationflags=getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
             close_fds=True, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-            env=dict(os.environ, HD2_PROJECT_DIR=_ROOT),
+            env=dict(os.environ, HD2_PROJECT_DIR=_ROOT), **extra,
         )
         return "✅ Web 控制台启动中"
     except Exception as e:

@@ -30,8 +30,11 @@ TEXT = (242, 242, 242); DIM = (168, 168, 168); MUTE = (110, 110, 110)
 GOLD = (255, 176, 0); GOLD2 = (255, 201, 74); BRASS = (200, 134, 42)
 W = 1080; PAD = 36; TALL = 1800
 
-FZ = r"C:\Windows\Fonts\msyh.ttc"
-FZB = r"C:\Windows\Fonts\msyhbd.ttc"
+# 字体跨平台解析（原为硬编码 C:\Windows\Fonts\msyh.ttc，Linux 下不可用）
+# 实际渲染统一走 report_card.F()；FZ/FZB 仅保留兼容引用
+from astrbot_plugin_hd2_common.fonts import resolve_font
+FZ = resolve_font(False)
+FZB = resolve_font(True)
 _f = {}
 from astrbot_plugin_hd2_war_report.report_card import F
 

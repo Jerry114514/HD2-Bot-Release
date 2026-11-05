@@ -38,6 +38,8 @@ Bot只提供整套七槽抽取，不提供单件替换、锁定或手动选装�
 
 部署面向 Windows + AstrBot 桌面版。代码离线检查同时覆盖 Windows/Linux；Linux 运行需要自行准备中文字体和对应平台接入。
 
+> **Linux 用户**：请切换到 [`Linux-Branch`](https://github.com/Jerry114514/HD2-Bot-Release/tree/Linux-Branch) 分支——该分支完成了字体跨平台解析、启动链路跨平台化（`start.sh`），详见 [docs/Linux部署指南.md](docs/Linux部署指南.md)。
+
 使用 Python 3.12（与本轮验证的 AstrBot 4.29.3 匹配）和 Node.js 22 或更高版本；AstrBot 使用支持事件优先级的版本（建议与部署使用的当前桌面版一并验证）。基础依赖：
 
 ```powershell

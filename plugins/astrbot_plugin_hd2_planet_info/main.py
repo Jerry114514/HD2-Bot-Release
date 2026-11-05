@@ -208,9 +208,10 @@ async def _translate_objective_desc(context, desc: str) -> str:
         import json as _json
         import urllib.request as _urllib
 
-        conf = _json.load(
-            open(_os.environ.get("HD2_CMD_CONFIG", r"C:\Users\<USERNAME>\.astrbot\data\cmd_config.json"), encoding="utf-8-sig")
-        )
+        # 默认路径跨平台化（原硬编码 C:\Users\<USERNAME>\...）：~/.astrbot/data/cmd_config.json
+        _cmd_config = _os.environ.get("HD2_CMD_CONFIG") or _os.path.join(
+            _os.path.expanduser("~"), ".astrbot", "data", "cmd_config.json")
+        conf = _json.load(open(_cmd_config, encoding="utf-8-sig"))
         providers = conf.get("provider_sources") or []
         key, base = "", "https://api.deepseek.com/v1/chat/completions"
         for p in providers:
