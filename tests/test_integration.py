@@ -125,9 +125,11 @@ if(/<b>name|<i>msg|<u>detail|bad\(\)/.test(body.innerHTML))throw Error('unescape
             doc["campaigns"]*=65
             doc["fetchedAt"]="long-fixture"
             paths=card.render_campaigns_card(temp)
-            self.assertIsInstance(paths,list);self.assertGreater(len(paths),1)
-            for image in paths:
-                with card.Image.open(image) as img:self.assertLessEqual(img.height,2164)
+            # 多页已合并为单张宽图（分区自左向右）：返回单一路径，列高受控、宽度随列数增长
+            self.assertIsInstance(paths,str)
+            with card.Image.open(paths) as img:
+                self.assertLessEqual(img.height,2224)
+                self.assertGreater(img.width,card.W)
 
 
 if __name__=="__main__":unittest.main()

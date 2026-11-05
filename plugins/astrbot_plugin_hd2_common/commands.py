@@ -6,12 +6,12 @@ from pathlib import Path
 import re
 import unicodedata
 
-from . import data
+from . import data, orders
 
 ALIASES = {
     "战报": "report", "目前战况如何": "report", "现在在打哪里": "report",
-    "重要指令是什么": "report", "战况如何": "report", "重要指令": "report",
-    "打哪里": "report", "major order": "report", "majororder": "report",
+    "重要指令是什么": "mo", "战况如何": "report", "重要指令": "mo",
+    "打哪里": "report", "major order": "mo", "majororder": "mo",
     "战线": "campaigns", "dss": "dss", "战役": "briefing", "分析": "analysis",
     "api": "api", "银河星图": "map", "星图": "map",
     "roll": "roll", "随机战备": "roll", "roll战备": "roll",
@@ -107,11 +107,12 @@ def value(value, digits=1):
 
 def order_text(doc):
     mo, assignment = doc.get("major_order") or {}, doc.get("assignments") or {}
+    content = data.major_order_content(doc)
     if not assignment and not mo:
-        return "🎖️ 当前没有进行中的重要指令。"
-    lines = ["🎖️ 重要指令", clean(mo.get("translated_brief") or assignment.get("briefing") or mo.get("brief"))]
+        return "🎖️ 当前没有进行中的重要指令。\n\n" + orders.special_orders_text(doc)
+    lines = ["🎖️ " + (content.get("title") or "重要指令"), content.get("text") or "暂缺正文"]
     if lines[1] and not re.search(r"[\u4e00-\u9fff]", lines[1]):
-        lines.insert(1, "暂缺中文简报，以下为来源原文：")
+        lines.insert(1, "暂缺中文正文，以下为来源原文：")
     for row in mo_tasks(doc):
         current, goal = row.get("progress"), row.get("goal")
         lines.append(f"• {clean(row.get('name') or row.get('label') or TASK_NAMES.get(row.get('type'), '任务'))}："
@@ -120,6 +121,7 @@ def order_text(doc):
         lines.append("截止：" + assignment["deadline"])
         if data.timestamp(assignment["deadline"]) is not None and data.timestamp(doc.get("fetchedAt")) is not None and data.timestamp(assignment["deadline"]) <= data.timestamp(doc["fetchedAt"]):
             lines.append("该指令截止时间已过，等待新指令。")
+    lines.extend(["", orders.special_orders_text(doc)])
     return "\n".join(line for line in lines if line)
 
 
@@ -190,17 +192,48 @@ def dss_text(doc):
 
 
 def briefing_text(doc):
-    active = doc.get("active_campaign") or {}
-    if not active.get("available"):
+    active = data.campaign_view(doc)
+    if not active or active.get("available") is False:
         return "🎬 当前没有可用的战役简报。"
-    lines = ["🎬 " + clean(active.get("title_cn") or active.get("title")), clean(active.get("description_cn") or active.get("description"))]
-    for phase in [data.current_phase(active)]:
-        lines.extend([clean(phase.get("title_cn") or phase.get("title")), clean(phase.get("briefing_cn") or phase.get("briefing"))])
+    title = clean(active.get("title_cn") or active.get("title"))
+    title_en = clean(active.get("title")) if active.get("title_cn") else ""
+    lines = ["🎬 " + title + (f" / {title_en}" if title_en else ""),
+             clean(active.get("description_cn") or active.get("description"))]
+    overall = {
+        "in_progress": "进行中 / IN PROGRESS",
+        "victory": "战役获胜 / VICTORY",
+        "defeat": "战役失败 / DEFEAT",
+    }.get(active.get("overall_status"), "进行中")
+    lines.append("战役状态：" + overall)
+    reward = active.get("reward") or {}
+    if reward:
+        amount = f" ×{reward.get('amount')}" if reward.get("amount") else ""
+        lines.append("战役奖励：" + clean(reward.get("name_cn") or reward.get("name")) + amount)
+    for index, phase in enumerate(active.get("phases") or []):
+        phase_title = clean(phase.get("title_cn") or phase.get("title"))
+        phase_en = clean(phase.get("title")) if phase.get("title_cn") else ""
+        phase_reward = phase.get("reward") or {}
+        phase_amount = f" ×{phase_reward.get('amount')}" if phase_reward.get("amount") else ""
+        lines.extend([
+            f"━━ 阶段 {index + 1:02d}"
+            + (f" · {phase_title}" if phase_title else "")
+            + (f" / {phase_en}" if phase_en else ""),
+            "状态：" + clean(phase.get("status_cn") or "未知")
+            + (f" / {phase.get('status_en')}" if phase.get("status_en") else ""),
+            "阶段奖励："
+            + (clean(phase_reward.get("name_cn") or phase_reward.get("name")) + phase_amount
+               if phase_reward else "无"),
+            "简报：" + clean(phase.get("briefing_cn") or phase.get("briefing") or "（暂无简报）"),
+            "战报：" + clean(phase.get("outcome") or "暂无可用战报。"),
+        ])
     return "\n\n".join(line for line in lines if line)
 
 
 def news_text(doc):
-    return "\n\n".join(clean(n.get("translated") or n.get("message")) for n in (doc.get("news") or [])[:3])
+    return "\n\n".join(
+        clean(item.get("translated") or item.get("official_message") or item.get("message"))
+        for item in orders.filtered_news(doc)[:3]
+    )
 
 
 @dataclass
@@ -213,12 +246,23 @@ class Result:
 
 def result(kind, query="", doc=None):
     if kind == "api":
-        issue = data.get_json("https://api.github.com/repos/Jerry114514/Jerry114514.github.io/issues/60", ttl=300) if doc is None else doc
+        from . import api_watch
+        issue = api_watch.fetch_issue60() if doc is None else doc
         body = str(issue.get("body") or "暂无变更记录")
-        url = issue.get("html_url") or "https://github.com/Jerry114514/Jerry114514.github.io/issues/60"
-        return Result(kind, "📡 API变更监测（主仓Issue #60）\n" + body[:6000] + ("\n……完整记录：" + url if len(body)>6000 else "\n"+url),
-                      {"fetchedAt":issue.get("updated_at") or "未知", "_issue_body":body})
+        revision = str(issue.get("revision") or api_watch.issue_revision(issue))
+        return Result(
+            kind,
+            api_watch.issue_text(issue),
+            {
+                "fetchedAt": issue.get("updated_at") or "未知",
+                "_issue_body": body,
+                "_issue_payload": issue,
+                "_issue_revision": revision,
+            },
+        )
     doc = data.site_doc() if doc is None else doc
+    if kind in ("report", "mo") and (doc.get("assignments_all") or doc.get("strategic")):
+        data.enrich_official_texts(doc)
     if kind == "planet":
         planet = find_planet(doc, query)
         query = planet["name"]
@@ -244,7 +288,8 @@ def result(kind, query="", doc=None):
 
 def render_result(view):
     from astrbot_plugin_hd2_war_report import report_card as card
-    functions = {"report": card.render_report_card, "campaigns": card.render_campaigns_card,
+    functions = {"report": card.render_report_card, "mo": card.render_major_order_card,
+                 "campaigns": card.render_campaigns_card,
                  "dss": card.render_dss_card, "briefing": card.render_briefing_card, "api":card.render_api_card}
     with data.snapshot_scope(view.document):
         if view.kind == "planet":

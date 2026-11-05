@@ -6,6 +6,7 @@ from astrbot.api import logger
 from astrbot.api.event import filter
 from astrbot.api.star import Star
 from astrbot_plugin_hd2_common.commands import parse_event
+from astrbot_plugin_hd2_common import errors
 from astrbot_plugin_hd2_common.runtime import blocking, text_reply, request_scope
 from astrbot_plugin_hd2_common.diagnostics import hd2_log
 from astrbot_plugin_hd2_roll.loadout import draw,format_result
@@ -25,7 +26,7 @@ class Hd2RollPlugin(Star):
             return
         _,args,plain=parsed
         if args not in ("","纯随机","random","pure"):
-            yield text_reply(event, "用法：/roll 或 /roll 纯随机；加 t / 文字查看纯文本。")
+            yield text_reply(event, "⚠️ 随机战备不接受该参数。\n💡 用法：/roll 或 /roll 纯随机；加 t / 文字查看纯文本。")
             event.stop_event()
             return
         try:
@@ -43,6 +44,6 @@ class Hd2RollPlugin(Star):
                     output_mode="image" if image else "text")
         except Exception as error:
             hd2_log("failed",plugin="roll",detail=type(error).__name__)
-            yield text_reply(event, "⚠️ "+str(error))
+            yield text_reply(event, errors.friendly("roll", error))
         finally:
             event.stop_event()

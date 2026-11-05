@@ -28,13 +28,17 @@ class DeliveryTests(unittest.TestCase):
             self.assertEqual(len(backups),1)
             self.assertEqual(backups[0].read_text(),"local customization")
 
-    def test_dss_states_and_current_phase_are_shared(self):
+    def test_dss_states_and_all_campaign_phases_are_shared(self):
         action={"status":3,"effectIds":[1]}
         self.assertEqual(data.dss_phase({"activeEffectIds":[]},action),"冷却中")
         self.assertEqual(data.dss_phase({"activeEffectIds":[1]},action),"已激活")
         doc=snapshot();doc['active_campaign']={"available":True,"title_cn":"title","current_phase_id":2,"phases":[{"id":1,"briefing_cn":"过去"},{"id":2,"briefing_cn":"当前"}]}
-        text=commands.briefing_text(doc)
-        self.assertIn("当前",text);self.assertNotIn("过去",text)
+        with patch.object(data, "campaign_zh_document", return_value={}):
+            text=commands.briefing_text(doc)
+        self.assertIn("阶段 01",text)
+        self.assertIn("阶段 02",text)
+        self.assertIn("过去",text)
+        self.assertIn("当前",text)
 
     def test_log_rotation_is_bounded_and_preserves_string_identity(self):
         with tempfile.TemporaryDirectory() as temp,patch.object(diagnostics,"LOG_FILE",str(Path(temp)/"log")),patch.object(diagnostics,"MAX_BYTES",1000):

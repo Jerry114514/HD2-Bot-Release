@@ -27,6 +27,16 @@ def install():
         for cls in ("At", "Plain", "Reply", "Image"):
             setattr(modules[name],cls,type(cls,(Component,),{}))
     sys.modules.update(modules)
+    class MessageChain:
+        def __init__(self, chain=None):
+            self.chain = list(chain or [])
+        def message(self, text):
+            self.chain.append(("message", text))
+            return self
+        def file_image(self, path):
+            self.chain.append(("image", path))
+            return self
+    modules["astrbot.api.event"].MessageChain = MessageChain
 
 
 class Result(tuple):

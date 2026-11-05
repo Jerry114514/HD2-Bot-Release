@@ -62,9 +62,11 @@ if _MON_PARENT not in _sys.path:
     _sys.path.insert(0, _MON_PARENT)
 try:
     from astrbot_plugin_hd2_common.diagnostics import hd2_log as _log
+    from astrbot_plugin_hd2_common import errors as _errors
 except Exception:
     def _log(*a, **k):
         pass
+    _errors = None
 
 
 def _gid(event):
@@ -106,7 +108,8 @@ class Hd2LookupPlugin(Star):
         except Exception:
             pass
         if args:
-            yield text_reply(event, "用法：/帮助 或 /help；加 t / 文字查看纯文本。")
+            _, usage = (_errors.USAGE["help"] if _errors else ("帮助", "示例：/帮助 或 /help"))
+            yield text_reply(event, "⚠️ 帮助命令不接受额外参数；加 t / 文字查看纯文本。\n💡 " + usage)
             event.stop_event()
             return
         _t0 = time.time()
@@ -134,6 +137,6 @@ class Hd2LookupPlugin(Star):
             _log("done", plugin="lookup", text=text, group=_gid(event), user=_uid(event), cost=time.time() - _t0, detail="help-text")
         except Exception as e:
             _log("failed", plugin="lookup", text=text, group=_gid(event), user=_uid(event), cost=time.time() - _t0, detail=str(e)[:150])
-            yield text_reply(event, f"⚠️ 读取使用说明失败：{e}")
+            yield text_reply(event, _errors.friendly("help", e) if _errors else f"⚠️ 读取使用说明失败：{e}")
         event.stop_event()
         return

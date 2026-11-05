@@ -9,10 +9,12 @@ from concurrent.futures import Future
 from collections import OrderedDict
 import copy
 import hashlib
+import html
 import json
 import math
 import os
 from pathlib import Path
+import re
 import tempfile
 import threading
 import time
@@ -36,6 +38,7 @@ def setting(*keys, default=None):
 
 DEFAULT_SITE = "https://jerry114514.github.io/HD2-Galatic_war-Map"
 CACHE = Path(__file__).parent / "cache"
+MAJOR_ORDER_BANNER = "./assets/campaign/banner_eagle3.webp"
 _memory = OrderedDict()
 _lock = threading.RLock()
 _inflight = {}
@@ -256,6 +259,305 @@ def player_distribution(doc):
 def current_phase(campaign):
     phases = campaign.get("phases") or []
     return next((p for p in phases if p.get("id") is not None and p.get("id")==campaign.get("current_phase_id")), None) or next((p for p in phases if p.get("status")==0), None) or (phases[0] if phases else {})
+
+
+_RICH_TAG_RE = re.compile(r"<(i|ci)=([0-9]+)>(.*?)</\1>", re.I | re.S)
+_HTML_TAG_RE = re.compile(r"<[^>]*>")
+
+
+def _plain_rich_text(value):
+    text = html.unescape(str(value or ""))
+    text = _RICH_TAG_RE.sub(lambda match: _HTML_TAG_RE.sub("", match.group(3)), text)
+    text = _HTML_TAG_RE.sub("", text)
+    return html.unescape(text).replace("\r\n", "\n").replace("\r", "\n").strip()
+
+
+def rich_text_runs(value):
+    """Return styled runs while stripping every unsupported HTML tag."""
+    text = html.unescape(str(value or "")).replace("\r\n", "\n").replace("\r", "\n")
+    runs = []
+    position = 0
+    for match in _RICH_TAG_RE.finditer(text):
+        prefix = _HTML_TAG_RE.sub("", text[position:match.start()])
+        if prefix:
+            runs.append((prefix, None))
+        inner = _HTML_TAG_RE.sub("", match.group(3))
+        tone = {"1": "yellow", "3": "blue"}.get(match.group(2))
+        if inner:
+            runs.append((inner, tone))
+        position = match.end()
+    tail = _HTML_TAG_RE.sub("", text[position:])
+    if tail:
+        runs.append((tail, None))
+    combined = []
+    for part, tone in runs:
+        if combined and combined[-1][1] == tone:
+            combined[-1] = (combined[-1][0] + part, tone)
+        elif part:
+            combined.append((part, tone))
+    return combined
+
+
+def _stable_major_order_revision(doc, assignment):
+    assignment_id = assignment.get("id")
+    if assignment_id not in (None, "", 0, -1, "0", "-1"):
+        return str(assignment_id)
+    tasks = []
+    for task in assignment.get("tasks") or []:
+        if isinstance(task, dict):
+            tasks.append({
+                "index": task.get("index"),
+                "type": task.get("type"),
+                "values": task.get("values"),
+                "goal": task.get("goal"),
+            })
+    war = doc.get("war") or {}
+    key = "|".join(str(value or "") for value in (
+        war.get("warId", war.get("id")),
+        assignment.get("startTime", assignment.get("startedAt")),
+        assignment.get("deadline"),
+        json.dumps(tasks, ensure_ascii=False, sort_keys=True, separators=(",", ":")),
+    ))
+    return "h:" + hashlib.sha256(key.encode()).hexdigest()[:12] if key.strip("|") else ""
+
+
+def major_order_content(doc):
+    """Resolve the current MO without borrowing old dispatches or campaign text."""
+    assignment = doc.get("assignments") or {}
+    major_order = doc.get("major_order") or {}
+    started = timestamp(assignment.get("startTime", assignment.get("startedAt")))
+    frontier = started - 48 * 3600 if started is not None else None
+    dispatches = []
+    for dispatch in doc.get("dispatches") or []:
+        if not isinstance(dispatch, dict):
+            continue
+        title = str(dispatch.get("message") or dispatch.get("title") or "")
+        if not re.search(r"NEW\s+MAJOR\s+ORDER", title, re.I):
+            continue
+        published = timestamp(dispatch.get("published") or dispatch.get("publishedAt"))
+        if frontier is not None and (published is None or published < frontier):
+            continue
+        dispatches.append((published or 0, number(dispatch.get("id")) or 0, dispatch))
+    dispatches.sort(key=lambda row: (row[0], row[1]), reverse=True)
+
+    dispatch = dispatches[0][2] if dispatches else None
+    dispatch_id = dispatch.get("id") if dispatch else None
+    news_item = {}
+    if dispatch_id is not None:
+        news_item = next(
+            (
+                item for item in doc.get("news") or []
+                if isinstance(item, dict) and str(item.get("id")) == str(dispatch_id)
+            ),
+            {},
+        )
+    candidates = [
+        ("official_message", news_item.get("official_message")),
+        ("translated", news_item.get("translated")),
+        ("message_zh", news_item.get("message_zh")),
+    ]
+    raw_text, text_source = "", ""
+    for source, value in candidates:
+        if _plain_rich_text(value):
+            raw_text, text_source = str(value), source
+            break
+
+    assignment_id = assignment.get("id")
+    translated_id = major_order.get("id32")
+    translation_matches = (
+        assignment_id in (None, "")
+        or translated_id in (None, "")
+        or str(assignment_id) == str(translated_id)
+    )
+    if not raw_text and translation_matches and _plain_rich_text(major_order.get("translated_brief")):
+        raw_text, text_source = str(major_order["translated_brief"]), "major_order.translated_brief"
+    if not raw_text and assignment.get("briefing"):
+        raw_text, text_source = str(assignment["briefing"]), "assignment.briefing"
+    if not raw_text and dispatch:
+        raw_text, text_source = str(dispatch.get("message") or ""), "dispatch.message"
+
+    banners = []
+    for source in (
+        major_order.get("banner_image_local"),
+        major_order.get("banner_image"),
+        MAJOR_ORDER_BANNER,
+    ):
+        if source and source not in banners:
+            banners.append(source)
+    return {
+        "title": _plain_rich_text(major_order.get("title")) or "重要指令",
+        "text": _plain_rich_text(raw_text),
+        "rich_text": rich_text_runs(raw_text),
+        "source": text_source,
+        "dispatch_id": dispatch_id,
+        "published": dispatch.get("published") if dispatch else None,
+        "banner_sources": banners,
+        "revision": _stable_major_order_revision(doc, assignment),
+    }
+
+
+PHASE_STATUS = {
+    0: ("in_progress", "进行中", "IN PROGRESS"),
+    2: ("success", "成功", "SUCCESS"),
+    3: ("failure", "失败", "FAILURE"),
+}
+
+
+def campaign_zh_document(force=False):
+    return get_json(
+        site_url("data/campaign_zh.json"),
+        ttl=setting("data", "campaign_zh_cache_ttl", default=300),
+        force=force,
+    )
+
+
+def official_texts_document(force=False):
+    return get_json(
+        site_url("data/translated/official_texts.json"),
+        ttl=setting("data", "official_texts_cache_ttl", default=300),
+        force=force,
+    )
+
+
+def enrich_official_texts(doc, force=False):
+    if isinstance(doc.get("official_texts"), dict):
+        return doc
+    try:
+        doc["official_texts"] = official_texts_document(force=force)
+    except (OSError, ValueError, TypeError):
+        doc["official_texts"] = {}
+    return doc
+
+
+def campaign_image_sources(campaign, phase=None):
+    phase = phase or {}
+    sources = []
+    for source in (
+        phase.get("intro_image_local"),
+        phase.get("intro_image"),
+        campaign.get("banner_image_local"),
+        campaign.get("banner_image"),
+    ):
+        if source and source not in sources:
+            sources.append(source)
+    return sources
+
+
+def campaign_view(doc, translations=None):
+    """Normalize every active campaign phase and apply campaign_zh by stable IDs."""
+    campaign = copy.deepcopy(doc.get("active_campaign") or {})
+    if campaign.get("available") is False or not campaign:
+        return campaign
+    phases = [dict(phase) for phase in campaign.get("phases") or [] if isinstance(phase, dict)]
+    needs_translation = (
+        not _plain_rich_text(campaign.get("title_cn"))
+        or not _plain_rich_text(campaign.get("description_cn"))
+        or any(
+            not _plain_rich_text(phase.get("title_cn"))
+            or not _plain_rich_text(phase.get("briefing_cn"))
+            for phase in phases
+        )
+    )
+    if needs_translation and translations is None:
+        try:
+            translations = campaign_zh_document()
+        except (OSError, ValueError, TypeError):
+            translations = {}
+    if not isinstance(translations, dict):
+        translations = {}
+    episodes = (translations or {}).get("episodes") or {}
+    episode = episodes.get(str(campaign.get("id"))) or episodes.get(
+        "title:" + str(campaign.get("title") or "").strip().upper()
+    ) or {}
+    translated_phases = episode.get("phases") or {}
+    campaign["title_cn"] = (
+        _plain_rich_text(campaign.get("title_cn"))
+        or _plain_rich_text(episode.get("title"))
+    )
+    campaign["description_cn"] = (
+        _plain_rich_text(campaign.get("description_cn"))
+        or _plain_rich_text(episode.get("description"))
+    )
+
+    normalized = []
+    for index, phase in enumerate(phases):
+        phase_zh = translated_phases.get(str(phase.get("id"))) or {}
+        status_key, status_cn, status_en = PHASE_STATUS.get(
+            phase.get("status"),
+            (
+                str(phase.get("status_key") or "unknown"),
+                str(phase.get("status_cn") or "未知"),
+                "",
+            ),
+        )
+        if phase.get("status_key"):
+            status_key = str(phase["status_key"])
+        if phase.get("status_cn"):
+            status_cn = str(phase["status_cn"])
+        status_en = {
+            "in_progress": "IN PROGRESS",
+            "success": "SUCCESS",
+            "failure": "FAILURE",
+        }.get(status_key, status_en)
+        outcome = _plain_rich_text(phase.get("outcome"))
+        if not outcome:
+            outcome = {
+                "in_progress": "进行中，尚未发布最终战报",
+                "success": "该阶段已完成，战术目标达成。",
+                "failure": "该阶段未能达成全部目标。",
+            }.get(status_key, "暂无可用战报。")
+        reward = phase.get("reward")
+        if isinstance(reward, list):
+            reward = reward[0] if reward else None
+        normalized.append({
+            **phase,
+            "index": index,
+            "title": _plain_rich_text(phase.get("title")),
+            "title_cn": (
+                _plain_rich_text(phase.get("title_cn"))
+                or _plain_rich_text(phase_zh.get("title"))
+            ),
+            "briefing": _plain_rich_text(phase.get("briefing")),
+            "briefing_cn": (
+                _plain_rich_text(phase.get("briefing_cn"))
+                or _plain_rich_text(phase_zh.get("briefing"))
+            ),
+            "outcome": outcome,
+            "status_key": status_key,
+            "status_cn": status_cn,
+            "status_en": status_en,
+            "reward": reward,
+            "image_sources": campaign_image_sources(campaign, phase),
+        })
+    campaign["phases"] = normalized
+    current_index = next(
+        (index for index, phase in enumerate(normalized)
+         if phase.get("id") is not None
+         and str(phase.get("id")) == str(campaign.get("current_phase_id"))),
+        None,
+    )
+    if current_index is None and isinstance(campaign.get("current_phase_index"), int):
+        candidate = campaign["current_phase_index"]
+        if 0 <= candidate < len(normalized):
+            current_index = candidate
+    if current_index is None:
+        current_index = next(
+            (index for index, phase in enumerate(normalized) if phase.get("status") == 0),
+            len(normalized) - 1 if normalized else None,
+        )
+    campaign["current_phase_index"] = current_index
+    campaign["phase_count"] = len(normalized)
+    wins = sum(1 for phase in normalized if phase.get("status_key") == "success")
+    losses = sum(1 for phase in normalized if phase.get("status_key") == "failure")
+    running = any(phase.get("status_key") == "in_progress" for phase in normalized)
+    episode_running = number(campaign.get("episodes_running")) or 1
+    campaign["overall_status"] = (
+        "in_progress" if episode_running <= 3 and running
+        else "victory" if wins > losses
+        else "defeat" if losses > wins
+        else "in_progress"
+    )
+    return campaign
 
 
 def region_frames(planet_index, region_index):
