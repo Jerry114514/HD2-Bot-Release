@@ -4,7 +4,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from astrbot.api.event import filter
 from astrbot.api.star import Star
-from astrbot_plugin_hd2_common.commands import parse_event
+from astrbot.api.event import MessageChain
+from astrbot_plugin_hd2_common.commands import command_suggestion, parse_event
 from astrbot_plugin_hd2_common.data import setting
 from astrbot_plugin_hd2_common.choices import choices
 
@@ -52,6 +53,14 @@ class Hd2GuardPlugin(Star):
             else:
                 choices.cancel(event)
             if event._hd2_choice is not None:
+                return
+        if not parsed:
+            # 关键词检测：像指令的唤醒消息（拼写错误/缺斜杠/官方@唤醒）回复
+            # 对应或相近的指令提示并拦截，不再漏进 LLM；普通聊天维持原行为
+            hint = command_suggestion(event)
+            if hint:
+                await event.send(MessageChain().message(hint))
+                event.stop_event()
                 return
         if setting("bot", "allow_chat", default=False):
             return

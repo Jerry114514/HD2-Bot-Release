@@ -63,5 +63,8 @@ class Event:
     def get_messages(self):return []
     def get_sender(self):return types.SimpleNamespace(card="",nickname="tester")
     def stop_event(self):self.stopped=True
+    async def send(self, chain):
+        self.sent = getattr(self, "sent", [])
+        self.sent.append(chain)
     def plain_result(self,text):return Result(("text",text))
     def image_result(self,path):return ("image",path)
