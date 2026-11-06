@@ -24,10 +24,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ICON_DIR = os.path.join(HERE, "icons")
 CACHE_DIR = os.path.join(HERE, "cache")
 
-# ── 黑金 HUD tokens（DIM/MUTE 与 report_card 同步提亮，保证暗底可读性） ──
-BG = (10, 10, 10); PANEL = (18, 18, 18); LINE = (36, 36, 36); LINE2 = (42, 42, 42)
-TEXT = (242, 242, 242); DIM = (188, 188, 188); MUTE = (132, 132, 132)
-GOLD = (255, 176, 0); GOLD2 = (255, 201, 74); BRASS = (200, 134, 42)
+# ── Steam 风 tokens（与 report_card 同源）：深蓝底 + favicon 亮黄 + 冷白 ──
+BG = (14, 22, 33); PANEL = (27, 40, 56); LINE = (44, 61, 79); LINE2 = (56, 76, 97)
+TEXT = (240, 245, 250); DIM = (176, 192, 208); MUTE = (128, 148, 168)
+GOLD = (248, 232, 0); GOLD2 = (255, 243, 118); BRASS = (199, 176, 31)
 W = 1080; PAD = 36; TALL = 1800
 
 FZ = r"C:\Windows\Fonts\msyh.ttc"
@@ -71,7 +71,7 @@ def stripe_band(img, y0, h, alpha=22):
     x = -h
     while x < W:
         dr.polygon([(x, y0 + h), (x + h, y0), (x + h + 7, y0), (x + 7, y0 + h)],
-                   fill=(255, 176, 0, alpha))
+                   fill=(248, 232, 0, alpha))
         x += 14
     dr.line([(0, y0), (W, y0)], fill=LINE2)
     dr.line([(0, y0 + h - 1), (W, y0 + h - 1)], fill=LINE2)
@@ -172,7 +172,7 @@ def render_roll_card(out_dir=None, result=None):
         fw = dr.textlength(ft, font=F(14))
         dr.text((W - PAD - fw, y + 14), ft, font=F(14), fill=MUTE)
         dr.text((PAD, y + 40), "真理部 · 管理式民主 · 与 Arrowhead Game Studios 无隶属关系",
-                font=F(14), fill=(80, 80, 80))
+                font=F(14), fill=(120, 138, 156))
         H = min(TALL, y + 88)
 
         img = img.crop((0, 0, W, H))
