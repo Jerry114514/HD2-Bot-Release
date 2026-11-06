@@ -1,5 +1,6 @@
 """Command parsing and presentation models shared by bot and console."""
 from dataclasses import dataclass
+import difflib
 import html
 import json
 from pathlib import Path
@@ -21,6 +22,79 @@ ALIASES = {
     "变种": "variant", "查询变种": "variant", "查变种": "variant",
 }
 VARIANT_TERMS = json.loads((Path(__file__).parent / "variant_terms.json").read_text(encoding="utf-8"))
+
+# ── 未知指令检测（guard 用）：把"像指令但没被解析"的消息转成可操作的提示 ──
+COMMAND_CANONICAL = {
+    "report": "/战报", "mo": "/重要指令", "campaigns": "/战线", "dss": "/dss",
+    "briefing": "/战役", "analysis": "/分析", "api": "/api", "map": "/银河星图",
+    "roll": "/roll", "wiki": "/wiki", "btk": "/btk", "help": "/帮助",
+    "planet": "/查询", "variant": "/变种",
+}
+_HINT_MAX_LEN = 20      # 超过视为普通聊天
+_HINT_CUTOFF = 0.72     # 相近指令相似度阈值
+
+_HINT_STRIP_LEAD = "/！!？?~、."
+_HINT_STRIP_TAIL = "。！？!?…~，, "
+
+
+def _hint_normalize(event):
+    """复用 parse_event 的归一化口径；返回 (candidate, had_slash, wake)"""
+    original = getattr(getattr(event, "message_obj", None), "message_str", None)
+    if not isinstance(original, str):
+        original = getattr(event, "message_str", "")
+    wake = False
+    is_wake = getattr(event, "is_wake_up", None)
+    if callable(is_wake):
+        try:
+            wake = bool(is_wake())
+        except Exception:
+            wake = False
+    text = " ".join(unicodedata.normalize("NFKC", original or "").split())
+    text = re.sub(r"^@[\w.\-]+\s+", "", text)
+    had_slash = text.startswith("/")
+    candidate = text.lstrip(_HINT_STRIP_LEAD).strip()
+    candidate = re.sub(r"[。！？!?…~，,\s]+$", "", candidate).strip()
+    return candidate, had_slash, wake
+
+
+def command_suggestion(event) -> str | None:
+    """关键词检测：识别"指令尝试"（@唤醒、前缀唤醒的短消息），输出对应/相近的
+    指令提示；普通聊天返回 None（维持 allow_chat / 静默拦截的原行为）。
+
+    判定（全部满足才提示）：唤醒消息 或 带 "/" 前缀；去标点后 ≤20 字符；
+    整体或首词与已知指令别名完全相等 或 相似度 ≥0.72。
+    """
+    candidate, had_slash, wake = _hint_normalize(event)
+    if not wake and not had_slash:
+        return None
+    if not candidate or len(candidate) > _HINT_MAX_LEN:
+        return None
+    aliases = {k.lower(): k for k in ALIASES}
+    match = None
+    if candidate.lower() in aliases:
+        # 整句就是别名（如 "roll"、"目前战况如何"）
+        match = (aliases[candidate.lower()], None)
+    elif len(candidate) <= 10:
+        # 短输入：首词/次词相近才算指令尝试，避免误伤以同词开头的普通聊天
+        for probe in candidate.split()[:2]:
+            pl = probe.lower()
+            if pl in aliases:
+                match = (aliases[pl], None)
+                break
+            close = difflib.get_close_matches(pl, list(aliases), n=2, cutoff=_HINT_CUTOFF)
+            if close:
+                match = (aliases[close[0]], aliases[close[1]] if len(close) > 1 else None)
+                break
+    if match is None:
+        if had_slash:
+            return "未知指令，请使用 /帮助 查看指令列表。"
+        return None
+    canon = COMMAND_CANONICAL.get(ALIASES.get(match[0], ""), match[0])
+    second = COMMAND_CANONICAL.get(ALIASES.get(match[1], ""), match[1]) if match[1] else None
+    if second and second != canon:
+        return (f"未知指令「{candidate}」：您是想使用 {canon} 或 {second} 吗？"
+                "发送 /帮助 查看完整指令列表。")
+    return f"未知指令「{candidate}」：您是想使用 {canon} 吗？发送 /帮助 查看完整指令列表。"
 
 
 def parse_event(event):
