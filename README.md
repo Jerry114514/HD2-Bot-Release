@@ -2,6 +2,19 @@
 
 基于 AstrBot 的《绝地潜兵2》中文机器人，包含 10 个插件。战报、战线、DSS、战役、星球、Wiki 与配装支持黑金 HUD 图片；图片不可用时使用同一次查询的文字结果。
 
+> 本项目由 AI（DeepSeek Agent）辅助生成并维护。
+
+## 插件市场安装（推荐）
+
+本仓库已作为**单一 AstrBot 插件**发布到插件市场（12 插件合一入口，装一个 = 全部子系统就位）：
+
+1. AstrBot WebUI → 插件市场 → 搜索 **`HD2 战况机器人`**（或 `astrbot_plugin_hd2_suite`）→ 安装
+2. 进入插件安装目录（`data/plugins/HD2-Bot-Release/`），复制 `config.example.json` 为 `config.json` 并填写
+3. 配置 AstrBot 消息平台（OneBot v11 反向 WS 指向 AstrBot）与 LLM Provider（/分析 需要）
+4. 群里发 `/帮助` 验证
+
+> 仓库的其余部署方式（`start.bat` 一键启动、Web 控制台、12 插件分散部署）见下文——市场安装是其中"插件就位"步骤的快捷方式，配置与协议端接入仍需按文档完成。
+
 ## 最近更新（2026-11）
 
 - **协议端迁移 NapCat → SnowLuma**：OneBot v11 协议端改用 SnowLuma（NapCat 同团队新一代实现）。启动链路改为 `launcher.bat` / `launcher.sh`（自动注入 QQ）；推送改走标准 OneBot HTTP（3000 端口 + accessToken）；WebUI 5099；扫码在 QQ 窗口完成。配置键 `napcat.*` → `snowluma.*`，`bot.platform` 兼容 `snowluma`/`onebot` 别名。详见下文「协议端：SnowLuma」。
