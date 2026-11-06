@@ -20,12 +20,8 @@ CACHE_DIR = str(Path(__file__).parent / "cache")
 WIKI_API = "https://helldivers.wiki.gg/zh/api.php"
 WIKI_HOME = "https://helldivers.wiki.gg/zh"
 FETCH_TIMEOUT = 8
-TEXT_LIMIT = 900           # 正文摘要上限（字符）；数据主要在表格
+TEXT_LIMIT = 30000         # 正文字符上限（2026-11 全量渲染：基本等于不截断，仅防异常超大页）
 THUMB_BOX = 236            # 主图框边长
-WIKI_TALL = 9000           # 长图画布上限（按内容裁切）
-TABLES_MAX = 8             # 最多渲染的表格数
-TABLE_ROWS_MAX = 26        # 单表最多数据行（超出截断提示）
-CELL_MAX = 60              # 单元格文本上限
 
 # wiki 界面/维护残留（extract 双保险逐行过滤）
 WIKI_JUNK_RE = re.compile(

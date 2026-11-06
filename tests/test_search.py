@@ -190,9 +190,10 @@ class SearchTests(unittest.TestCase):
                 rendered=wiki_card.render_wiki_card('长表',temp,value)
             self.assertEqual(labels.count('重复列头'),1)
             self.assertIsInstance(rendered,str)
+            # 2026-11 全量渲染 + 多页合并：内容超高时合并为宽图（分区自左向右），高度收敛
             with wiki_card.Image.open(rendered) as img:
-                self.assertGreater(img.height,2165)
-                self.assertLess(img.height,wiki_card.WIKI_LONG_MAX)
+                self.assertGreater(img.width,wiki_card.W)
+                self.assertLess(img.height,2400)
 
     def test_singleflight_cancel_one_waiter(self):
         async def probe():

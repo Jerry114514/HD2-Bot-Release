@@ -2009,7 +2009,7 @@ def render_help_card(out_dir=None):
         return None
 
 
-def save_pages(img, height, out_path, document=None, page_info=None):
+def save_pages(img, height, out_path, document=None, page_info=None, caption=None, max_area=None, png_level=6):
     """超长画布合并为单张宽图：按安静行均衡切段，从左向右排列成连续分区。
 
     旧行为是竖切成多张 PNG 分多条消息发送（QQ 里刷屏且上下文割裂）；
@@ -2018,6 +2018,9 @@ def save_pages(img, height, out_path, document=None, page_info=None):
     附近 ±100px 内回退找安静行，避免「首列塞满、末列只剩尾巴」的失衡观感。
     单段内容（不超高）保持原单图输出，页脚同样收敛到底部条内。
     page_info：遗留参数，兼容保留；若提供 (i, n, 标题) 则标题用作列标签前缀。
+    caption：自定义底部页脚文案（战报默认展示数据时间）。
+    max_area：画布像素面积上限（宽×高），默认 34M；长内容卡（如 Wiki 全文）可放宽。
+    png_level：PNG 压缩级别（1 最快体积最大，6 默认）；大幅面渲染建议降级换速度。
     """
     import math
     n_pages = max(1, math.ceil(height / 2100))
@@ -2052,7 +2055,7 @@ def save_pages(img, height, out_path, document=None, page_info=None):
     col_h = max(e - s for s, e in spans)
     total_w = n * W + (n - 1) * GUTTER
     total_h = LABEL_H + col_h + FOOT_H
-    if total_w * total_h > 34_000_000:  # 约 15 段，防极端内容撑爆内存
+    if total_w * total_h > (max_area or 34_000_000):  # 防极端内容撑爆内存
         raise ValueError("内容过长，请使用文字查询或原文链接")
     canvas = Image.new("RGB", (total_w, total_h), BG)
     dr = ImageDraw.Draw(canvas)
@@ -2068,7 +2071,10 @@ def save_pages(img, height, out_path, document=None, page_info=None):
                 dr.text((x + PAD + 150, 26), "◄ 各分区自左向右连续阅读", font=F(13), fill=MUTE)
             dr.line([(x, LABEL_H - 10), (x + W, LABEL_H - 10)], fill=LINE2)
         canvas.paste(img.crop((0, s, W, e)), (x, LABEL_H))
-    cap = f"数据时间 {ts or '见正文'}" + quality + (" · 各分区自左向右连续阅读" if n > 1 else "")
+    if caption is None:
+        cap = f"数据时间 {ts or '见正文'}" + quality + (" · 各分区自左向右连续阅读" if n > 1 else "")
+    else:
+        cap = caption + (" · 各分区自左向右连续阅读" if n > 1 else "")
     dr.line([(0, total_h - FOOT_H), (total_w, total_h - FOOT_H)], fill=LINE)
     dr.text((PAD, total_h - FOOT_H + 16), cap, font=F(16), fill=DIM)
     mot_x = total_w - PAD - dr.textlength("真理部 · MOT", font=F(14))

@@ -102,10 +102,13 @@ class Hd2WikiPlugin(Star):
                 return
             text = format_text(value)
             images = None
-            if not plain and value["status"] in ("resolved","ok") and time.monotonic()<deadline:
+            if not plain and value["status"] in ("resolved", "ok") and time.monotonic() < deadline:
+                # 全量渲染（含全部表格/行/完整单元格）耗时随页面大小增长，
+                # 给渲染阶段独立的 60s 预算，不再复用抓取阶段的剩余 deadline
+                render_deadline = time.monotonic() + 60
                 try:
-                    images = await asyncio.wait_for(wiki_blocking(render, keyword, {**value,"deadline":deadline}),
-                                                    timeout=max(.01,deadline-time.monotonic()))
+                    images = await asyncio.wait_for(wiki_blocking(render, keyword, {**value, "deadline": render_deadline}),
+                                                    timeout=60)
                 except Exception as error:
                     logger.warning(f"[HD2] Wiki图片不可用：{type(error).__name__}")
             if menu is not None and not choices.current(menu):
