@@ -141,7 +141,8 @@ class ErrorFriendlyMatrix(unittest.TestCase):
 
     def test_usage_aliases_cover_all_kinds(self):
         for kind in ("report", "mo", "campaigns", "dss", "briefing", "api", "map",
-                     "planet", "variant", "wiki", "roll", "btk", "analysis", "help"):
+                     "planet", "variant", "wiki", "roll", "btk", "analysis", "help",
+                     "demolition"):
             self.assertIn(kind, errors.USAGE)
             self.assertTrue(errors.USAGE[kind][0])
             self.assertTrue(errors.USAGE[kind][1])

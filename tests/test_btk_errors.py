@@ -16,6 +16,8 @@ class BtkErrorGuidanceTests(unittest.TestCase):
             ("AR-23 不存在虫 头部", "未识别敌人", "/wiki 不存在虫"),
             ("AR-23 武斗虫", "缺少部位", "/wiki 武斗虫"),
             ("AR-23 武斗虫 引擎", "未找到部位「引擎」", "/wiki 武斗虫"),
+            ("武斗虫 头部", "第一个参数应是武器", "/btk 武器"),
+            ("武斗虫 头部", "敌人名称", "/btk AR-23"),
         )
         for command, expected, hint in cases:
             with self.subTest(command=command):

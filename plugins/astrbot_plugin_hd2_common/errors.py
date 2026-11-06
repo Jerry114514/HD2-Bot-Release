@@ -32,6 +32,7 @@ USAGE = {
     "btk": ("BTK 测伤", "示例：/btk测伤 <武器> [目标]"),
     "analysis": ("行动分析", "示例：/分析"),
     "help": ("帮助", "示例：/帮助 或 /help"),
+    "demolition": ("拆毁值", "示例：/拆毁值 直击 | 建筑，或 /拆毁值 爆炸物；分类查看：/拆毁值 直击"),
 }
 
 
@@ -54,7 +55,8 @@ def friendly(command, error, usage=None):
     if isinstance(error, (ValueError, KeyError, LookupError)):
         # 语义错误的消息本身已写明原因与建议（find_planet / 变种源校验等）
         body = f"⚠️ {title}：{msg}"
-        if use and ("未找到" in msg or "歧义" in msg or "用法" in msg or "无效" in msg):
+        # 消息内已含斜杠指引（如 btk 的"可发送 /btk 敌人 ..."）时不再叠加通用 💡
+        if use and "/" not in msg and ("未找到" in msg or "歧义" in msg or "用法" in msg or "无效" in msg):
             body += f"\n💡 {use}"
         return body
 
