@@ -33,19 +33,20 @@ FETCH_TIMEOUT = 20
 # 收敛到共享解析器（astrbot_plugin_hd2_common/fonts.py），可用 HD2_FONT / HD2_FONT_BOLD 覆盖
 from astrbot_plugin_hd2_common.fonts import resolve_font_pair
 
-# ── 主站 tokens（css/tokens.css 同源）；DIM/MUTE 按可读性要求提亮一档 ──
-BG = (10, 10, 10)
-PANEL = (18, 18, 18)
-PANEL2 = (24, 24, 24)   # 斑马纹偶数行
-LINE = (36, 36, 36)
-LINE2 = (42, 42, 42)
-TEXT = (242, 242, 242)
-DIM = (188, 188, 188)   # 原 (168,168,168)：暗色底上对比不足
-MUTE = (132, 132, 132)  # 原 (110,110,110)：辅助标签提亮一档
-GOLD = (255, 176, 0)
-GOLD2 = (255, 201, 74)
-BRASS = (200, 134, 42)
-BLUE = (91, 163, 208)
+# ── Steam 风 tokens：深蓝底 + 亮黄主强调（favicon #f8e800）+ 冷白文字 ──
+# 阵营色独立于本表（FACTION_COLOR 与玩家分布行），不随模板变化
+BG = (14, 22, 33)      # Steam 深蓝 #0e1621
+PANEL = (27, 40, 56)   # Steam 面板蓝 #1b2838
+PANEL2 = (34, 49, 66)  # 斑马纹偶数行
+LINE = (44, 61, 79)    # #2c3d4f
+LINE2 = (56, 76, 97)   # #384c61
+TEXT = (240, 245, 250) # 冷白
+DIM = (176, 192, 208)  # 蓝灰次级文字
+MUTE = (128, 148, 168) # 蓝灰辅助标签
+GOLD = (248, 232, 0)   # favicon 亮黄 #f8e800
+GOLD2 = (255, 243, 118)# 高亮黄
+BRASS = (199, 176, 31) # 暗黄（次级强调）
+BLUE = (91, 163, 208)  # 阵营色：超级地球（保持不变）
 GREEN = (31, 168, 74)
 RED = (255, 77, 46)
 W = 1080
@@ -245,18 +246,18 @@ def stripe_band(img, y0, h, alpha=22):
     x = -h
     while x < W:
         dr.polygon([(x, y0 + h), (x + h, y0), (x + h + 7, y0), (x + 7, y0 + h)],
-                   fill=(255, 176, 0, alpha))
+                   fill=(248, 232, 0, alpha))
         x += 14
     dr.line([(0, y0), (W, y0)], fill=LINE2)
     dr.line([(0, y0 + h - 1), (W, y0 + h - 1)], fill=LINE2)
 
 def progress_bar(dr, x, y, w, h, ratio, fill=GOLD):
-    dr.rectangle([x, y, x + w, y + h], fill=(31, 31, 31), outline=LINE2)
+    dr.rectangle([x, y, x + w, y + h], fill=(20, 30, 43), outline=LINE2)
     fw = int(w * max(0.0, min(1.0, ratio)))
     if fw > 0:
         dr.rectangle([x, y, x + fw, y + h], fill=fill)
     for k in (1, 2, 3):
-        dr.line([x + int(w * k / 4), y, x + int(w * k / 4), y + h], fill=(10, 10, 10))
+        dr.line([x + int(w * k / 4), y, x + int(w * k / 4), y + h], fill=BG)
 
 def section_label(dr, x, y, text, f_label):
     dr.rectangle([x, y + 2, x + 6, y + 2 + 28], fill=GOLD)
@@ -491,7 +492,7 @@ def render_report_card(out_dir=None):
                     equip = "限定：" + (req.get("name") or req.get("en"))
                     ew = dr.textlength(equip, font=f_small)
                     dr.rectangle([W - PAD - 18 - ew - 20, yy - 3, W - PAD - 18, yy + 29],
-                                 fill=(26, 20, 10), outline=BRASS)
+                                 fill=(46, 42, 10), outline=BRASS)
                     dr.text((W - PAD - 18 - ew - 10, yy + 1), equip, font=f_small, fill=GOLD2)
                 yy += 38
                 goal, prog = t.get("goal"), t.get("progress")
@@ -575,7 +576,7 @@ def render_report_card(out_dir=None):
         fw = dr.textlength(ft, font=f_tiny)
         dr.text((W - PAD - fw, y + 16), ft, font=f_tiny, fill=MUTE)
         dr.text((PAD, y + 42), "真理部 · 管理式民主 · 本站与 Arrowhead Game Studios 无隶属关系",
-                font=f_tiny, fill=(115, 115, 115))
+                font=f_tiny, fill=(120, 138, 156))
         return y + 88
     return _render_cached(os.path.join(out_dir, OUT_NAME), "", str(data.get("fetchedAt")), draw)
 
@@ -812,7 +813,7 @@ def render_campaigns_card(out_dir=None):
                 yy += ROW_H
             dr.text((PAD + 18, y + panel_h - 28),
                     "解放/防御使用对应战役进度 · 数据不足显示未知",
-                    font=F(13), fill=(115, 115, 115))
+                    font=F(13), fill=(120, 138, 156))
             return y + panel_h + 12
 
         return _render_cached(out_path, meta_path, rev, draw)
@@ -942,7 +943,7 @@ def render_dss_card(out_dir=None):
             if unknown:
                 note = "未收录效果 ID：" + "、".join("#" + str(i) for i in unknown) + "（照实显示）"
                 nw = dr.textlength(note, font=F(13))
-                dr.text((W - PAD - 18 - nw, y - 12), note, font=F(13), fill=(115, 115, 115))
+                dr.text((W - PAD - 18 - nw, y - 12), note, font=F(13), fill=(120, 138, 156))
             return y + 10
         return _render_cached(out_path, meta_path, rev, draw)
     except Exception:
@@ -1382,7 +1383,7 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
                         dr.text((PAD + 14, ry + 7), nm, font=F(17, True), fill=TEXT)
                         if en_nm and en_nm != nm:
                             dr.text((PAD + 14 + dr.textlength(nm, font=F(17, True)) + 10, ry + 11),
-                                    en_nm, font=F(11), fill=(115, 115, 115))
+                                    en_nm, font=F(11), fill=(120, 138, 156))
                         dr.text((c_owner, ry + 9), owner_cn + " · " + type_cn + "★" * stars,
                                 font=F(14), fill=DIM)
                         pw = dr.textlength(fmt(players) if players else "—", font=F(16, True))
@@ -1393,7 +1394,7 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
                                 fill=GREEN if p == 100 else TEXT)
                         rw = dr.textlength(rate_txt, font=F(15))
                         dr.text((c_rate - rw, ry + 9), rate_txt, font=F(15),
-                                fill=(115, 115, 115) if rate_txt == "—" else DIM)
+                                fill=(120, 138, 156) if rate_txt == "—" else DIM)
                     y += panel_h + 18
 
             # ══ 环境与作战词条（分组照主站：变种类 + 作战限制 保留组，其余平铺） ══
@@ -1435,7 +1436,7 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
                 if gk == "limit":
                     dr.text((PAD + 18, gy), "作战限制", font=F(15, True), fill=BRASS)
                 for cx, cy2, c, cw in rows_l:
-                    dr.rectangle([cx, cy2, cx + cw, cy2 + 34], fill=(26, 20, 10), outline=BRASS)
+                    dr.rectangle([cx, cy2, cx + cw, cy2 + 34], fill=(46, 42, 10), outline=BRASS)
                     dr.text((cx + 11, cy2 + 4), c, font=F(18, True), fill=GOLD2)
             if not items:
                 dr.text((PAD + 18, y + 54), "当前无环境词条", font=F(19), fill=MUTE)
@@ -1543,7 +1544,7 @@ def render_api_card(out_dir=None):
             fw = dr.textlength(ft, font=F(14))
             dr.text((W - PAD - fw, y + 14), ft, font=F(14), fill=MUTE)
             dr.text((PAD, y + 40), "对照表口径：官方 API 结构（字段名 + 类型）比对，基线随 CI 更新",
-                    font=F(14), fill=(115, 115, 115))
+                    font=F(14), fill=(120, 138, 156))
             dr.text((PAD, y + 64), "本会话已登记自动监测；每 60 秒检查一次，内容变化时主动推送。",
                     font=F(14), fill=GOLD2)
             return y + 104
@@ -2075,7 +2076,7 @@ def save_pages(img, height, out_path, document=None, page_info=None, caption=Non
     dr.line([(0, total_h - FOOT_H), (total_w, total_h - FOOT_H)], fill=LINE)
     dr.text((PAD, total_h - FOOT_H + 16), cap, font=F(16), fill=DIM)
     mot_x = total_w - PAD - dr.textlength("真理部 · MOT", font=F(14))
-    dr.text((mot_x, total_h - FOOT_H + 20), "真理部 · MOT", font=F(14), fill=(115, 115, 115))
+    dr.text((mot_x, total_h - FOOT_H + 20), "真理部 · MOT", font=F(14), fill=(120, 138, 156))
     path = os.path.splitext(out_path)[0] + ".png"
     fd, tmp = tempfile.mkstemp(prefix=".card_", dir=os.path.dirname(path))
     os.close(fd)

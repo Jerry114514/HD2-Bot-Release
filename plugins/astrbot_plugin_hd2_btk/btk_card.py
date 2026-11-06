@@ -233,7 +233,7 @@ def _draw_scan(dr, img, view):
     yy = y + 50
     for i, row in enumerate(shown, 1):
         if i % 2 == 0:
-            dr.rectangle([PAD + 1, yy, W - PAD - 1, yy + 66], fill=(22, 22, 22))
+            dr.rectangle([PAD + 1, yy, W - PAD - 1, yy + 66], fill=(22, 32, 46))
         dr.text((PAD + 18, yy + 18), f"{i:02d}", font=F(16, True), fill=BRASS)
         target = f"{row.get('enemy')} · {row.get('part')}"
         if len(target) > 30:
