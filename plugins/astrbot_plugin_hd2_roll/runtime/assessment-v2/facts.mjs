@@ -110,17 +110,39 @@ export function sourcePanel(enemies, heavy, armorDoc, tiers, id, part = 'head') 
     threat_basis: p.constitution === 'None' ? 'SOURCE_PANEL_NO_CONSTITUTION' : 'CONSTITUTION_EVENT_ORDER_UNRESOLVED'} : null;
 }
 
+// New Wiki tables expose drift and climb as separate two-axis vectors. They
+// are not interchangeable with the old Horizontal/Vertical fields. Preserve
+// both source vectors; use their per-axis maximum only as an explicit proxy
+// for our small handling-time correction, never as hit probability or damage.
+export function sourceHandling(item) {
+  const handling = Object.fromEntries(['ergonomics', 'recoil_horizontal', 'recoil_vertical'].map(key => [key, number(stat(item, key))]));
+  const sources = Object.fromEntries(['ergonomics', 'recoil', 'recoil_horizontal', 'recoil_vertical'].map(key => [key, {
+    selected: stat(item, key), detailed: field(tableRows(item, 'weapon_stats'), key), infobox: info(item, key),
+    source_ref: `wiki:${item.id}@${item.provenance.revid}`,
+  }]));
+  const pair = raw => {
+    const m = /^\s*↔\[(-?\d+(?:\.\d+)?)\]\s*↕\[(-?\d+(?:\.\d+)?)\]\s*$/.exec(raw ?? '');
+    return m ? {horizontal: Math.abs(Number(m[1])), vertical: Math.abs(Number(m[2]))} : null;
+  };
+  const drift = pair(stat(item, 'drift_recoil')), climb = pair(stat(item, 'climb_recoil'));
+  for (const axis of ['horizontal', 'vertical']) {
+    const key = 'recoil_' + axis;
+    if (handling[key] !== null || !drift || !climb) continue;
+    handling[key] = Math.max(drift[axis], climb[axis]);
+    sources[key] = {...sources[key], selected: String(handling[key]),
+      drift_raw: stat(item, 'drift_recoil'), climb_raw: stat(item, 'climb_recoil'),
+      basis: 'ENGINEERING_AXIS_MAX_OF_DRIFT_AND_CLIMB; NOT_LEGACY_FIELD_EQUIVALENCE'};
+  }
+  return {handling, sources};
+}
+
 export function weaponFacts(item, tiers, supplements = {}, sharedEffects = {}) {
   const supplyOnly = item.id === 'vehicle_m_103_supply_fast_recon_vehicle';
   const noncombat = supplyOnly || item.id === 'backpack_b_1_supply_pack';
   const inventory = sourceInventory(item);
   const trait = info(item, 'traits') ?? '';
-  const handling = Object.fromEntries(['ergonomics', 'recoil_horizontal', 'recoil_vertical'].map(key => [key, number(stat(item, key))]));
-  // Main-weapon exact keys only: never borrow an underbarrel or vehicle gun row.
-  const handlingSource = Object.fromEntries(['ergonomics', 'recoil', 'recoil_horizontal', 'recoil_vertical'].map(key => [key, {
-    selected: stat(item, key), detailed: field(tableRows(item, 'weapon_stats'), key), infobox: info(item, key),
-    source_ref: `wiki:${item.id}@${item.provenance.revid}`,
-  }]));
+  // Main-weapon rows only: never borrow an underbarrel or vehicle gun row.
+  const {handling, sources: handlingSource} = sourceHandling(item);
   const extra = supplements[item.id] ?? {};
   // A complete, explicitly labelled Partial single-round row is also a source
   // binding. Do not restrict this mechanic to the original weapon whitelist.
