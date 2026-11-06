@@ -27,3 +27,4 @@ napcat/
 .idea/
 Thumbs.db
 .DS_Store
+data/cmd_config.json
