@@ -260,8 +260,18 @@ def _target(text):
         return weapon, enemy, part
     weapon, rest = _match_prefix(weapons, text, _weapon_aliases)
     if weapon is None:
+        first = text.split(None, 1)[0] if text.split() else text
+        # 最常见错误：把敌人写在了武器位（如 /btk 武斗虫 头部）
+        enemy_hit, _rest = _match_prefix(enemies, text, _enemy_aliases)
+        if enemy_hit is not None:
+            enemy_id = str(enemy_hit.get("enemy") or "")
+            raise ValueError(
+                f"「{first}」是敌人名称——第一个参数应是武器。"
+                f"用法：/btk <武器> {enemy_id} <部位>，例：/btk AR-23 {enemy_id} 头部。"
+                "可发送 /btk 武器 查看武器 ID。"
+            )
         raise ValueError(
-            "未识别武器。请发送 /btk 武器 查看武器 ID。"
+            f"未识别武器「{first}」。请发送 /btk 武器 查看武器 ID。"
             + BTK_REFERENCE_HINT
         )
     if not rest:
