@@ -9,9 +9,14 @@ from astrbot.api.event import filter
 from astrbot.api.star import Star
 from astrbot_plugin_hd2_common.commands import parse_event
 from astrbot_plugin_hd2_common import errors
+from astrbot_plugin_hd2_common.data import setting
 from astrbot_plugin_hd2_common.runtime import wiki_blocking, singleflight, text_reply, request_scope
 from astrbot_plugin_hd2_common.diagnostics import hd2_log
 from astrbot_plugin_hd2_wiki.wiki_data import wiki_lookup, format_text, catalogue, RULE_VERSION
+from astrbot_plugin_hd2_wiki.chat_context import (
+    WIKI_LOOKUP_TOOL, build_wiki_context, chat_search_text, polish_chat_reply, render_chat_reference,
+    render_reply_policy, render_tool_result, reply_limit, should_ground,
+)
 from astrbot_plugin_hd2_common.search import normalize
 from astrbot_plugin_hd2_common.choices import choices, PAGE_SIZE
 
@@ -24,6 +29,143 @@ def render(keyword, value):
 class Hd2WikiPlugin(Star):
     async def terminate(self):
         choices.clear()
+
+    def _chat_deadline(self, default=5.5):
+        try:
+            timeout = float(setting("chat", "wiki_timeout_seconds", default=default))
+        except (TypeError, ValueError):
+            timeout = default
+        return time.monotonic() + max(1.0, min(12.0, timeout))
+
+    def _ensure_wiki_tool(self, req):
+        """Keep the managed wiki tool visible even after plugin tool filtering."""
+        try:
+            manager = self.context.get_llm_tool_manager()
+            tool = manager.get_func(WIKI_LOOKUP_TOOL)
+            if tool is None:
+                return
+            if getattr(req, "func_tool", None) is None:
+                from astrbot.api import ToolSet
+                req.func_tool = ToolSet()
+            req.func_tool.add_tool(tool)
+        except Exception:
+            pass
+
+    def _direct_quote_text(self, event):
+        try:
+            for message in event.get_messages():
+                if type(message).__name__ == "Reply":
+                    return str(getattr(message, "message_str", "") or "")
+        except Exception:
+            pass
+        return ""
+
+    @filter.on_llm_request()
+    async def ground_chat_with_wiki(self, event, req):
+        """Inject bounded wiki evidence into ordinary role-play chat."""
+        try:
+            if parse_event(event) or getattr(event, "_hd2_choice", None) is not None:
+                return
+            if event.get_extra("_hd2_chat_policy_done"):
+                return
+            current_message = str(getattr(req, "prompt", None) or getattr(event, "message_str", "") or "").strip()
+            message = chat_search_text(
+                current_message,
+                getattr(req, "extra_user_content_parts", ()) or (),
+                self._direct_quote_text(event),
+            )
+            try:
+                reply_chars = int(setting("chat", "max_reply_chars", default=180))
+            except (TypeError, ValueError):
+                reply_chars = 180
+            req.system_prompt = (
+                (getattr(req, "system_prompt", "") or "").rstrip()
+                + "\n\n" + render_reply_policy(current_message, reply_chars)
+            )
+            event.set_extra("_hd2_chat_policy_done", True)
+            self._ensure_wiki_tool(req)
+            if not setting("chat", "wiki_grounding", default=True):
+                return
+            if event.get_extra("_hd2_wiki_grounding_done"):
+                return
+            if not should_ground(message):
+                return
+            event.set_extra("_hd2_wiki_grounding_done", True)
+            deadline = self._chat_deadline()
+            try:
+                max_chars = int(setting("chat", "wiki_context_chars", default=2600))
+            except (TypeError, ValueError):
+                max_chars = 2600
+            value = await asyncio.wait_for(
+                wiki_blocking(build_wiki_context, message, deadline=deadline,
+                              max_chars=max(800, min(6000, max_chars))),
+                timeout=max(1.1, deadline - time.monotonic() + 0.5),
+            )
+            reference = render_chat_reference(value)
+            req.system_prompt = (getattr(req, "system_prompt", "") or "").rstrip() + "\n\n" + reference
+            hd2_log("generated", plugin="chat_grounding", source=value.get("source"),
+                    output_mode="prompt", search={"status": value.get("status"),
+                    "terms": value.get("terms"), "pages": [p.get("title") for p in value.get("pages", [])],
+                    "elapsed_ms": value.get("elapsed_ms")})
+        except Exception as error:
+            try:
+                fallback = {
+                    "status": "unavailable",
+                    "source": "https://helldivers.wiki.gg/zh",
+                    "query": str(getattr(req, "prompt", "") or ""),
+                    "pages": [], "candidates": [],
+                    "warnings": [type(error).__name__],
+                }
+                req.system_prompt = (getattr(req, "system_prompt", "") or "").rstrip() + "\n\n" + render_chat_reference(fallback)
+            except Exception:
+                pass
+            hd2_log("failed", plugin="chat_grounding", detail=type(error).__name__,
+                    search={"status": "unavailable"})
+
+    @filter.on_llm_response()
+    async def polish_chat_response(self, event, response):
+        """Apply lossless cleanup to chat replies without truncating content."""
+        if parse_event(event) or getattr(event, "_hd2_choice", None) is not None:
+            return
+        original = getattr(response, "completion_text", None)
+        if not isinstance(original, str) or not original.strip():
+            return
+        try:
+            configured = int(setting("chat", "max_reply_chars", default=180))
+        except (TypeError, ValueError):
+            configured = 180
+        limit = reply_limit(getattr(event, "message_str", "") or "", configured)
+        polished = polish_chat_reply(original, limit)
+        if polished != original:
+            response.completion_text = polished
+            hd2_log("generated", plugin="chat_cleanup", output_mode="response",
+                    detail={"before": len(original), "after": len(polished),
+                            "budget": limit, "content_truncated": False})
+
+    @filter.llm_tool(name=WIKI_LOOKUP_TOOL)
+    async def wiki_chat_lookup(self, event, query: str):
+        """查询《绝地潜兵2》中文 Wiki。用于核实武器、战备、敌人、机制、背景和专有名词；不要用它查询实时战况。
+
+        Args:
+            query(string): 要查询的 Wiki 主题或明确词条名
+        """
+        deadline = self._chat_deadline(default=9.0)
+        try:
+            value = await asyncio.wait_for(
+                wiki_blocking(build_wiki_context, query, deadline=deadline, max_chars=4200),
+                timeout=max(1.1, deadline - time.monotonic() + 0.5),
+            )
+        except Exception as error:
+            value = {
+                "status": "unavailable", "source": "https://helldivers.wiki.gg/zh",
+                "query": str(query or ""), "pages": [], "candidates": [],
+                "warnings": [type(error).__name__], "terms": [],
+            }
+        hd2_log("generated", plugin="chat_grounding_tool", source=value.get("source"),
+                output_mode="tool", search={"query": str(query or "")[:160],
+                "status": value.get("status"), "pages": [p.get("title") for p in value.get("pages", [])],
+                "elapsed_ms": value.get("elapsed_ms")})
+        return render_tool_result(value)
 
     async def _menu(self, event, menu, value=None):
         fresh = value is not None

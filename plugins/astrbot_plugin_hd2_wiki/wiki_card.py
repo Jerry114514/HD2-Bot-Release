@@ -12,9 +12,13 @@ import os
 import time
 from PIL import Image, ImageDraw, ImageOps
 from astrbot_plugin_hd2_war_report.report_card import (
-    W, PAD, BG, TEXT, GOLD, MUTE, LINE, F, _hud_head, _help_wrap, CACHE_DIR, save_pages,
+    W, PAD, BG, TEXT, GOLD, MUTE, LINE, F, _hud_head, _help_wrap, save_pages,
 )
+from astrbot_plugin_hd2_common.paths import plugin_cache_dir
 from .wiki_data import wiki_lookup, _fetch_thumb
+
+# 成品卡与缩略图缓存统一落 wiki 插件数据目录，不写插件安装目录。
+CACHE_DIR = str(plugin_cache_dir("astrbot_plugin_hd2_wiki", create=False))
 
 WIKI_LONG_MAX = 70000        # 内容画布预检上限（超高内容仍拒绝，避免内存失控）
 WIKI_MAX_AREA = 80_000_000   # 合并宽图像素面积上限（约 36 列）

@@ -1,13 +1,27 @@
 """Small event contract doubles; no QQ transport or production framework state."""
-import logging
 import sys
 import types
+
+
+class _NullLogger:
+    """Stand-in for ``astrbot.api.logger``; deliberately not Python ``logging``."""
+
+    @staticmethod
+    def _emit(message, *args, **kwargs):
+        return None
+
+    debug = info = warning = error = _emit
 
 
 def install():
     def decorator(*args, **kwargs):
         def bind(fn):
             fn.priority = kwargs.get("priority", 0)
+            return fn
+        return bind
+    def tool_decorator(*args, **kwargs):
+        def bind(fn):
+            fn.tool_name = kwargs.get("name") or fn.__name__
             return fn
         return bind
     class Star:
@@ -17,9 +31,14 @@ def install():
         def __init__(self, *args, **kwargs):
             self.__dict__.update(kwargs)
     modules = {name:types.ModuleType(name) for name in ["astrbot", "astrbot.api", "astrbot.api.event", "astrbot.api.star", "astrbot.api.message_components", "astrbot.core", "astrbot.core.message", "astrbot.core.message.components"]}
-    modules["astrbot.api"].logger = logging.getLogger("test_astrbot")
+    modules["astrbot.api"].logger = _NullLogger()
     modules["astrbot.api.event"].AstrMessageEvent = Event
-    modules["astrbot.api.event"].filter = types.SimpleNamespace(event_message_type=decorator, EventMessageType=types.SimpleNamespace(ALL=0,GROUP_MESSAGE=1))
+    modules["astrbot.api.event"].filter = types.SimpleNamespace(
+        event_message_type=decorator, on_llm_request=decorator,
+        on_llm_response=decorator,
+        llm_tool=tool_decorator,
+        EventMessageType=types.SimpleNamespace(ALL=0,GROUP_MESSAGE=1),
+    )
     modules["astrbot.api.star"].Star = Star
     modules["astrbot.api.star"].Context = object
     modules["astrbot.api.star"].register = decorator
@@ -56,12 +75,15 @@ class Event:
         self.user=user
         self.wake=wake
         self.stopped=False
+        self._extras={}
     def get_sender_id(self):return self.user
     def get_self_id(self):return "self"
     def get_platform_name(self):return "aiocqhttp"
     def is_wake_up(self):return self.wake
     def get_messages(self):return []
     def get_sender(self):return types.SimpleNamespace(card="",nickname="tester")
+    def set_extra(self,key,value):self._extras[key]=value
+    def get_extra(self,key=None,default=None):return self._extras if key is None else self._extras.get(key,default)
     def stop_event(self):self.stopped=True
     async def send(self, chain):
         self.sent = getattr(self, "sent", [])

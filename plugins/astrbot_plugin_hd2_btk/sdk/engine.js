@@ -162,6 +162,10 @@
       if (!(perHit > 0)) return null;
       var cripple = pool.cripple != null ? need(pool.cripple, perHit, pellets) : null;
       var full = need(pool.full, perHit, pellets);
+      var mul = (kind === 'part' || kind === 'destroy') ? (part.instances || 1) : 1;
+      if (mul > 1) {
+        [cripple, full].forEach(function (o) { if (o) { o.shots *= mul; o.pellets *= mul; } });
+      }
       return { kind: kind, label: label, pool: pool, perHit: perHit,
         cripple: cripple, full: full, primary: cripple || full, bleedSec: bleedSec };
     }

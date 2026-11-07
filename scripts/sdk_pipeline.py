@@ -75,7 +75,8 @@ def main():
     plugin_pkg.__path__ = [str(ROOT / "plugins")]
     sys.modules.update({"data": data_pkg, "data.plugins": plugin_pkg})
     modules = {}
-    for name in ("common", "monitor", "guard", "war_report", "roll", "wiki", "planet_info", "variant_query", "lookup", "welcome", "btk"):
+    for name in ("common", "monitor", "guard", "war_report", "roll", "wiki", "planet_info",
+                 "variant_query", "lookup", "welcome", "btk", "demolition"):
         module = importlib.import_module("data.plugins.astrbot_plugin_hd2_" + name + ".main")
         modules[name] = module
         metadata = star_map[module.__name__]
@@ -156,11 +157,13 @@ def main():
              patch.object(modules["roll"], "format_result", return_value="fixture seven slots"), \
              patch.object(modules["roll"], "render", side_effect=ImportError("text fallback fixture")), \
              patch.object(modules["btk"], "_run_bridge", return_value={"ok": True, "weapon": "AR-23 解放者", "enemy": "武斗虫", "part": "头部", "btk": 2, "ttk": 0.1, "path": "part", "label": "打爆致死部位", "perShotDamage": 150, "pelletsPerShot": 1, "stuck": None}), \
+             patch.object(modules["demolition"], "build_view", return_value={"kind": "info", "text": "fixture demolition"}), \
              patch.object(modules["lookup"], "_render_help_card", None), \
              patch.object(modules["lookup"], "_build_help_text", return_value="fixture help"):
             for platform in ("qq_official", "aiocqhttp"):
                 for mention in (False, True):
-                    for text in ("/roll", "/api", "/战报", "/战报 t", "/wiki", "/btk AR-23 武斗虫 头部", "/星球", "/变种", "/帮助"):
+                    for text in ("/roll", "/api", "/战报", "/战报 t", "/wiki", "/btk AR-23 武斗虫 头部",
+                                 "/拆毁值 EAT-17 炮舰设施", "/星球", "/变种", "/帮助"):
                         await check(text, platform, mention)
                 for text in ("roll", "api", "战报", "普通消息", "/unknown"):
                     await check(text, platform, expected=False)

@@ -8,9 +8,10 @@ from astrbot_plugin_hd2_war_report.report_card import (
     GOLD, GOLD2, BRASS, BLUE, GREEN, RED, F,
     _hud_head, _help_wrap, _render_cached,
 )
+from astrbot_plugin_hd2_common.paths import plugin_cache_dir
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-CACHE_DIR = os.path.join(HERE, "cache")
+# 成品卡缓存落插件数据目录，不写插件安装目录。
+CACHE_DIR = str(plugin_cache_dir("astrbot_plugin_hd2_btk", create=False))
 ANGLE_NAMES = ("正面命中", "小角度命中", "大角度命中", "极端角度命中")
 
 
@@ -199,7 +200,7 @@ def _draw_compute(dr, img, view):
         blast = "波及：" + "、".join(options["blastParts"])
         dr.text((PAD, y), blast, font=F(14), fill=DIM)
         y += 26
-    dr.text((PAD, y), "仅输出结果；伤害口径与 hd2-btk-sdk v0.12.2 一致。",
+    dr.text((PAD, y), "仅输出结果；伤害口径与 hd2-btk-sdk v0.14.1 一致。",
             font=F(13), fill=MUTE)
     y += 34
     return y

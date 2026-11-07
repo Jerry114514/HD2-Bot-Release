@@ -1,7 +1,9 @@
 # 隐私与本地文件（勿提交）
 config.json
+config.json.bak*
 *.local.json
 *.bak_webui_*
+*.bak_napcat_*
 *.tmp_webui*
 .qa-artifacts/
 .venv*/
@@ -15,8 +17,12 @@ __pycache__/
 temp/
 news_cache.json
 *.log
-# 插件运行时缓存（MO / DSS 资讯 / 新闻译文 / 信息流快照），部署后由插件自行重建
+# 插件运行时写入安装目录的历史位置（已迁移到 data/plugin_data/，保留忽略以防旧部署残留）
 plugins/*/cache/
+# AstrBot 插件数据目录：缓存 / 状态 / 指令日志统一落在这里，部署后由插件自行重建
+data/plugin_data/
+# 本地打包产物
+dist/
 
 # NapCat / AstrBot 运行产物
 napcat/

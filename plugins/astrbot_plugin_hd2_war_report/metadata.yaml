@@ -1,4 +1,7 @@
 name: astrbot_plugin_hd2_war_report
+display_name: HD2 战况速报
 desc: 绝地潜兵2 战况速报插件 - 同步 MO、活动战役、战线与 DSS，并每分钟监测 API 变更。
-author: local
-version: 1.0.0
+short_desc: 战报 / 重要指令 / 战役 / DSS：主站快照转中文 HUD 卡片，含 MO 自动播报与 /api 变更订阅。
+author: Jerry114514
+version: 1.0.1
+repo: https://github.com/Jerry114514/HD2-Bot-Release

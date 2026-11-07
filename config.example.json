@@ -37,6 +37,13 @@
     "api_key": "YOUR_DEEPSEEK_API_KEY",
     "api_url": "https://api.deepseek.com/v1/chat/completions"
   },
+  "chat": {
+    "_说明": "LLM 普通聊天仅在 bot.allow_chat=true 时放行；Wiki 证据会自动注入游戏知识问答。",
+    "wiki_grounding": true,
+    "wiki_timeout_seconds": 5.5,
+    "wiki_context_chars": 2600,
+    "max_reply_chars": 180
+  },
   "data": {
     "_说明": "可选。信息流与 /战报 后台预热相关设置，留空则用 hd2_config.py 里的默认值。",
     "news_json_url": "https://jerry114514.github.io/HD2-Galatic_war-Map/data.json",

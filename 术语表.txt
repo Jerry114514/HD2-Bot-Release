@@ -25,6 +25,8 @@ Voteless|||无票者
 Spore Burst Strain|||孢裂变种
 Predator Strain|||掠食变种
 Rupture Strain|||爆裂变种
+Corrosive Strain|||腐蚀变种
+Toxic Miasma Strain|||毒瘴变种
 Dragonroach|||蟑龙
 Hive Lord|||霸王虫
 The Incineration Corps|||炽灼部队

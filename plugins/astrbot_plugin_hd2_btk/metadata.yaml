@@ -1,4 +1,7 @@
 name: astrbot_plugin_hd2_btk
-desc: 绝地潜兵2 武器伤害与敌人部位阈值测试 - /btk 武器 敌人 部位，并支持卡阈值扫描和武器/敌人菜单
-author: local
-version: 1.1.1
+display_name: HD2 BTK 武器数据
+desc: 绝地潜兵2 BTK v0.14.1 - 武器伤害、敌人部位、DoT 与卡阈值，内置 149 件武器和 118 种敌人
+short_desc: BTK/TTK 伤害 HUD 卡：武器 × 敌人部位、卡阈值矩阵与持续伤害测算。
+author: Jerry114514
+version: 1.2.1
+repo: https://github.com/Jerry114514/HD2-Bot-Release

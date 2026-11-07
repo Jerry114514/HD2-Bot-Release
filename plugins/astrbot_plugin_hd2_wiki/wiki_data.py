@@ -3,20 +3,39 @@ import hashlib
 import json
 import os
 import re
+import sys
 import time
 import urllib.parse
 import urllib.request
-import logging
 from pathlib import Path
-from astrbot_plugin_hd2_common.data import get_json
 import contextvars
 from functools import lru_cache
 from html import unescape
 from collections import OrderedDict
 import threading
+from astrbot_plugin_hd2_common.data import get_json
+from astrbot_plugin_hd2_common.paths import plugin_cache_dir
 from astrbot_plugin_hd2_common.search import match_name, normalize, models, RULE_VERSION
-logger = logging.getLogger(__name__)
-CACHE_DIR = str(Path(__file__).parent / "cache")
+
+try:  # AstrBot 运行时只允许使用框架提供的 logger
+    from astrbot.api import logger
+except Exception:  # 离线工具/单元测试：框架不可用时退化为 stderr，不引入内置 logging
+    class _StderrLogger:
+        """Minimal stand-in used only when the AstrBot runtime is unavailable."""
+
+        @staticmethod
+        def _emit(message, *args, **_kwargs):
+            try:
+                sys.stderr.write((message % args if args else str(message)) + "\n")
+            except Exception:
+                pass
+
+        debug = info = warning = error = _emit
+
+    logger = _StderrLogger()
+
+# 缩略图/缓存一律写插件数据目录（data/plugin_data/astrbot_plugin_hd2_wiki），不写安装目录。
+CACHE_DIR = str(plugin_cache_dir("astrbot_plugin_hd2_wiki", create=False))
 WIKI_API = "https://helldivers.wiki.gg/zh/api.php"
 WIKI_HOME = "https://helldivers.wiki.gg/zh"
 FETCH_TIMEOUT = 8

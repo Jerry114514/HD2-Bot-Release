@@ -102,4 +102,7 @@ function scanStuck(opt) {
   return out;
 }
 
-module.exports = { compute, scanStuck, listWeapons, listEnemies, engine: E, data: { weapons, enemies } };
+const demo = require('./demolition.js');
+
+module.exports = { compute, scanStuck, listWeapons, listEnemies, engine: E, data: { weapons, enemies },
+  demolition: demo.canDemolish, demolitionAt: demo.demolitionAt, structures: demo.STRUCTURES, blasts: demo.BLASTS };

@@ -78,6 +78,17 @@ class SearchTests(unittest.TestCase):
         doc=snapshot();doc["planets"].append({"index":99,"name":"X45"})
         with self.assertRaisesRegex(ValueError,"歧义"): commands.find_planet(doc,"x45")
 
+    def test_planet_names_snapshot_matches_latest_starmap(self):
+        starmap = json.loads((Path(__file__).resolve().parents[1] / "tables/starmap.json").read_text(encoding="utf-8"))
+        expected = {
+            str(name).upper(): str(planet.get("cn") or "").strip()
+            for name, planet in starmap["planets"].items()
+            if str(planet.get("cn") or "").strip()
+        }
+        self.assertEqual(commands.names(), expected)
+        for name in ("MINCHIR", "HEZE BAY", "ENULIALE", "DIASPORA X", "GEMSTONE BLUFFS", "NABATEA SECUNDUS", "NAVI VII", "CERBERUS IIIC"):
+            self.assertIn(name, commands.names())
+
     def test_catalogue_identity_and_optional_dependency(self):
         local=wiki._local("AR23")
         self.assertEqual([r["title"] for r in local if r["tier"]==0],["AR-23 解放者"])
@@ -195,6 +206,19 @@ class SearchTests(unittest.TestCase):
                 self.assertGreater(img.width,wiki_card.W)
                 self.assertLess(img.height,2400)
 
+    def test_wiki_thumb_alpha_is_composited_on_card_background(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp, "transparent.png")
+            image = wiki_card.Image.new("RGBA", (40, 40), (255, 0, 0, 0))
+            for x in range(15, 25):
+                for y in range(15, 25):
+                    image.putpixel((x, y), (0, 0, 255, 255))
+            image.save(path)
+            prepared = wiki_card._prepare_wiki_thumb(path)
+        self.assertEqual(prepared.size, (10, 10))
+        self.assertEqual(prepared.getpixel((0, 0)), (0, 0, 255))
+        self.assertEqual(prepared.getpixel((9, 9)), (0, 0, 255))
+
     def test_singleflight_cancel_one_waiter(self):
         async def probe():
             release=asyncio.Event();calls=[]
@@ -237,6 +261,9 @@ class SearchTests(unittest.TestCase):
             result=asyncio.run(variant._scan_all_variants())
         self.assertFalse(result["complete"]);self.assertEqual(result["unknown_effects"],[999])
         self.assertIs(variant.VARIANT_CN,commands.VARIANT_TERMS)
+        self.assertEqual(variant.VARIANT_CN["CORROSIVE STRAIN"],"腐蚀变种")
+        self.assertEqual(variant.VARIANT_CN["TOXIC MIASMA STRAIN"],"毒瘴变种")
+        self.assertEqual(commands.parse("/变种 腐蚀变种"),("variant","腐蚀变种",False))
 
     def test_plain_handler_renders_candidates_and_records_outcome(self):
         value={"status":"ambiguous","title":"词条","url":"https://example.test","text":"","rev":"none","candidates":[{"title":"候选","reason":"近似名称"}],"search_complete":False}

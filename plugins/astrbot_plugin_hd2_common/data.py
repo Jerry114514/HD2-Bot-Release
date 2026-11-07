@@ -20,6 +20,7 @@ import threading
 import time
 from datetime import datetime, timezone
 from urllib.request import Request, urlopen
+from .paths import plugin_cache_dir
 
 _root = os.environ.get("HD2_PROJECT_DIR")
 if _root:
@@ -37,7 +38,8 @@ def setting(*keys, default=None):
 
 
 DEFAULT_SITE = "https://jerry114514.github.io/HD2-Galatic_war-Map"
-CACHE = Path(__file__).parent / "cache"
+# 快照缓存落在插件数据目录（data/plugin_data/...），不写插件安装目录。
+CACHE = plugin_cache_dir("astrbot_plugin_hd2_common", create=False)
 MAJOR_ORDER_BANNER = "./assets/campaign/banner_eagle3.webp"
 _memory = OrderedDict()
 _lock = threading.RLock()

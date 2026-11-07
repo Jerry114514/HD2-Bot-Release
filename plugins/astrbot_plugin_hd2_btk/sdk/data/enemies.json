@@ -37,7 +37,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿(4)",
@@ -48,7 +49,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 4
    }
   ],
   "mult": {
@@ -93,7 +95,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 6
    }
   ],
   "mult": {
@@ -138,7 +141,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 2
    },
    {
     "part": "内部血肉",
@@ -193,7 +197,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "前腿甲(2)",
@@ -204,7 +209,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 2
    },
    {
     "part": "后腿甲(2)",
@@ -215,7 +221,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 2
    },
    {
     "part": "腿部血肉(4)",
@@ -226,7 +233,8 @@
     "cap": false,
     "fatal": true,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 4
    }
   ],
   "mult": {
@@ -315,7 +323,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "手臂(2)",
@@ -326,7 +335,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部(2)",
@@ -337,7 +347,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -393,7 +404,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部(2)",
@@ -404,7 +416,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -493,7 +506,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 8
    },
    {
     "part": "肢体护甲(受损,8处)",
@@ -548,7 +562,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ]
  },
@@ -601,7 +616,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "口腔",
@@ -623,7 +639,8 @@
     "cap": true,
     "fatal": false,
     "bleed": "35000 [0/s]",
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 6
    },
    {
     "part": "软肉(6)",
@@ -634,7 +651,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 6
    },
    {
     "part": "腹板装甲(前6)",
@@ -667,7 +685,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.5
+    "exdr": 0.5,
+    "count": 14
    }
   ],
   "mult": {
@@ -734,7 +753,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部 (4)",
@@ -745,7 +765,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 4
    },
    {
     "part": "翅膀",
@@ -801,7 +822,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 3
    },
    {
     "part": "底盘",
@@ -845,7 +867,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "甲壳弱点（2）",
@@ -856,7 +879,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "左髋关节",
@@ -878,7 +902,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "左上腿甲",
@@ -900,7 +925,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "下腿甲（3）",
@@ -911,7 +937,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 3
    },
    {
     "part": "胫甲（3）",
@@ -922,7 +949,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 3
    },
    {
     "part": "左脚护甲",
@@ -944,7 +972,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "外露腿部内部结构",
@@ -977,7 +1006,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 0
+    "exdr": 0,
+    "count": 2
    },
    {
     "part": "右侧与左侧大腿内部结构（2）",
@@ -988,7 +1018,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "中腿上部内部结构",
@@ -1010,7 +1041,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 3
    }
   ],
   "mult": {
@@ -1055,7 +1087,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 2
    },
    {
     "part": "内部血肉",
@@ -1110,7 +1143,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "前腿甲 (2)",
@@ -1121,7 +1155,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 2
    },
    {
     "part": "后腿甲 (2)",
@@ -1132,7 +1167,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 2
    },
    {
     "part": "腿部血肉 (4)",
@@ -1143,7 +1179,8 @@
     "cap": false,
     "fatal": true,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 4
    }
   ],
   "mult": {
@@ -1188,7 +1225,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.5
+    "exdr": 0.5,
+    "count": 2
    },
    {
     "part": "内部血肉",
@@ -1254,7 +1292,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.5
+    "exdr": 0.5,
+    "count": 2
    },
    {
     "part": "腿部护甲（12）",
@@ -1265,7 +1304,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.5
+    "exdr": 0.5,
+    "count": 12
    },
    {
     "part": "前左腿血肉",
@@ -1287,7 +1327,8 @@
     "cap": false,
     "fatal": true,
     "bleed": "2,000 [-0/s]",
-    "exdr": 0.5
+    "exdr": 0.5,
+    "count": 3
    }
   ],
   "mult": {
@@ -1332,7 +1373,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 0
+    "exdr": 0,
+    "count": 3
    },
    {
     "part": "触手血肉（3）",
@@ -1343,7 +1385,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0
+    "exdr": 0,
+    "count": 3
    },
    {
     "part": "头冠装甲",
@@ -1365,7 +1408,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 0
+    "exdr": 0,
+    "count": 2
    },
    {
     "part": "内部血肉",
@@ -1420,7 +1464,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0
+    "exdr": 0,
+    "count": 4
    },
    {
     "part": "腿部血肉（4）",
@@ -1431,7 +1476,8 @@
     "cap": false,
     "fatal": true,
     "bleed": null,
-    "exdr": 0
+    "exdr": 0,
+    "count": 4
    }
   ],
   "mult": {
@@ -1476,7 +1522,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿 (4)",
@@ -1487,7 +1534,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 4
    }
   ],
   "mult": {
@@ -1521,7 +1569,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 6
    },
    {
     "part": "腹部肉块（2）",
@@ -1532,7 +1581,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 2
    },
    {
     "part": "手臂（4）",
@@ -1543,7 +1593,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 4
    },
    {
     "part": "腿部（2）",
@@ -1554,7 +1605,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 2
    }
   ],
   "mult": {
@@ -1600,7 +1652,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部 (4)",
@@ -1611,7 +1664,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 4
    }
   ],
   "mult": {
@@ -1689,7 +1743,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "手臂（2）",
@@ -1700,7 +1755,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -1711,7 +1767,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "火箭弹",
@@ -1811,7 +1868,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "手臂（2）",
@@ -1822,7 +1880,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -1833,7 +1892,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "背包",
@@ -1900,7 +1960,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "侧向鳍（2）",
@@ -1911,7 +1972,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ]
  },
@@ -1953,7 +2015,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "聚变长炮（2）",
@@ -1964,7 +2027,8 @@
     "cap": null,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.6
+    "exdr": 0.6,
+    "count": 2
    },
    {
     "part": "榴弹投射巢（2）",
@@ -1975,7 +2039,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "胯部",
@@ -2008,7 +2073,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -2019,7 +2085,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 0.4
+    "exdr": 0.4,
+    "count": 2
    },
    {
     "part": "胫甲（2）",
@@ -2030,7 +2097,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -2120,7 +2188,8 @@
     "cap": false,
     "fatal": true,
     "bleed": null,
-    "exdr": 0.35
+    "exdr": 0.35,
+    "count": 2
    },
    {
     "part": "引擎 舱",
@@ -2142,7 +2211,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -2198,7 +2268,8 @@
     "cap": null,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "头部 护甲",
@@ -2286,7 +2357,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.4
+    "exdr": 0.4,
+    "count": 2
    },
    {
     "part": "后引擎 护甲",
@@ -2330,7 +2402,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.4
+    "exdr": 0.4,
+    "count": 8
    },
    {
     "part": "膝部 护甲（4）",
@@ -2341,7 +2414,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.4
+    "exdr": 0.4,
+    "count": 4
    },
    {
     "part": "右前腿 组件",
@@ -2363,7 +2437,8 @@
     "cap": true,
     "fatal": true,
     "bleed": "2,000 [-0/s]",
-    "exdr": 0.4
+    "exdr": 0.4,
+    "count": 3
    },
    {
     "part": "腹部 舱门（2）",
@@ -2374,7 +2449,8 @@
     "cap": false,
     "fatal": true,
     "bleed": "1,200 [-0/s]",
-    "exdr": 0.4
+    "exdr": 0.4,
+    "count": 2
    },
    {
     "part": "头部本体（头部护甲已破坏）",
@@ -2629,7 +2705,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ]
  },
@@ -2770,7 +2847,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -2815,7 +2893,8 @@
     "cap": false,
     "fatal": false,
     "bleed": "1,000 [-0/s]",
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "前臂（2）",
@@ -2826,7 +2905,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部",
@@ -2882,7 +2962,8 @@
     "cap": false,
     "fatal": false,
     "bleed": "1,000 [-0/s]",
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "前臂（2）",
@@ -2893,7 +2974,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部",
@@ -2949,7 +3031,8 @@
     "cap": false,
     "fatal": false,
     "bleed": "1,000 [-0/s]",
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "前臂（2）",
@@ -2960,7 +3043,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部",
@@ -3049,7 +3133,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -3138,7 +3223,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 0
+    "exdr": 0,
+    "count": 2
    }
   ],
   "mult": {
@@ -3172,7 +3258,8 @@
     "cap": null,
     "fatal": false,
     "bleed": null,
-    "exdr": 0
+    "exdr": 0,
+    "count": 4
    },
    {
     "part": "前段脊椎",
@@ -3194,7 +3281,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.35
+    "exdr": 0.35,
+    "count": 2
    },
    {
     "part": "传送圆盘",
@@ -3227,7 +3315,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.35
+    "exdr": 0.35,
+    "count": 2
    },
    {
     "part": "后中段脊椎",
@@ -3249,7 +3338,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.35
+    "exdr": 0.35,
+    "count": 2
    },
    {
     "part": "后段脊椎",
@@ -3271,7 +3361,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.35
+    "exdr": 0.35,
+    "count": 2
    },
    {
     "part": "尾部",
@@ -3364,9 +3455,12 @@
     "durability": 0.7,
     "to_main": null,
     "cap": null,
-    "fatal": false,
+    "fatal": true,
     "bleed": null,
-    "exdr": 0.6
+    "exdr": 0.6,
+    "count": 2,
+    "mulNote": "2 门 × 3,500，分别取整",
+    "instances": 2
    },
    {
     "part": "导弹发射器（2）",
@@ -3377,7 +3471,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "机枪组（2）",
@@ -3388,7 +3483,8 @@
     "cap": null,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "扬声器（2）",
@@ -3399,7 +3495,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "雾灯（2）",
@@ -3410,7 +3507,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "躯干盖板（2）",
@@ -3421,7 +3519,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.6
+    "exdr": 0.6,
+    "count": 2
    },
    {
     "part": "通风口（6）",
@@ -3432,7 +3531,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 6
    },
    {
     "part": "舱门（2）",
@@ -3443,7 +3543,9 @@
     "cap": null,
     "fatal": true,
     "bleed": null,
-    "exdr": 0
+    "exdr": 0,
+    "count": 2,
+    "displayOnly": true
    },
    {
     "part": "底盘行走装置",
@@ -3465,7 +3567,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.6
+    "exdr": 0.6,
+    "count": 4
    },
    {
     "part": "履带（4）",
@@ -3476,7 +3579,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.6
+    "exdr": 0.6,
+    "count": 4
    }
   ],
   "mult": {
@@ -3521,7 +3625,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -3532,7 +3637,8 @@
     "cap": false,
     "fatal": false,
     "bleed": "500 [-0/s]",
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "散热器",
@@ -3588,7 +3694,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -3599,7 +3706,8 @@
     "cap": false,
     "fatal": false,
     "bleed": "500 [-0/s]",
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "散热器",
@@ -3666,7 +3774,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "后部弱点",
@@ -3721,7 +3830,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "手臂护甲（2）",
@@ -3732,7 +3842,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "手臂（2）",
@@ -3743,7 +3854,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "机炮（2）",
@@ -3754,7 +3866,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "机炮弱点（2）",
@@ -3765,7 +3878,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部护甲（6）",
@@ -3776,7 +3890,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 6
    },
    {
     "part": "髋部（3）",
@@ -3787,7 +3902,8 @@
     "cap": false,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 3
    },
    {
     "part": "腿部（3）",
@@ -3798,7 +3914,8 @@
     "cap": false,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 3
    }
   ],
   "mult": {
@@ -3843,7 +3960,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 4
    },
    {
     "part": "爪（2）",
@@ -3854,7 +3972,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -3865,7 +3984,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -3943,7 +4063,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.65
+    "exdr": 0.65,
+    "count": 2
    },
    {
     "part": "上臂（2）",
@@ -3954,7 +4075,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.55
+    "exdr": 0.55,
+    "count": 2
    },
    {
     "part": "前臂（2）",
@@ -3965,7 +4087,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "骨盆与左腿",
@@ -4065,7 +4188,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "后腿 (2)",
@@ -4076,7 +4200,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -4121,7 +4246,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿（4）",
@@ -4132,7 +4258,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 4
    },
    {
     "part": "翅膀（2）",
@@ -4143,7 +4270,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -4188,7 +4316,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 6
    }
   ],
   "mult": {
@@ -4233,7 +4362,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "后机身（2）",
@@ -4244,7 +4374,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "引擎",
@@ -4266,7 +4397,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "船首",
@@ -4341,7 +4473,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.2
+    "exdr": 0.2,
+    "count": 2
    },
    {
     "part": "骨盆",
@@ -4363,7 +4496,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 0.7
+    "exdr": 0.7,
+    "count": 2
    }
   ],
   "mult": {
@@ -4441,7 +4575,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "手臂（2）",
@@ -4452,7 +4587,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -4463,7 +4599,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -4519,7 +4656,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿(2)",
@@ -4530,7 +4668,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -4620,7 +4759,9 @@
     "cap": false,
     "fatal": true,
     "bleed": null,
-    "exdr": 0.35
+    "exdr": 0.35,
+    "count": 2,
+    "displayOnly": true
    },
    {
     "part": "引擎舱",
@@ -4642,7 +4783,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -4687,7 +4829,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿（4）",
@@ -4698,7 +4841,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 4
    }
   ],
   "mult": {
@@ -4743,7 +4887,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿（4）",
@@ -4754,7 +4899,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 4
    },
    {
     "part": "翅膀（2）",
@@ -4765,7 +4911,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -4810,7 +4957,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 6
    }
   ],
   "mult": {
@@ -4855,7 +5003,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.5
+    "exdr": 0.5,
+    "count": 2
    },
    {
     "part": "内部血肉",
@@ -4921,7 +5070,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.5
+    "exdr": 0.5,
+    "count": 2
    },
    {
     "part": "腿部护甲（12）",
@@ -4932,7 +5082,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.5
+    "exdr": 0.5,
+    "count": 12
    },
    {
     "part": "前左腿血肉",
@@ -4954,7 +5105,8 @@
     "cap": false,
     "fatal": true,
     "bleed": "2,000 [-0/s]",
-    "exdr": 0.5
+    "exdr": 0.5,
+    "count": 3
    }
   ],
   "mult": {
@@ -4999,7 +5151,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿(4)",
@@ -5010,7 +5163,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 4
    }
   ],
   "mult": {
@@ -5055,7 +5209,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 2
    },
    {
     "part": "内部血肉",
@@ -5110,7 +5265,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 6
    },
    {
     "part": "爪 (2)",
@@ -5121,7 +5277,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "前腿甲 (2)",
@@ -5132,7 +5289,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 2
    },
    {
     "part": "后腿甲 (2)",
@@ -5143,7 +5301,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 2
    },
    {
     "part": "腿部血肉 (4)",
@@ -5154,7 +5313,8 @@
     "cap": false,
     "fatal": true,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 4
    }
   ],
   "mult": {
@@ -5232,7 +5392,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "后腿 (2)",
@@ -5243,7 +5404,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -5288,7 +5450,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 6
    }
   ],
   "mult": {
@@ -5333,7 +5496,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿（4）",
@@ -5344,7 +5508,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 4
    }
   ],
   "mult": {
@@ -5389,7 +5554,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 2
    },
    {
     "part": "内部血肉",
@@ -5444,7 +5610,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "前足跗节护甲（2）",
@@ -5455,7 +5622,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 2
    },
    {
     "part": "前腿护甲（2）",
@@ -5466,7 +5634,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 2
    },
    {
     "part": "后腿护甲（2）",
@@ -5477,7 +5646,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 2
    },
    {
     "part": "腿部血肉（4）",
@@ -5488,7 +5658,8 @@
     "cap": false,
     "fatal": true,
     "bleed": null,
-    "exdr": 0.25
+    "exdr": 0.25,
+    "count": 4
    }
   ],
   "mult": {
@@ -5566,7 +5737,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "后腿（2）",
@@ -5577,7 +5749,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ]
  },
@@ -5619,7 +5792,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿 (4)",
@@ -5630,7 +5804,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 4
    }
   ],
   "mult": {
@@ -5675,7 +5850,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.5
+    "exdr": 0.5,
+    "count": 2
    },
    {
     "part": "爪（2）",
@@ -5686,7 +5862,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.5
+    "exdr": 0.5,
+    "count": 2
    },
    {
     "part": "翅膀（4）",
@@ -5697,7 +5874,8 @@
     "cap": false,
     "fatal": true,
     "bleed": "2,500 [-0/s]",
-    "exdr": 0.5
+    "exdr": 0.5,
+    "count": 4
    },
    {
     "part": "胸部酸囊",
@@ -5763,7 +5941,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.5
+    "exdr": 0.5,
+    "count": 12
    }
   ],
   "mult": {
@@ -5808,7 +5987,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "前足跗节护甲 (2)",
@@ -5819,7 +5999,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "前肢 (2)",
@@ -5830,7 +6011,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "后肢 (2)",
@@ -5841,7 +6023,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -5897,7 +6080,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -5953,7 +6137,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "手臂（2）",
@@ -5964,7 +6149,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腹部",
@@ -5997,7 +6183,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "喷射背包",
@@ -6064,7 +6251,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -6075,7 +6263,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "喷射背包",
@@ -6142,7 +6331,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -6153,7 +6343,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "喷射背包",
@@ -6220,7 +6411,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -6231,7 +6423,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "喷射背包",
@@ -6287,7 +6480,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -6298,7 +6492,8 @@
     "cap": false,
     "fatal": false,
     "bleed": "500 [-0/s]",
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "喷射背包",
@@ -6354,7 +6549,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -6365,7 +6561,8 @@
     "cap": false,
     "fatal": false,
     "bleed": "500 [-0/s]",
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "喷射背包",
@@ -6443,7 +6640,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -6454,7 +6652,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "背包主体",
@@ -6554,7 +6753,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -6610,7 +6810,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -6621,7 +6822,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "喷射背包",
@@ -6688,7 +6890,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "手臂（2）",
@@ -6699,7 +6902,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腹部",
@@ -6732,7 +6936,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -6788,7 +6993,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "手臂（2）",
@@ -6799,7 +7005,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腹部",
@@ -6832,7 +7039,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "背包",
@@ -6899,7 +7107,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -6910,7 +7119,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -6966,7 +7176,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -6977,7 +7188,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "燃料罐主体",
@@ -7078,7 +7290,9 @@
     "cap": false,
     "fatal": true,
     "bleed": null,
-    "exdr": 0.35
+    "exdr": 0.35,
+    "count": 2,
+    "displayOnly": true
    },
    {
     "part": "引擎舱",
@@ -7100,7 +7314,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -7258,7 +7473,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 0
+    "exdr": 0,
+    "count": 2
    },
    {
     "part": "后 推进器（2）",
@@ -7269,7 +7485,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 0
+    "exdr": 0,
+    "count": 2
    }
   ]
  },
@@ -7311,7 +7528,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 0
+    "exdr": 0,
+    "count": 4
    }
   ]
  },
@@ -7424,7 +7642,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿(4)",
@@ -7435,7 +7654,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 4
    }
   ],
   "mult": {
@@ -7513,7 +7733,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "后腿 (2)",
@@ -7524,7 +7745,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -7569,7 +7791,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "胸足 (4)",
@@ -7580,7 +7803,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 4
    },
    {
     "part": "翅膀 (2)",
@@ -7591,7 +7815,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -7636,7 +7861,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "胸足 (4)",
@@ -7647,7 +7873,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 4
    },
    {
     "part": "翅膀 (2)",
@@ -7658,7 +7885,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -7714,7 +7942,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -7725,7 +7954,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    }
   ],
   "mult": {
@@ -7845,7 +8075,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -7856,7 +8087,8 @@
     "cap": false,
     "fatal": false,
     "bleed": "500 [-0/s]",
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "散热器",
@@ -7912,7 +8144,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "腿部（2）",
@@ -7923,7 +8156,8 @@
     "cap": false,
     "fatal": false,
     "bleed": "500 [-0/s]",
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "散热器",
@@ -7990,7 +8224,8 @@
     "cap": null,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.8
+    "exdr": 0.8,
+    "count": 2
    },
    {
     "part": "火箭弹（4）",
@@ -8001,7 +8236,8 @@
     "cap": null,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 4
    },
    {
     "part": "炮塔系统",
@@ -8034,7 +8270,8 @@
     "cap": true,
     "fatal": true,
     "bleed": null,
-    "exdr": 0
+    "exdr": 0,
+    "count": 2
    }
   ],
   "mult": {
@@ -8101,7 +8338,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "左侧 腿部（2）",
@@ -8112,7 +8350,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "右侧 腿部（2）",
@@ -8123,7 +8362,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "翅膀",
@@ -8201,7 +8441,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 0.55
+    "exdr": 0.55,
+    "count": 2
    },
    {
     "part": "前臂（2）",
@@ -8212,7 +8453,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "骨盆与 左腿",
@@ -8290,7 +8532,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "内部结构（2）",
@@ -8301,7 +8544,8 @@
     "cap": false,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "驾驶员",
@@ -8345,7 +8589,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "上臂（2）",
@@ -8356,7 +8601,8 @@
     "cap": false,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "前臂（2）",
@@ -8367,7 +8613,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "手臂弱点（2）",
@@ -8378,7 +8625,8 @@
     "cap": true,
     "fatal": false,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "髋部（2）",
@@ -8389,7 +8637,8 @@
     "cap": false,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "后髋",
@@ -8411,7 +8660,8 @@
     "cap": false,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "小腿（2）",
@@ -8422,7 +8672,8 @@
     "cap": false,
     "fatal": true,
     "bleed": null,
-    "exdr": 1
+    "exdr": 1,
+    "count": 2
    },
    {
     "part": "后腿",
@@ -8631,6 +8882,303 @@
     "av": 5,
     "durability": 1,
     "to_main": null,
+    "cap": null,
+    "fatal": true,
+    "bleed": null,
+    "exdr": 0
+   }
+  ]
+ },
+ {
+  "enemy": "迫击炮台（通过清空总血量而非拆毁值摧毁）",
+  "faction": "机器人",
+  "tier": "",
+  "mainHp": 400,
+  "note": "拆毁值未列",
+  "parts": [
+   {
+    "part": "主体",
+    "hp": 400,
+    "av": 4,
+    "durability": 1,
+    "to_main": null,
+    "cap": null,
+    "fatal": true,
+    "bleed": null,
+    "exdr": 0
+   },
+   {
+    "part": "散热口",
+    "hp": 400,
+    "av": 3,
+    "durability": 1,
+    "to_main": 1,
+    "cap": null,
+    "fatal": true,
+    "bleed": null,
+    "exdr": 0
+   }
+  ]
+ },
+ {
+  "enemy": "防空炮台（通过清空总血量而非拆毁值摧毁）",
+  "faction": "机器人",
+  "tier": "",
+  "mainHp": 400,
+  "note": "散热口为 1.005.000 新增弱点",
+  "parts": [
+   {
+    "part": "主体",
+    "hp": 400,
+    "av": 4,
+    "durability": 1,
+    "to_main": null,
+    "cap": null,
+    "fatal": true,
+    "bleed": null,
+    "exdr": 0
+   },
+   {
+    "part": "散热口",
+    "hp": 400,
+    "av": 3,
+    "durability": 1,
+    "to_main": 1,
+    "cap": null,
+    "fatal": true,
+    "bleed": null,
+    "exdr": 0
+   }
+  ]
+ },
+ {
+  "enemy": "机器人机枪部署支架（单管）（通过清空总血量而非拆毁值摧毁）",
+  "faction": "机器人",
+  "tier": "",
+  "mainHp": 300,
+  "note": "Light Fusion Cycler 单管",
+  "parts": [
+   {
+    "part": "主体",
+    "hp": 300,
+    "av": 2,
+    "durability": 1,
+    "to_main": null,
+    "cap": null,
+    "fatal": true,
+    "bleed": null,
+    "exdr": 0
+   }
+  ]
+ },
+ {
+  "enemy": "机器人机枪部署支架（双管）（通过清空总血量而非拆毁值摧毁）",
+  "faction": "机器人",
+  "tier": "",
+  "mainHp": 500,
+  "note": "Heavy Fusion Repeater 双管",
+  "parts": [
+   {
+    "part": "主体",
+    "hp": 500,
+    "av": 3,
+    "durability": 1,
+    "to_main": null,
+    "cap": null,
+    "fatal": true,
+    "bleed": null,
+    "exdr": 0
+   }
+  ]
+ },
+ {
+  "enemy": "凝视者（通过清空总血量而非拆毁值摧毁）",
+  "faction": "光能者",
+  "tier": "",
+  "mainHp": 900,
+  "note": "Gazer｜拆毁值 20",
+  "parts": [
+   {
+    "part": "主体",
+    "hp": 900,
+    "av": 5,
+    "durability": 1,
+    "to_main": null,
+    "cap": null,
+    "fatal": true,
+    "bleed": null,
+    "exdr": 0
+   },
+   {
+    "part": "眼睛",
+    "hp": 700,
+    "av": 1,
+    "durability": 0,
+    "to_main": 1,
+    "cap": null,
+    "fatal": true,
+    "bleed": null,
+    "exdr": 0
+   },
+   {
+    "part": "球体",
+    "hp": 900,
+    "av": 5,
+    "durability": 0,
+    "to_main": 1,
+    "cap": null,
+    "fatal": true,
+    "bleed": null,
+    "exdr": 0
+   },
+   {
+    "part": "底座",
+    "hp": 900,
+    "av": 5,
+    "durability": 0,
+    "to_main": 1,
+    "cap": null,
+    "fatal": true,
+    "bleed": null,
+    "exdr": 0
+   }
+  ]
+ },
+ {
+  "enemy": "凝视者尖塔（通过清空总血量而非拆毁值摧毁）",
+  "faction": "光能者",
+  "tier": "",
+  "mainHp": 900,
+  "note": "拆毁值 60",
+  "parts": [
+   {
+    "part": "主体",
+    "hp": 900,
+    "av": 9,
+    "durability": 1,
+    "to_main": null,
+    "cap": null,
+    "fatal": true,
+    "bleed": null,
+    "exdr": 0
+   }
+  ]
+ },
+ {
+  "enemy": "闪电尖塔（通过清空总血量而非拆毁值摧毁）",
+  "faction": "光能者",
+  "tier": "",
+  "mainHp": 200,
+  "note": "拆毁值 20",
+  "parts": [
+   {
+    "part": "主体",
+    "hp": 200,
+    "av": 2,
+    "durability": 0.8,
+    "to_main": null,
+    "cap": null,
+    "fatal": true,
+    "bleed": null,
+    "exdr": 0
+   }
+  ]
+ },
+ {
+  "enemy": "传送门（通过清空总血量而非拆毁值摧毁）",
+  "faction": "光能者",
+  "tier": "",
+  "mainHp": 1500,
+  "note": "Warp Gateway｜拆毁值 20(门)/40(其他)",
+  "parts": [
+   {
+    "part": "主体",
+    "hp": 1500,
+    "av": 5,
+    "durability": 1,
+    "to_main": null,
+    "cap": null,
+    "fatal": true,
+    "bleed": null,
+    "exdr": 0
+   }
+  ]
+ },
+ {
+  "enemy": "认知干扰器电源（通过清空总血量而非拆毁值摧毁）",
+  "faction": "光能者",
+  "tier": "",
+  "mainHp": 180,
+  "note": "不可独立摧毁本体，需打断 PSU｜拆毁 30",
+  "parts": [
+   {
+    "part": "主体",
+    "hp": 180,
+    "av": 0,
+    "durability": 1,
+    "to_main": null,
+    "cap": null,
+    "fatal": true,
+    "bleed": null,
+    "exdr": 0
+   }
+  ]
+ },
+ {
+  "enemy": "护盾生成器（通过清空总血量而非拆毁值摧毁）",
+  "faction": "光能者",
+  "tier": "",
+  "mainHp": 800,
+  "note": "Destroy Exospire 页",
+  "parts": [
+   {
+    "part": "主体",
+    "hp": 800,
+    "av": 2,
+    "durability": 1,
+    "to_main": null,
+    "cap": null,
+    "fatal": true,
+    "bleed": null,
+    "exdr": 0
+   },
+   {
+    "part": "顶部",
+    "hp": 500,
+    "av": 1,
+    "durability": 0,
+    "to_main": 1,
+    "cap": null,
+    "fatal": false,
+    "bleed": null,
+    "exdr": 0
+   }
+  ]
+ },
+ {
+  "enemy": "暗液体电池（通过清空总血量而非拆毁值摧毁）",
+  "faction": "光能者",
+  "tier": "",
+  "mainHp": 200,
+  "note": "需摧毁 ≥148 个",
+  "parts": [
+   {
+    "part": "主体",
+    "hp": 200,
+    "av": 1,
+    "durability": 1,
+    "to_main": null,
+    "cap": null,
+    "fatal": true,
+    "bleed": null,
+    "exdr": 0
+   },
+   {
+    "part": "弱点",
+    "hp": 50,
+    "av": 0,
+    "durability": 0,
+    "to_main": 1,
     "cap": null,
     "fatal": true,
     "bleed": null,

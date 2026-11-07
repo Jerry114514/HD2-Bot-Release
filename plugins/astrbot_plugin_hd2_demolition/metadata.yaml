@@ -1,0 +1,7 @@
+name: astrbot_plugin_hd2_demolition
+display_name: HD2 拆毁值评估
+desc: 绝地潜兵2 拆毁值评估 - 对比直击与爆炸拆毁值、距离衰减及常见目标/建筑门槛（BTK SDK v0.14.1）。
+short_desc: 直击与爆炸拆毁值对比、距离衰减曲线与常见目标/建筑门槛查询。
+author: Jerry114514
+version: 1.0.1
+repo: https://github.com/Jerry114514/HD2-Bot-Release

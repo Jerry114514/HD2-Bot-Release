@@ -416,6 +416,17 @@ PLANET_NAME_CN = {
     "ZZANIAH PRIME": "藏尼亚主星",
 }
 
+# 发布包内的星图快照是译名的唯一当前版本；上方常量只作为旧部署的离线兜底。
+try:
+    with open(_os.path.join(_os.path.dirname(__file__), "planet_names.json"), encoding="utf-8") as _planet_names_file:
+        PLANET_NAME_CN.update({
+            str(name).upper(): str(label).strip()
+            for name, label in json.load(_planet_names_file).items()
+            if str(label).strip()
+        })
+except (OSError, ValueError, AttributeError):
+    pass
+
 
 # 星区译名（sector id -> 中文，官方/社区 sector 字段用）
 SECTOR_CN = {

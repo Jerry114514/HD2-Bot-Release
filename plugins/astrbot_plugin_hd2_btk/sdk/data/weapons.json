@@ -904,7 +904,7 @@
  },
  {
   "id": "RS-422",
-  "name": "RS-422 磁轨炮",
+  "name": "RS-422 磁轨炮（安全模式）",
   "cat": "支援武器",
   "dmg": 600,
   "dmg2": 225,
@@ -3650,5 +3650,137 @@
   "duration": 1,
   "note": "150/s ×1s，AP7",
   "element": "explosion"
+ },
+ {
+  "id": "E/AT-12",
+  "name": "E/AT-12 反坦克炮台",
+  "cat": "防御工事",
+  "type": "projectile",
+  "dmg": 1300,
+  "dmg2": 1300,
+  "ap": [
+   6,
+   6,
+   6,
+   3
+  ],
+  "caliber": 75,
+  "mass": 6500,
+  "v0": 625,
+  "drag": 0.75,
+  "grav": 1,
+  "pellets": 1,
+  "rpm": null,
+  "explosion": {
+   "dmg": 150,
+   "ap": [
+    3,
+    2,
+    3
+   ]
+  },
+  "note": "75mm APHE（6.5 kg）｜内圈150爆炸(AP3,3m)、外圈6m、冲击波7m｜弹药30发，一次性不可补弹｜工事本体300血 AV2 耐久80%｜模板无射速行"
+ },
+ {
+  "id": "E/MG-101",
+  "name": "E/MG-101 重机枪部署支架",
+  "cat": "防御工事",
+  "type": "projectile",
+  "dmg": 200,
+  "dmg2": 40,
+  "ap": [
+   4,
+   4,
+   4,
+   0
+  ],
+  "caliber": 12.5,
+  "mass": 52,
+  "v0": 880,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "rpm": 660,
+  "note": "12.5mm 全金属被甲｜双枪各300发(共600)｜正文「每秒11发」≈660RPM，持续约30s｜工事本体1000血 AV2 拆毁40｜一次性不可补弹"
+ },
+ {
+  "id": "RS-422-UNSAFE",
+  "name": "RS-422 磁轨炮（不安全模式，极限蓄力）",
+  "cat": "支援武器",
+  "dmg": 1494,
+  "dmg2": 560,
+  "ap": [
+   5,
+   5,
+   5,
+   5
+  ],
+  "caliber": 10,
+  "mass": 50,
+  "v0": 2000,
+  "drag": 0.3,
+  "grav": 1,
+  "pellets": 1,
+  "note": "不安全模式极限蓄力：伤害 ×2.49（安全模式 600→1494）｜穿透减速 0%？wiki 原文确为 0%；另有过蓄力爆炸（v1 不计）",
+  "rpm": 60
+ },
+ {
+  "id": "C4",
+  "name": "B/MD C4背包",
+  "cat": "防御工事",
+  "type": "stratagem",
+  "dmg": 0,
+  "dmg2": 0,
+  "ap": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "caliber": null,
+  "mass": null,
+  "v0": null,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "explosion": {
+   "dmg": 2000,
+   "ap": [
+    7,
+    6,
+    7
+   ]
+  },
+  "note": "拆毁 40｜内圈 3 m / 外圈 7 m｜仅爆炸，无直击"
+ },
+ {
+  "id": "STAX3",
+  "name": "StA-X3 W.A.S.P.发射器",
+  "cat": "支援武器",
+  "type": "projectile",
+  "dmg": 200,
+  "dmg2": 200,
+  "ap": [
+   6,
+   3,
+   2,
+   0
+  ],
+  "caliber": 1,
+  "mass": 11,
+  "v0": 500,
+  "drag": 0,
+  "grav": 0,
+  "pellets": 1,
+  "rpm": null,
+  "explosion": {
+   "dmg": 600,
+   "ap": [
+    3,
+    2,
+    2
+   ]
+  },
+  "note": "拆毁 30（直击/火箭爆炸/火炮爆炸）｜爆炸内 2.5 m / 外 5 m"
  }
 ]

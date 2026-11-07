@@ -127,6 +127,8 @@ VARIANT_GROUP_OF = {
     "SPORE BURST STRAIN": "TERMINID BROOD",
     "PREDATOR STRAIN": "TERMINID BROOD",
     "RUPTURE STRAIN": "TERMINID BROOD",
+    "CORROSIVE STRAIN": "TERMINID BROOD",
+    "TOXIC MIASMA STRAIN": "TERMINID BROOD",
     "DRAGONROACH": "EXOTIC LIFEFORM",
     "HIVE LORD": "EXOTIC LIFEFORM",
     "THE INCINERATION CORPS": "AUTOMATON ASSEMBLAGE",
@@ -150,6 +152,8 @@ VARIANT_CN = {
     "SPORE BURST STRAIN": ("孢裂变种", "这颗星球上的虫子发生了变异，会释放特殊的信息素，使得其他同变种个体分泌大量肾上腺素。做好准备，以非暴力手段应对这些为彼此提速的敌人。"),
     "PREDATOR STRAIN": ("掠食变种", "根据报道，这颗星球上的终结族体现出极强的攻击性，且学会了高速移动的能力与表层伪装色，做好准备，以迅雷之势清扫这些变种。"),
     "RUPTURE STRAIN": ("爆裂变种", "情报显示，这颗星球上的终结族体现出极强的腐蚀性，且学会了掘地等手段免疫常规攻击，做好准备，应对这些精通于地下突袭的变种。"),
+    "CORROSIVE STRAIN": ("腐蚀变种", "该星球上的终结族出现了新的腐蚀性变种，行动时请留意相关敌情。"),
+    "TOXIC MIASMA STRAIN": ("毒瘴变种", "该星球上的终结族出现了新的毒瘴变种，行动时请留意相关敌情。"),
     "DRAGONROACH": ("蟑龙", "该星球上的吐酸泰坦选择进化出了飞行能力，不过原始本能使得它们不会成群出现，做好夺取制空权的准备。"),
     "HIVE LORD": ("霸王虫", "该星球上的终结族演变出了复数个皮糙肉厚的庞然大物，做好面对虫群与广域动量攻击的准备。"),
     "THE INCINERATION CORPS": ("炽灼部队", "在此处的机器人配备了大量火焰装备。来吧，去给他们浇点油。"),
@@ -197,54 +201,8 @@ MO_TARGET_CN = {
 }
 # ============ 战略目标词库 END ============
 
-async def _translate_objective_desc(context, desc: str) -> str:
-    """用 DeepSeek 翻译战略目标英文描述为中文（失败返回原文）"""
-    if not desc or not desc.strip():
-        return desc
-    # 已含中文则跳过
-    if re.search(r"[\u4e00-\u9fff]", desc):
-        return desc
-    try:
-        import json as _json
-        import urllib.request as _urllib
-
-        conf = _json.load(
-            open(_os.environ.get("HD2_CMD_CONFIG", r"C:\Users\<USERNAME>\.astrbot\data\cmd_config.json"), encoding="utf-8-sig")
-        )
-        providers = conf.get("provider_sources") or []
-        key, base = "", "https://api.deepseek.com/v1/chat/completions"
-        for p in providers:
-            if isinstance(p, dict) and "deepseek" in str(p.get("id", "")).lower():
-                keys = p.get("key") or []
-                key = keys[0] if isinstance(keys, list) and keys else str(keys or "")
-                if p.get("api_base"):
-                    base = p["api_base"].rstrip("/") + "/chat/completions"
-                break
-        if not key:
-            return desc
-        sys_prompt = (
-            "你是《绝地潜兵2》中文本地化翻译。把用户给出的英文战略目标描述翻译成简体中文，"
-            "星球名等专有名词保留英文或按常识译名，只输出译文不要解释。"
-        )
-        req = _urllib.Request(
-            base,
-            data=_json.dumps({
-                "model": "deepseek-chat",
-                "messages": [
-                    {"role": "system", "content": sys_prompt},
-                    {"role": "user", "content": desc},
-                ],
-                "temperature": 0.3,
-            }).encode("utf-8"),
-            headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}"},
-        )
-        with _urllib.urlopen(req, timeout=120) as resp:
-            data = _json.loads(resp.read().decode("utf-8"))
-        result = (data["choices"][0]["message"]["content"] or "").strip()
-        return result or desc
-    except Exception:
-        return desc
-
+# 战略目标英文描述的翻译已统一交给框架 LLM 接口（llm_generate）处理，
+# 这里不再保留直连外部 API / 读取本机凭据的同步实现。
 
 import os as _os
 import sys as _sys

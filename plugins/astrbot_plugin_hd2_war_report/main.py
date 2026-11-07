@@ -14,6 +14,7 @@ from astrbot.api.star import Context, Star
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from astrbot_plugin_hd2_common import api_watch, commands, data, errors, orders
+from astrbot_plugin_hd2_common.paths import plugin_data_dir
 from astrbot_plugin_hd2_common.runtime import blocking, text_reply, request_scope
 from astrbot_plugin_hd2_common.sources import (
     fetch_json as _fetch_json, fetch_official as _fetch_official,
@@ -65,11 +66,13 @@ class Hd2WarReportPlugin(Star):
         self._warm_task = None
         self._api_task = None
         self._api_lock = None
+        # 运行期状态写插件数据目录（data/plugin_data/...），不写插件安装目录。
+        state_dir = plugin_data_dir("astrbot_plugin_hd2_war_report", "state")
         self._api_state = api_watch.ApiWatchState(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache", "api_watch_state.json")
+            os.path.join(str(state_dir), "api_watch_state.json")
         )
         self._mo_seen = MoSeenStore(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache", "mo_seen.json")
+            os.path.join(str(state_dir), "mo_seen.json")
         )
 
     @filter.event_message_type(filter.EventMessageType.ALL)

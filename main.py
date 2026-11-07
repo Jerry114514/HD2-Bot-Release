@@ -31,6 +31,7 @@ from astrbot_plugin_hd2_common.runtime import request_scope
 
 # 子系统实现：仓库内既有插件类，逻辑零改动、直接复用
 from astrbot_plugin_hd2_btk.main import Hd2BtkPlugin
+from astrbot_plugin_hd2_demolition.main import Hd2DemolitionPlugin
 from astrbot_plugin_hd2_guard.main import Hd2GuardPlugin
 from astrbot_plugin_hd2_lookup.main import Hd2LookupPlugin
 from astrbot_plugin_hd2_monitor.main import Hd2MonitorPlugin
@@ -55,6 +56,7 @@ class Hd2SuitePlugin(Star):
         self._wiki = Hd2WikiPlugin(context)
         self._roll = Hd2RollPlugin(context)
         self._btk = Hd2BtkPlugin(context)
+        self._demolition = Hd2DemolitionPlugin(context)
         self._lookup = Hd2LookupPlugin(context)
         self._guard = Hd2GuardPlugin(context)
         self._monitor = Hd2MonitorPlugin(context)
@@ -92,6 +94,12 @@ class Hd2SuitePlugin(Star):
     @request_scope
     async def suite_btk(self, event: AstrMessageEvent):
         async for reply in self._btk.keyword_trigger(event):
+            yield reply
+
+    @filter.event_message_type(filter.EventMessageType.ALL)
+    @request_scope
+    async def suite_demolition(self, event: AstrMessageEvent):
+        async for reply in self._demolition.keyword_trigger(event):
             yield reply
 
     @filter.event_message_type(filter.EventMessageType.ALL)

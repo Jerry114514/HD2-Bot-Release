@@ -18,6 +18,7 @@ ALIASES = {
     "roll": "roll", "随机战备": "roll", "roll战备": "roll",
     "wiki": "wiki", "wiki查询": "wiki", "查wiki": "wiki",
     "btk": "btk", "btk测伤": "btk",
+    "拆毁值": "demolition", "拆毁": "demolition",
     "帮助": "help", "help": "help", "星球": "planet", "查询": "planet", "查": "planet",
     "变种": "variant", "查询变种": "variant", "查变种": "variant",
 }
@@ -139,7 +140,8 @@ def clean(value):
 
 
 def names():
-    return json.loads((Path(__file__).parent / "planet_names.json").read_text(encoding="utf-8"))
+    table = json.loads((Path(__file__).parent / "planet_names.json").read_text(encoding="utf-8"))
+    return {str(name).upper(): str(label).strip() for name, label in table.items() if str(label).strip()}
 
 
 def planet_name(planet):
@@ -316,6 +318,7 @@ class Result:
     text: str
     document: dict
     query: str = ""
+    title_cn: str = ""
 
 
 def result(kind, query="", doc=None):
@@ -337,9 +340,11 @@ def result(kind, query="", doc=None):
     doc = data.site_doc() if doc is None else doc
     if kind in ("report", "mo") and (doc.get("assignments_all") or doc.get("strategic")):
         data.enrich_official_texts(doc)
+    title_cn = ""
     if kind == "planet":
         planet = find_planet(doc, query)
         query = planet["name"]
+        title_cn = planet_name(planet)
         body = planet_text(doc, planet)
     elif kind == "report":
         dist = data.player_distribution(doc)
@@ -357,7 +362,7 @@ def result(kind, query="", doc=None):
         raise ValueError("未知战况命令")
     meta = doc.get("_hd2") or {}
     footer = f"数据时间：{doc.get('fetchedAt', '未知')}" + ("｜缓存/数据陈旧" if meta.get("stale") else "")
-    return Result(kind, body.strip() + "\n\n" + footer, doc, query)
+    return Result(kind, body.strip() + "\n\n" + footer, doc, query, title_cn)
 
 
 def render_result(view):
@@ -367,5 +372,5 @@ def render_result(view):
                  "dss": card.render_dss_card, "briefing": card.render_briefing_card, "api":card.render_api_card}
     with data.snapshot_scope(view.document):
         if view.kind == "planet":
-            return card.render_planet_card(view.query)
+            return card.render_planet_card(view.query, title_cn=view.title_cn or None)
         return functions[view.kind]()

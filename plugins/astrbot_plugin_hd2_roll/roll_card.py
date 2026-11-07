@@ -18,11 +18,13 @@ import urllib.request
 from PIL import Image, ImageDraw, ImageFont
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from astrbot_plugin_hd2_roll.loadout import draw, catalog
+from astrbot_plugin_hd2_common.paths import plugin_cache_dir
 
 CATALOG_URL = "https://jerry114514.github.io/shared/hd2-loadout/data/catalog.json"
 HERE = os.path.dirname(os.path.abspath(__file__))
 ICON_DIR = os.path.join(HERE, "icons")
-CACHE_DIR = os.path.join(HERE, "cache")
+# 成品卡缓存落插件数据目录，不写插件安装目录。
+CACHE_DIR = str(plugin_cache_dir("astrbot_plugin_hd2_roll", create=False))
 
 # ── Steam 风 tokens（与 report_card 同源）：深蓝底 + favicon 亮黄 + 冷白 ──
 BG = (14, 22, 33); PANEL = (27, 40, 56); LINE = (44, 61, 79); LINE2 = (56, 76, 97)

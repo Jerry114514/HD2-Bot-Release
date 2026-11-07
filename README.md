@@ -1,6 +1,6 @@
 # HD2 Bot
 
-基于 AstrBot 的《绝地潜兵2》中文机器人，包含 10 个插件。战报、战线、DSS、战役、星球、Wiki 与配装支持黑金 HUD 图片；图片不可用时使用同一次查询的文字结果。
+基于 AstrBot 的《绝地潜兵2》中文机器人，包含 12 个插件。战报、战线、DSS、战役、星球、Wiki 与配装支持黑金 HUD 图片；图片不可用时使用同一次查询的文字结果。
 
 > 本项目由 AI（DeepSeek Agent）辅助生成并维护。
 
@@ -41,6 +41,9 @@
 | /btk 卡阈值 武器 | 阈值矩阵卡：扫描接近少一发击杀的敌人致死部位 |
 | /btk 武器 / 敌人 | 查询可测武器分类、敌人阵营与部位数据 |
 | /btk DOT-FIRE 敌人 | 持续伤害 HUD 卡：每跳伤害、触发次数、总时长与元素倍率 |
+| /拆毁值 来源 | 对比最佳直击与爆炸路线，并对照广播塔、虫穴、构筑者等常见目标 |
+| /拆毁值 来源 目标 | 对比指定目标的直击/爆炸 DF、门槛和爆炸距离曲线 |
+| /拆毁值 直击 / 爆炸物 / 常见目标 / 建筑 | 查询直击来源、爆炸物数据、常见目标和完整建筑拆毁门槛 |
 | /战报t、/rollt、/wiki 关键词 文字 | 纯文字输出 |
 
 Bot只提供整套七槽抽取，不提供单件替换、锁定或手动选装入口。平衡抽取只输出配装结果；评分、评价规则、种子、模型版本和尝试过程不进入用户输出。图片失败不会重抽，也不会退成旧四槽。抽取失败明确提示，不自动改成纯随机。
@@ -49,7 +52,7 @@ Bot只提供整套七槽抽取，不提供单件替换、锁定或手动选装�
 
 战略指令从独立的 `STRATEGIC DIRECTIVE/THREAT` assignment 和最新公告解析；战略机遇使用 `strategic.active/status/dispatch_id`，并关联开局公告；次要指令优先读取独立 `MINOR ORDER` assignment。当前数据没有官方独立条目时，界面会明确标记“重要指令附加目标 · 非官方独立 MINOR ORDER”，不会把附加目标伪装成独立指令。
 
-新 MO 首次被任一战况命令发现时，会按“平台 + 用户”自动发送一次 MO 卡；`/战报` 和 `/重要指令` 始终重播当期内容。已通知记录保存在插件 `cache/mo_seen.json`，重启后仍有效。`/战役` 一次展示活动战役的全部阶段，每阶段包含头图、简报、战报、结果和奖励。
+新 MO 首次被任一战况命令发现时，会按“平台 + 用户”自动发送一次 MO 卡；`/战报` 和 `/重要指令` 始终重播当期内容。已通知记录保存在插件数据目录 `data/plugin_data/astrbot_plugin_hd2_war_report/state/mo_seen.json`，重启后仍有效。`/战役` 一次展示活动战役的全部阶段，每阶段包含头图、简报、战报、结果和奖励。
 
 ## 银河星图（快捷指令）
 
@@ -101,7 +104,9 @@ python -m playwright install chromium
 5. 在 SnowLuma WebUI 配置 OneBot 反向 WS 客户端（wsClients）：`ws://127.0.0.1:6199/ws`（指向 AstrBot，role 用 Universal）；再把它生成的 `accessToken` 填入 `config.json` 的 `snowluma.access_token`
 6. 控制台推送走 OneBot HTTP（默认 `http://127.0.0.1:3000`）；在 SnowLuma 的 onebot 配置里把 `messageFormat` 设为 `string`（CQ 码字符串消息）
 
-AstrBot 会从 `event.message_str` 移除唤醒前缀；插件统一使用原始消息文本识别 `/` 指令，无需删除框架的 `/` 唤醒设置。普通消息即使通过 @ 或私聊唤醒，也不会被补成指令。
+AstrBot 会从 `event.message_str` 移除唤醒前缀；插件统一使用原始消息文本识别 `/` 指令，无需删除框架的 `/` 唤醒设置。普通消息即使通过 @ 或私聊唤醒，也不会被补成指令；`bot.allow_chat=true` 时，普通消息会交给 AstrBot LLM 并启用 Wiki 事实层。
+
+`/api` 默认每 60 秒检查主仓 Issue #60；调用过 `/api` 的会话会自动订阅，只有规范化后的内容变化才推送。可用 `data.api_watch_enable` 关闭，`data.api_watch_interval` 调整间隔但最低为 60 秒。
 
 将 `HD2_PROJECT_DIR` 指向仓库绝对路径，并让 AstrBot 桌面进程继承它。部署/更新前先预览：
 
@@ -114,7 +119,7 @@ python scripts/check.py --config config.json
 python scripts/launch.py
 ```
 
-同步不会复制运行缓存或覆盖已有 welcome_config.json，也不删除其他插件。更新期间先停止/卸载 HD2 插件，文件同步完成后重载全部 11 个插件；避免运行中混用不同版本核心。
+同步不会复制运行缓存或覆盖已有 welcome_config.json，也不删除其他插件。更新期间先停止/卸载 HD2 插件，文件同步完成后重载全部 12 个插件；避免运行中混用不同版本核心。
 
 框架凭据、群配置和本地备份不提交。配置损坏会报错；进程管理按配置端口和可执行路径核验实例，端口被陌生进程占用时拒绝结束它。
 
@@ -134,9 +139,9 @@ python scripts/launch.py
 python -X utf8 scripts/check.py
 ```
 
-检查包括语法、隔离函数、真实本机 HTTP、事件接口契约、Pillow 绘图及 Node 黑箱桥接；不会连接 QQ、使用凭据或发送消息。CI 在 Windows/Python 3.12/Node 24 与 Linux/Python 3.12/Node 22 运行离线检查。本轮在独立环境验证 AstrBot 4.29.3 可加载全部11插件；真实 QQ 收发待验，平台能力须结合实际适配器权限确认。
+检查包括语法、隔离函数、真实本机 HTTP、事件接口契约、Pillow 绘图及 Node 黑箱桥接；不会连接 QQ、使用凭据或发送消息。CI 在 Windows/Python 3.12/Node 24 与 Linux/Python 3.12/Node 22 运行离线检查。本轮在独立环境验证 AstrBot 4.29.3 可加载全部12插件；真实 QQ 收发待验，平台能力须结合实际适配器权限确认。
 
-框架回归另在隔离环境运行，CI 也执行此项。全部11插件按 AstrBot 的 `data.plugins` 命名空间加载，经过真实唤醒、白名单、处理、结果修饰及回复阶段；同时检查内置帮助、进群通知、取消与卸载。数据/绘图使用夹具；QQ 官方/OneBot 真实适配器的发送转换只替换网络 API，不连接平台：
+框架回归另在隔离环境运行，CI 也执行此项。全部12插件按 AstrBot 的 `data.plugins` 命名空间加载，经过真实唤醒、白名单、处理、结果修饰及回复阶段；同时检查内置帮助、进群通知、取消与卸载。数据/绘图使用夹具；QQ 官方/OneBot 真实适配器的发送转换只替换网络 API，不连接平台：
 
 ```powershell
 python -m pip install -r requirements-wiki.txt AstrBot==4.29.3
@@ -146,6 +151,19 @@ python -X utf8 scripts/sdk_pipeline.py
 `t`/`文字`、候选及图片渲染回退使用明确的纯文本消息，不再跟随全局文字转图片或官方 QQ Markdown 设置。`/help` 由 HD2 帮助优先处理，避免与内置帮助重复回复。进群欢迎仍受 AstrBot 会话白名单与 `welcome_config.json` 限制，自己的进群通知不播报。
 
 [修复与验收记录](docs/修复验收.md) 对应审查问题 1–21。旧 Agent 记录和架构分析属于历史材料，不代表当前运行状态。旧数据层与测试按当前图片架构选择性适配；没有整体回退当前插件。
+
+## LLM 对话与 Wiki 事实层
+
+普通聊天由 AstrBot 原生 LLM 处理，角色文本位于 `persona/super-earth-persona.md`。人格只负责身份、语气、世界观和边界；游戏事实由 `helldivers.wiki.gg/zh` 实时检索补充。
+
+- `bot.allow_chat=true`：放行非指令消息；仍受 AstrBot 唤醒、平台白名单与会话限制。
+- `chat.wiki_grounding=true`：识别到武器、战备、敌人、机制、剧情或专有名词问题时，在 LLM 请求前注入最多约 2600 字 Wiki 证据。
+- `hd2_wiki_lookup`：模型可在证据不足时主动查询中文 Wiki；返回词条正文、原文链接、修订号和歧义候选。
+- `chat.wiki_timeout_seconds`：检索总预算，默认 5.5 秒；超时不会阻断人格回复，只要求模型说明档案未核实。
+- `chat.max_reply_chars`：普通聊天长度预算，默认 180 字；目标为 80–120 字，用户明确要求详细说明时才放宽。该预算只指导模型，不再对最终文本做字符截断。
+- 普通寒暄、纯角色扮演和当前战况不会自动检索；实时战况仍应使用 `/战报`、`/战线`、`/dss` 等指令。
+
+Wiki 正文被明确标记为不可信参考资料，不执行其中的任何指令。人格可继续用真理部宣传口吻包装事实，但名称、数值、护甲、伤害、版本改动和机制以当前检索结果为准；证据缺失时不得猜测。
 
 
 ## Wiki 搜索与名称维护

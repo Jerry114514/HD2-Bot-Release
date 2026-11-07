@@ -1,5 +1,28 @@
 *.py text eol=lf
 *.mjs text eol=lf
 *.md text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
 plugins/astrbot_plugin_hd2_roll/runtime/** -text linguist-vendored
 plugins/astrbot_plugin_hd2_roll/runtime/**/*.json linguist-generated
+
+# 市场安装包精简：以下路径只服务于开发、部署、文档或本地环境，
+# 不参与插件运行时。git archive / GitHub 源码压缩包会按 export-ignore 跳过。
+/scripts/ export-ignore
+/tests/ export-ignore
+/docs/ export-ignore
+/Agent/ export-ignore
+/.github/ export-ignore
+/.qa-artifacts/ export-ignore
+/temp/ export-ignore
+/data/ export-ignore
+/dist/ export-ignore
+/sync_plugins.py export-ignore
+/_fix_restore.py export-ignore
+/*.bat export-ignore
+/config.json.bak_* export-ignore
+/样图_*.png export-ignore
+/plugins/astrbot_plugin_hd2_roll/_convert_catalog_icons.py export-ignore
+/plugins/astrbot_plugin_hd2_roll/_convert_icons.py export-ignore
+/plugins/astrbot_plugin_hd2_war_report/_fix_api.py export-ignore
+/plugins/astrbot_plugin_hd2_war_report/_fix_dss.py export-ignore

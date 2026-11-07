@@ -48,7 +48,8 @@ class EventCommandTests(unittest.TestCase):
         asyncio.run(run())
 
     def test_original_text_is_authoritative_and_slash_stays_required(self):
-        for original in ("/roll", "/api", "/战报 t", "/wiki AR23", "/btk AR-23 武斗虫 头部", "/星球 X45", "/变种", "/help"):
+        for original in ("/roll", "/api", "/战报 t", "/wiki AR23", "/btk AR-23 武斗虫 头部",
+                          "/拆毁值 EAT-17 炮舰设施", "/星球 X45", "/变种", "/help"):
             event = stripped_event(original)
             self.assertEqual(commands.parse_event(event), commands.parse(original))
             self.assertEqual(event.message_str, original[1:])

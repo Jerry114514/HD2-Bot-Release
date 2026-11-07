@@ -20,13 +20,16 @@ import threading
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from astrbot_plugin_hd2_common import api_watch, orders
 from astrbot_plugin_hd2_common import data as shared
-from astrbot_plugin_hd2_common.commands import mo_tasks
+from astrbot_plugin_hd2_common.commands import mo_tasks, names as _bundled_planet_names
+from astrbot_plugin_hd2_common.sources import table_candidates as _table_candidates
+from astrbot_plugin_hd2_common.paths import plugin_cache_dir
 _render_locks = {}
 _render_lock_guard = threading.Lock()
 
 DATA_URL = "https://jerry114514.github.io/HD2-Galatic_war-Map/data.json"
 DIST_URL = "https://jerry114514.github.io/HD2-Galatic_war-Map/data/history/player_distribution.json"
-CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cache")
+# 渲染缓存/静态图落插件数据目录，不写插件安装目录。
+CACHE_DIR = str(plugin_cache_dir("astrbot_plugin_hd2_war_report", create=False))
 OUT_NAME = "report_card.png"
 FETCH_TIMEOUT = 20
 FONT_CANDIDATES = [
@@ -102,7 +105,8 @@ def _static_map_json(url, cache_name, build):
         m = build(obj)
         if m:
             try:
-                json.dump(m, open(cache_file, "w", encoding="utf-8"))
+                with open(cache_file, "w", encoding="utf-8") as stream:
+                    json.dump(m, stream, ensure_ascii=False)
             except Exception:
                 pass
             return m
@@ -136,13 +140,29 @@ def _effect_cn_map():
 
 
 def _starmap_cn_map():
-    """starmap.json → {EN_NAME_UPPER: 中文名}"""
+    """starmap.json → {shared.planet_key(EN_NAME): 中文名}"""
     def build(sm):
         pls = sm.get("planets") or {}
-        return {k.upper(): (v.get("cn") or "") for k, v in pls.items() if isinstance(v, dict)}
-    return _static_map_json(
+        return {
+            shared.planet_key(k): str(v.get("cn") or "").strip()
+            for k, v in pls.items()
+            if isinstance(v, dict) and str(v.get("cn") or "").strip()
+        }
+    remote = _static_map_json(
         "https://jerry114514.github.io/HD2-Galatic_war-Map/tables/starmap.json",
-        "starmap_cn.json", build)
+        "starmap_cn_v2.json", build)
+    local = {
+        shared.planet_key(k): str(v or "").strip()
+        for k, v in _bundled_planet_names().items()
+        if str(v or "").strip()
+    }
+    return {**local, **remote}
+
+
+def _planet_display_name(slug, title_cn="", starmap_names=None, fallback=""):
+    """Resolve a planet title with the same key normalization used by search."""
+    return ((starmap_names or {}).get(shared.planet_key(slug)) or title_cn
+            or fallback or str(slug or "未知星球"))
 
 
 def _sector_maps():
@@ -765,8 +785,9 @@ def render_campaigns_card(out_dir=None):
                 pl = planets.get(cp.get("index"))
                 if not pl:
                     continue
-                en = (pl.get("name") or "").upper()
-                cn = smcn.get(en) or cp.get("name") or en
+                planet_name = pl.get("name") or ""
+                en = planet_name.upper()
+                cn = smcn.get(shared.planet_key(planet_name)) or cp.get("name") or en
                 fac_en = c.get("faction") or pl.get("currentOwner") or ""
                 fac = FACTION_CN.get(fac_en, fac_en)
                 state = shared.campaign_state(data, pl)
@@ -841,9 +862,10 @@ def render_dss_card(out_dir=None):
         def draw(dr, img):
             planets = {p.get("index"): p for p in (data.get("planets") or []) if p.get("index") is not None}
             pl = planets.get(dss.get("planetIndex")) or {}
-            en = (pl.get("name") or "").upper()
+            planet_name = pl.get("name") or ""
+            en = planet_name.upper()
             smcn = _starmap_cn_map()
-            cn = smcn.get(en) or pl.get("name") or "—"
+            cn = smcn.get(shared.planet_key(planet_name)) or planet_name or "—"
             emap = _effect_cn_map()
             active_ids = set(dss.get("activeEffectIds") or [])
             cur_war = dss.get("currentWarTime") or 0
@@ -1046,29 +1068,42 @@ def _planet_biome_name(pl):
 def _planet_intel():
     """词条链：hd2_variables（cn+分组）→ effect_id_cn 兜底 → {id: (cn, 组名)}"""
     cn, grp = {}, {}
-    try:
-        v = _site_get("https://jerry114514.github.io/HD2-Galatic_war-Map/tables/hd2_variables.json")
-        for cat in v.get("categories") or []:
+
+    def merge_variables(value, overwrite=False):
+        if not isinstance(value, dict):
+            return
+        for cat in value.get("categories") or []:
             nm = cat.get("name") or cat.get("key") or ""
-            for e in cat.get("entries") or []:
-                c = e.get("cn") or e.get("name") or ""
-                for eid in e.get("effect_ids") or []:
+            for entry in cat.get("entries") or []:
+                label = entry.get("cn") or entry.get("name") or ""
+                for eid in entry.get("effect_ids") or []:
                     if eid is None:
                         continue
-                    if eid not in cn and c:
-                        cn[eid] = c
+                    if overwrite or eid not in cn:
+                        if label:
+                            cn[eid] = label
                         grp[eid] = nm
-                    elif eid not in grp:
-                        grp[eid] = nm
+
+    try:
+        merge_variables(_site_get("https://jerry114514.github.io/HD2-Galatic_war-Map/tables/hd2_variables.json"))
     except Exception:
         pass
     try:
-        fb = json.load(open(os.path.join(CACHE_DIR, "effect_id_cn.json"), encoding="utf-8"))
+        path = next((p for p in _table_candidates("hd2_variables.json") if os.path.isfile(p)), "")
+        if path:
+            with open(path, encoding="utf-8") as stream:
+                merge_variables(json.load(stream), overwrite=True)
+    except (OSError, ValueError, TypeError):
+        pass
+    try:
+        with open(os.path.join(CACHE_DIR, "effect_id_cn.json"), encoding="utf-8") as stream:
+            fb = json.load(stream)
     except Exception:
         try:
             fb = _get("https://jerry114514.github.io/HD2-Galatic_war-Map/tables/effect_id_cn.json")
             try:
-                json.dump(fb, open(os.path.join(CACHE_DIR, "effect_id_cn.json"), "w", encoding="utf-8"))
+                with open(os.path.join(CACHE_DIR, "effect_id_cn.json"), "w", encoding="utf-8") as stream:
+                    json.dump(fb, stream, ensure_ascii=False)
             except Exception:
                 pass
         except Exception:
@@ -1081,7 +1116,35 @@ def _planet_intel():
                 continue
             if i not in cn and val:
                 cn[i] = val
+    try:
+        path = next((p for p in _table_candidates("effect_id_cn.json") if os.path.isfile(p)), "")
+        if path:
+            with open(path, encoding="utf-8") as stream:
+                local = json.load(stream)
+            for key, label in local.items():
+                try:
+                    eid = int(key)
+                except (TypeError, ValueError):
+                    continue
+                if eid not in cn and label:
+                    cn[eid] = label
+    except (OSError, ValueError, TypeError):
+        pass
     return cn, grp
+
+
+def _dedupe_effect_items(eids, cn_map, grp):
+    """Collapse multiple effect IDs that share the same localized label."""
+    seen, items = set(), []
+    for eid in eids or ():
+        if eid is None:
+            continue
+        label = cn_map.get(eid) or ("#" + str(eid))
+        if label in seen:
+            continue
+        seen.add(label)
+        items.append((label, grp.get(eid) or ""))
+    return items
 
 
 def _chips_lines(dr, x0, y0, texts, max_w, line_h=44):
@@ -1142,7 +1205,7 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
             updated = (data.get("fetchedAt") or "")[:16].replace("T", " ")
             y = _hud_head(dr, img, "星球指挥台", "PLANET COMMAND")
 
-            cn = title_cn or smcn.get(en) or pl.get("name") or en
+            cn = _planet_display_name(slug, title_cn, smcn, pl.get("name"))
             # 星区中文名：starmap system 优先，API sector 仅兜底（主站 secCn 口径）
             secmaps = _sector_maps()
             sec_cn = ((secmaps.get("pl_sec") or {}).get((pl.get("name") or en).upper())
@@ -1402,13 +1465,7 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
 
             # ══ 环境与作战词条（分组照主站：变种类 + 作战限制 保留组，其余平铺） ══
             eids = [i for i in (pl.get("activeEffects") or []) if i is not None]
-            seen, items = set(), []
-            for eid in eids:
-                c = cn_map.get(eid) or ("#" + str(eid))
-                if c in seen:                    # 多 id 同词条 → 链上第一个命中（主站口径）
-                    continue
-                seen.add(c)
-                items.append((c, grp.get(eid) or ""))
+            items = _dedupe_effect_items(eids, cn_map, grp)
             var_items = [x for x in items if "变种" in x[1]]
             limit_items = [x for x in items if x[1] == "作战限制"]
             flat_items = [x for x in items if x not in var_items and x not in limit_items]
@@ -1875,7 +1932,10 @@ HELP_SECTIONS = [
                          "破片=数量；波及=部位1,部位2。参数与主命令一起发送"),
         ("/btk 卡阈值 武器 [全部]", "阈值矩阵卡：默认只扫致死部位；加“全部”扫描所有部位"),
         ("/btk DOT-FIRE 敌人", "持续伤害卡：每跳伤害、触发次数、总时长与元素倍率（无需部位）"),
-        ("/btk 武器 / 敌人", "查看直击来源：可测武器分类、敌人阵营和部位数据"),
+        ("/btk 武器 / 敌人", "查看武器 ID、敌人阵营和指定敌人的可用部位"),
+        ("/拆毁值 来源", "直击/爆炸分行判定，并对照广播塔、虫穴、构筑者和设施"),
+        ("/拆毁值 来源 目标", "指定目标的 DF、门槛、爆炸距离和最大拆毁距离"),
+        ("/拆毁值 直击 / 爆炸物 / 常见目标 / 建筑", "查看直击来源、爆炸曲线、常见目标和完整目标门槛"),
     ]),
     ("AI 增强", "AUGMENT", [
         ("/分析", "AI 战局分析：威胁评估与目标建议（需配置 LLM，失败时明确提示）"),

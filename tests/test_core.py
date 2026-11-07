@@ -56,6 +56,11 @@ class DataTests(unittest.TestCase):
         self.assertIn("25.0%", commands.result("planet", "x-45", doc).text)
         self.assertIn("防御截止", commands.result("campaigns", doc=doc).text)
 
+    def test_planet_result_exposes_synced_chinese_title(self):
+        view = commands.result("planet", "x45", snapshot())
+        self.assertEqual(view.title_cn, "X45")
+        self.assertEqual(commands.planet_name({"name": "CERBERUS IIIc"}), "刻耳柏洛斯IIIc")
+
     def test_region_keeps_outer_timestamp_and_measures(self):
         frames = {"data": [
                 {"timestampUtc": "2026-10-30T00:00:00Z", "planetRegions": [{"planetIndex":45,"regionIndex":0,"owner":3,"health":80000,"regerPerSecond":0}]},

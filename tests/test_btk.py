@@ -38,12 +38,14 @@ class BtkTests(unittest.TestCase):
 
     def test_menus_and_catalog(self):
         weapons, enemies = btk._data()
-        self.assertEqual(len(weapons), 144)
-        self.assertEqual(len(enemies), 107)
+        self.assertEqual(len(weapons), 149)
+        self.assertEqual(len(enemies), 118)
         self.assertIn("BTK 武器库", btk.handle_command("武器"))
         enemy = btk.handle_command("敌人 武斗虫")
         self.assertIn("头部", enemy)
         self.assertIn("致死", enemy)
+        self.assertIn("E/AT-12", btk.handle_command("武器 防御工事"))
+        self.assertIn("防空炮台", btk.handle_command("敌人 机器人"))
 
     def test_dot_weapon_and_difficulty_variants(self):
         low = btk.build_view("AR-23 武斗虫 头部")

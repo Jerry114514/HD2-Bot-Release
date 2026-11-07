@@ -1,4 +1,4 @@
-# hd2-btk-sdk v0.12.2
+# hd2-btk-sdk v0.14.1
 
 绝地潜兵 2 武器击杀计算器（v8）的引擎包，给 QQ 机器人 / 后端用。零依赖，Node 直接 require。
 
@@ -21,6 +21,23 @@ sdk.compute({ weapon: 'DOT-FIRE', enemy: '强袭虫' });
 // → { perTrigger: 292.5, triggers: 9, seconds: 27, factor: 0.65, mult: 1.5 }
 ```
 DoT 只作用主体、有穿甲（AP>AV 全伤 / AP=AV 65% / AP<AV 免疫）、按触发次数×时长累加，并乘敌人元素倍率（`enemy.mult.fire` 等）。
+
+## 拆毁值（v0.14 新增）
+
+```js
+sdk.demolition('“飞鹰”500KG炸弹（延时爆炸）', '炮舰设施');
+// → { ok:false, reason:'demolition-insufficient', need:60 }
+sdk.demolition('NUX-223 地狱火炸弹', '巨石');
+// → { ok:true, maxDistance:17, need:60 }
+sdk.demolitionAt('“飞鹰”500KG炸弹（延时爆炸）', 16.7);
+// → 40
+```
+
+`reason` 取值：`badr`（需爆炸伤害）、`demolition-insufficient`（无血量，拆不掉）、
+`demolition-insufficient-has-hp`（拆不掉但可清血量，返回 `hp: [血量, AV]`）。
+
+曲线：内圈全额；内外圈之间 普通 `df×(1−√x)`、巨型 `df×(1−x²)`；外圈归零；结果截尾取整。
+`sdk.structures` / `sdk.blasts` 可直接拿来给指令做菜单。
 
 ## 口径（务必保持一致）
 - 取整：**只在最后一步** ceil，中间全浮点

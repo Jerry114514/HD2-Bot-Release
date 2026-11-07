@@ -18,6 +18,10 @@ from astrbot_plugin_hd2_common.diagnostics import hd2_log
 
 VARIANT_CN = commands.VARIANT_TERMS
 _scan_cache = {"ts":0,"data":{}}
+PLANET_HEADERS = {
+    "X-Super-Client": "astrbot-hd2-plugin",
+    "X-Super-Contact": "https://github.com/Jerry114514/HD2-Bot-Release",
+}
 
 
 def _load_planet_cn_map():
@@ -53,7 +57,7 @@ async def _scan_all_variants(deadline=None):
     rows={key:[] for key in VARIANT_CN}
     unknown=set(); warnings=[]
     source=OFFICIAL_API_URL
-    planets=await blocking(_fetch_json,PLANETS_URL,timeout=_remaining(deadline))
+    planets=await blocking(_fetch_json,PLANETS_URL,timeout=_remaining(deadline),extra_headers=PLANET_HEADERS)
     if not isinstance(planets,list) or any(not isinstance(p,dict) or not isinstance(p.get("index"),int) or not isinstance(p.get("name"),str) for p in planets):
         raise ValueError("星球名称数据不完整")
     names={p["index"]:p["name"] for p in planets}

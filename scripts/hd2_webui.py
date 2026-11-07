@@ -64,6 +64,7 @@ PORT = int(_g("webui", "port", d=8630))
 from scripts import instance
 sys.path.insert(0, os.path.join(_ROOT, "plugins"))
 from astrbot_plugin_hd2_common import commands as service
+from astrbot_plugin_hd2_common import diagnostics as _diagnostics
 from astrbot_plugin_hd2_common.diagnostics import hd2_log
 from astrbot_plugin_hd2_common.runtime import new_request, request_id
 _CONFIG_LOCK = threading.RLock()
@@ -673,15 +674,21 @@ def action_restart_astrbot() -> str:
     return "\n".join(lines)
 
 
-LOG_FILE = os.path.join(BASE, "temp", "指令日志.jsonl")
+# 指令流水现在写在 AstrBot 插件数据目录（data/plugin_data/...）；旧版 temp/ 文件仅作兼容读取。
+LOG_FILE = _diagnostics.LOG_FILE
+LEGACY_LOG_FILE = os.path.join(BASE, "temp", "指令日志.jsonl")
+
+
+def _log_candidates():
+    return [LOG_FILE, LEGACY_LOG_FILE]
 
 
 def action_logs() -> str:
     """读取指令执行流水（最近 200 条）"""
     try:
-        rows = []
-        if os.path.exists(LOG_FILE):
-            with io.open(LOG_FILE, encoding="utf-8") as f:
+        rows, target = [], next((p for p in _log_candidates() if os.path.exists(p)), LOG_FILE)
+        if os.path.exists(target):
+            with io.open(target, encoding="utf-8") as f:
                 for line in f.readlines()[-200:]:
                     line = line.strip()
                     if line:
@@ -689,7 +696,7 @@ def action_logs() -> str:
                             rows.append(json.loads(line))
                         except Exception:
                             pass
-        return json.dumps({"logs": rows}, ensure_ascii=False)
+        return json.dumps({"logs": rows, "path": target}, ensure_ascii=False)
     except Exception as e:
         return json.dumps({"logs": [], "error": str(e)}, ensure_ascii=False)
 
@@ -1361,6 +1368,11 @@ class Handler(BaseHTTPRequestHandler):
             self._send(404, "Not Found", "text/plain")
 
     def do_POST(self):
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+        except (TypeError, ValueError):
+            length = 0
+        body = self.rfile.read(length) if 0 < length <= 65536 else None
         if not self._trusted_request(mutation=True):
             self._send(403,'{"ok":false,"output":"请求来源或会话校验失败，请刷新控制台"}')
             return
@@ -1369,10 +1381,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         token = new_request()
         try:
-            length = int(self.headers.get("Content-Length",0))
-            if not 0 < length <= 65536:
+            if body is None:
                 raise ValueError("请求长度无效")
-            req = json.loads(self.rfile.read(length).decode("utf-8"))
+            req = json.loads(body.decode("utf-8"))
             if not isinstance(req,dict):
                 raise ValueError("请求必须为JSON对象")
             if set(req) - {"action","value","group","mode"}:

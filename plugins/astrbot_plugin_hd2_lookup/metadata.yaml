@@ -1,5 +1,7 @@
----
 name: astrbot_plugin_hd2_lookup
+display_name: HD2 作战手册
 desc: HD2 帮助插件 - 发送 /帮助 输出作战手册图片卡（指令速查；原 /查表 功能已移除）
-author: local
-version: 1.1.0
+short_desc: /帮助 输出作战手册图片卡，指令速查与玩法要点。
+author: Jerry114514
+version: 1.1.1
+repo: https://github.com/Jerry114514/HD2-Bot-Release

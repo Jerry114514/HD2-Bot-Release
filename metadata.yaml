@@ -3,7 +3,7 @@ display_name: HD2 战况机器人 · 绝地潜兵2 全家桶
 desc: |
   《绝地潜兵 2》（Helldivers 2）中文战况机器人全家桶 —— 一个插件装齐全部子系统。
 
-  指令：/战报 /重要指令 /战线 /dss /战役 /查询 /变种 /wiki /btk测伤 /roll /分析 /帮助 /银河星图 /api。
+  指令：/战报 /重要指令 /战线 /dss /战役 /查询 /变种 /wiki /btk测伤 /拆毁值 /roll /分析 /帮助 /银河星图 /api。
 
   特性：
   · 黑金 HUD 图片卡（Steam 深蓝 + 亮黄），超长内容自动合并为单张宽图，分区自左向右阅读
@@ -16,7 +16,8 @@ desc: |
   需复制 config.example.json 为插件目录内 config.json 并填写配置（详见仓库 README 与部署文档）。
 
   本插件及其文档由 AI（DeepSeek Agent）辅助生成并维护，人工审核后发布。
-version: 1.0.0
+version: 1.0.1
+short_desc: 绝地潜兵2中文战况全家桶：HUD 战报卡、MO 推送、Wiki 长图、BTK 测伤与配装抽取。
 author: Jerry114514
 repo: https://github.com/Jerry114514/HD2-Bot-Release
 support_platforms:

@@ -1,14 +1,37 @@
-"""Append-only, bounded diagnostics without AstrBot dependencies."""
+"""Append-only, bounded command diagnostics.
+
+The log lives in the plugin data directory
+(``data/plugin_data/astrbot_plugin_hd2_common/logs/commands.jsonl``), so nothing is
+written to the plugin installation directory or the project root.
+"""
 import json
-import logging
 import os
 from pathlib import Path
+import sys
 import threading
 import time
 from contextlib import contextmanager
+from .paths import plugin_data_dir
 from .runtime import request_id
-_ROOT = Path(os.environ.get("HD2_PROJECT_DIR") or Path(__file__).resolve().parents[2])
-LOG_FILE = str(_ROOT / "temp/指令日志.jsonl")
+
+try:  # AstrBot 运行时只允许使用框架提供的 logger
+    from astrbot.api import logger
+except Exception:  # 离线工具/单元测试：框架不可用时退化为 stderr，不引入内置 logging
+    class _StderrLogger:
+        """Minimal stand-in used only when the AstrBot runtime is unavailable."""
+
+        @staticmethod
+        def _emit(message, *args, **_kwargs):
+            try:
+                sys.stderr.write((message % args if args else str(message)) + "\n")
+            except Exception:
+                pass
+
+        debug = info = warning = error = _emit
+
+    logger = _StderrLogger()
+
+LOG_FILE = str(plugin_data_dir("astrbot_plugin_hd2_common", "logs", "commands.jsonl", create=False))
 MAX_BYTES = 512 * 1024
 _lock = threading.Lock()
 
@@ -58,5 +81,4 @@ def hd2_log(stage, plugin="", text="", group="", user="", name="", detail="", co
                 with path.open("a", encoding="utf-8") as stream:
                     stream.write(json.dumps(record, ensure_ascii=False) + "\n")
     except OSError as error:
-        logging.getLogger(__name__).warning("HD2 diagnostic log unavailable: %s",error)
-
+        logger.warning("HD2 diagnostic log unavailable: %s",error)

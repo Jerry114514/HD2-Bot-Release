@@ -60,6 +60,12 @@ DEFAULTS = {
         "fake_user": 2428164570,   # WS 注入测试用假成员号
         "fake_name": "绝地潜兵·测试员",
     },
+    "chat": {
+        "wiki_grounding": True,
+        "wiki_timeout_seconds": 5.5,
+        "wiki_context_chars": 2600,
+        "max_reply_chars": 180,
+    },
     "data": {
         "site_base": "https://jerry114514.github.io/HD2-Galatic_war-Map",
         "max_stale_seconds": 3600,
