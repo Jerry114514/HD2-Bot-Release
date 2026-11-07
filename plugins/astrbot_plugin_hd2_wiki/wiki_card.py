@@ -25,6 +25,18 @@ WIKI_MAX_AREA = 80_000_000   # 合并宽图像素面积上限（约 36 列）
 WIKI_PNG_LEVEL = 3           # 大幅面 PNG 用低压缩换渲染速度
 
 
+def _prepare_wiki_thumb(path):
+    """载入缩略图：裁掉透明边，再按卡片底色合成，避免透明区域在深色画面上发黑。"""
+    with Image.open(path) as src:
+        rgba = src.convert("RGBA")
+    bbox = rgba.getchannel("A").getbbox()
+    if bbox:
+        rgba = rgba.crop(bbox)
+    canvas = Image.new("RGB", rgba.size, BG)
+    canvas.paste(rgba, (0, 0), rgba)
+    return canvas
+
+
 def _render_long_cached(out_path, meta_path, digest, draw, height, caption):
     """渲染全量内容并缓存为合并宽图；返回 PNG 路径。"""
     try:
@@ -58,8 +70,7 @@ def render_wiki_card(keyword, out_dir=None, data=None):
     thumb_image = None
     if thumb:
         try:
-            with Image.open(thumb) as src:
-                thumb_image = ImageOps.contain(src.convert("RGB"), (200,200))
+            thumb_image = ImageOps.contain(_prepare_wiki_thumb(thumb), (200, 200))
         except (OSError, ValueError):
             pass
     visible = {k:v for k,v in value.items() if k not in ("diagnostics", "deadline")}
