@@ -9,6 +9,7 @@ from dataclasses import dataclass
 import re
 import time
 import unicodedata
+from types import SimpleNamespace
 
 
 PAGE_SIZE = 5
@@ -24,16 +25,43 @@ def owner(event):
     return (event.get_platform_name(), origin, str(getattr(message, "group_id", "") or ""), sender)
 
 
+def quoted_messages(event):
+    quotes = [p for p in event.get_messages() if type(p).__name__ == "Reply"]
+    # OneBot drops Reply when fetching the original message fails. Retain its
+    # raw ID so a deleted/unavailable quote cannot turn into a plain selection.
+    if not quotes and event.get_platform_name() == "aiocqhttp":
+        raw = getattr(event.message_obj, "raw_message", None)
+        parts = raw.get("message", []) if isinstance(raw, dict) else []
+        if isinstance(parts, list):
+            for part in parts:
+                if isinstance(part, dict) and part.get("type") == "reply":
+                    data = part.get("data")
+                    data = data if isinstance(data, dict) else {}
+                    quotes.append(SimpleNamespace(id=data.get("id", ""), sender_id=""))
+    return quotes
+
+
 def reply(event):
-    # A number embedded in an attachment, a quote or a message to somebody else
-    # is not a selection. Never use the wake-prefix-stripped text for this test.
-    for part in event.get_messages():
+    # Read only the new body, never numbers inside quoted text or attachments.
+    # Never use the wake-prefix-stripped event.message_str for this test.
+    parts = event.get_messages()
+    if len(quoted_messages(event)) > 1:
+        return None
+    body = []
+    for part in parts:
         name = type(part).__name__
-        if name == "At" and str(getattr(part, "qq", "")) == str(event.get_self_id()):
+        if name == "At":
+            target = str(getattr(part, "qq", ""))
+            official_marker = (target == "qq_official" and event.get_platform_name() in
+                               ("qq_official", "qq_official_webhook"))
+            if target == str(event.get_self_id()) or official_marker:
+                continue
+        if name == "Reply":
             continue
         if name != "Plain":
             return None
-    original = getattr(event.message_obj, "message_str", event.message_str)
+        body.append(getattr(part, "text", ""))
+    original = "".join(body) if parts else getattr(event.message_obj, "message_str", event.message_str)
     text = unicodedata.normalize("NFKC", original or "").strip()
     bot = re.escape(str(event.get_self_id()))
     text = re.sub(r"^(?:<@!?" + bot + r">|@" + bot + r"\s+)\s*", "", text).strip()
@@ -51,6 +79,14 @@ class Menu:
     value: dict | None = None
     page: int = 0
     state: str = "loading"
+    publication: int = 0
+
+
+@dataclass
+class MenuReceipt:
+    menu: Menu
+    publication: int
+    expires: float
 
 
 @dataclass
@@ -66,20 +102,22 @@ class ChoiceStore:
         self.capacity = capacity
         self.menus = OrderedDict()
         self.seen = OrderedDict()
+        self.receipts = OrderedDict()
 
     def prune(self):
         now = self.clock()
-        for records in (self.menus, self.seen):
+        for records in (self.menus, self.seen, self.receipts):
             for key, item in list(records.items()):
                 if isinstance(item, Menu) and item.state == "loading":
                     continue  # Admitted lookups have their own bounded query budget.
-                expiry = item.expires if isinstance(item, Menu) else item
+                expiry = item.expires if isinstance(item, (Menu, MenuReceipt)) else item
                 if expiry <= now:
                     records.pop(key, None)
 
     def clear(self):
         self.menus.clear()
         self.seen.clear()
+        self.receipts.clear()
 
     def cancel(self, event):
         self.menus.pop(owner(event), None)
@@ -110,6 +148,7 @@ class ChoiceStore:
         menu.value = deepcopy(value)
         menu.page = 0
         menu.state = "publishing"
+        menu.publication += 1
         menu.expires = self.clock() + TTL
         return True
 
@@ -120,6 +159,38 @@ class ChoiceStore:
                 menu.expires = self.clock() + TTL
             elif menu.expires <= self.clock():
                 self.discard(menu)
+
+    def bind(self, menu, message_ids):
+        if not self.current(menu):
+            return
+        for mid in message_ids:
+            key = (*menu.key[:3], str(mid))
+            # Keep short-lived tombstones so old/other-user menus get an error.
+            self.receipts[key] = MenuReceipt(menu, menu.publication, self.clock() + TTL * 2)
+            self.receipts.move_to_end(key)
+        while len(self.receipts) > self.capacity * 4:
+            self.receipts.popitem(last=False)
+
+    def quoted_action(self, event, menu):
+        quotes = quoted_messages(event)
+        if not quotes:
+            return None
+        quote = quotes[0]
+        key = owner(event)
+        mid = str(getattr(quote, "id", "") or "")
+        record = self.receipts.get((*key[:3], mid)) if key and mid else None
+        sender = str(getattr(quote, "sender_id", "") or "")
+        if sender and sender != str(event.get_self_id()):
+            return Action("quote_unrelated")
+        if record is None:
+            return Action("quote_unknown")
+        if record.menu.key != key:
+            return Action("quote_owner")
+        if not self.current(record.menu) or record.menu is not menu:
+            return Action("quote_expired")
+        if record.publication != menu.publication:
+            return Action("quote_page")
+        return None
 
     def handle(self, event):
         self.prune()
@@ -133,12 +204,18 @@ class ChoiceStore:
         receipt = (key, message_id)
         if message_id and receipt in self.seen:
             return Action("duplicate")
-        if menu is None:
+        quote_action = self.quoted_action(event, menu)
+        if quote_action is not None and quote_action.kind == "quote_unrelated":
+            self.cancel(event)
+            return None
+        if menu is None and quote_action is None:
             return None
         if message_id:
             self.seen[receipt] = self.clock() + TTL
             while len(self.seen) > self.capacity * 4:
                 self.seen.popitem(last=False)
+        if quote_action is not None:
+            return quote_action
         if value == "取消":
             self.discard(menu)
             return Action("cancelled", menu)
@@ -151,6 +228,7 @@ class ChoiceStore:
                 return Action("boundary", menu)
             menu.page = target
             menu.state = "publishing"
+            menu.publication += 1
             return Action("page", menu)
         start = menu.page * PAGE_SIZE
         if not start < value <= min(start + PAGE_SIZE, total):

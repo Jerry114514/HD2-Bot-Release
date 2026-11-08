@@ -217,6 +217,8 @@ def main():
             count += await audit(modules, scheduler, config, CaptureEvent, sandbox, check, llm_attempts)
             from sdk_choices import check_choices
             count += await check_choices(modules, scheduler, config, CaptureEvent, sandbox)
+            from sdk_quoted_choices import check_quoted_choices
+            count += await check_quoted_choices(modules, scheduler, CaptureEvent, sandbox)
             from sdk_wiki_tables import audit_wiki_tables
             count += await audit_wiki_tables(modules, scheduler, CaptureEvent, sandbox)
             assert not llm_attempts, f"Unexpected default LLM requests: {llm_attempts}"

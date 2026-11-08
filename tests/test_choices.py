@@ -24,6 +24,15 @@ def event(text, **kwargs):
     return e
 
 
+def quoted(text="2", mid="menu-1", sender="self", **kwargs):
+    e = event(text, **kwargs)
+    part = type("Reply", (), {"id":mid, "sender_id":sender, "message_str":"old body 7"})()
+    plain = type("Plain", (), {"text":text})()
+    e.get_messages = lambda: [part, plain]
+    e.message_obj.message_id = f"{mid}-{text}-{kwargs}"
+    return e
+
+
 class ChoicesTests(unittest.TestCase):
     def setUp(self):
         self.now = 0
@@ -101,6 +110,68 @@ class ChoicesTests(unittest.TestCase):
         self.store.activate(menu)  # Lookup failed: restore only the original wait window.
         self.assertFalse(self.store.current(menu))
         self.assertFalse(self.store.menus)
+
+    def test_quoted_current_menu_uses_new_body_and_identity(self):
+        menu, _ = self.ready()
+        self.store.bind(menu, ["menu-1"])
+        e = quoted("选　２", sender="")  # Official QQ may only supply the reply ID.
+        e.message_obj.message_str = "quoted old body 7; new body 2"
+        self.assertEqual(self.store.handle(e).index, 1)
+        self.assertEqual(self.store.handle(e).kind, "duplicate")
+        self.assertIsNone(reply(quoted("")))
+        self.assertIsNone(reply(quoted("/2")))
+        self.assertIsNone(reply(quoted("这是什么")))
+
+    def test_quotes_do_not_cross_owner_session_adapter_or_page(self):
+        menu, _ = self.ready()
+        self.store.bind(menu, ["menu-1"])
+        self.assertEqual(self.store.handle(quoted(user="other")).kind, "quote_owner")
+        self.assertEqual(self.store.handle(quoted(group="other")).kind, "quote_unknown")
+        other = quoted(); other.unified_msg_origin = "other:GroupMessage:x"
+        self.assertEqual(self.store.handle(other).kind, "quote_unknown")
+        self.assertEqual(self.store.handle(quoted("下一页")).kind, "page")
+        self.store.activate(menu); self.store.bind(menu, ["menu-2"])
+        self.assertEqual(self.store.handle(quoted("6")).kind, "quote_page")
+        self.assertEqual(self.store.handle(quoted("6", mid="menu-2")).index, 5)
+
+    def test_old_unknown_and_expired_quotes_keep_latest_menu(self):
+        old, _ = self.ready()
+        self.store.bind(old, ["menu-1"])
+        new, _ = self.ready()
+        self.assertEqual(self.store.handle(quoted()).kind, "quote_expired")
+        self.assertTrue(self.store.current(new))
+        self.assertEqual(self.store.handle(quoted(mid="missing")).kind, "quote_unknown")
+        self.assertTrue(self.store.current(new))
+        self.store.bind(new, ["menu-2"])
+        self.now = 121
+        self.assertEqual(self.store.handle(quoted(mid="menu-2")).kind, "quote_expired")
+        self.now = 241; self.store.prune()
+        self.assertFalse(self.store.receipts)
+        for i in range(20):
+            menu, _ = self.ready()
+            self.store.bind(menu, [str(i)])
+        self.assertEqual(len(self.store.receipts), 8)
+        self.store.clear()
+        self.assertFalse(self.store.receipts)
+
+    def test_unrelated_quote_is_ordinary_chat_and_extra_components_rejected(self):
+        self.ready()
+        self.assertIsNone(self.store.handle(quoted(sender="someone-else")))
+        self.assertFalse(self.store.menus)
+        e = quoted()
+        for part in (type("Image", (), {})(), type("At", (), {"qq":"other"})(),
+                     type("Reply", (), {"id":"another"})()):
+            e.get_messages = lambda p=part: quoted().get_messages() + [p]
+            self.assertIsNone(reply(e))
+
+    def test_onebot_missing_original_retains_raw_quote_id(self):
+        menu, _ = self.ready()
+        self.store.bind(menu, ["menu-1"])
+        e = event("2")
+        e.message_obj.raw_message = {"message":[{"type":"reply", "data":{"id":"unknown"}},
+                                               {"type":"text", "data":{"text":"2"}}]}
+        self.assertEqual(self.store.handle(e).kind, "quote_unknown")
+        self.assertEqual(menu.state, "ready")
 
     def test_guard_rechecks_access_and_does_not_swallow_new_commands(self):
         settings={}
