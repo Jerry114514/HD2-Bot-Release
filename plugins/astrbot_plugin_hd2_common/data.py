@@ -263,34 +263,69 @@ def current_phase(campaign):
     return next((p for p in phases if p.get("id") is not None and p.get("id")==campaign.get("current_phase_id")), None) or next((p for p in phases if p.get("status")==0), None) or (phases[0] if phases else {})
 
 
-_RICH_TAG_RE = re.compile(r"<(i|ci)=([0-9]+)>(.*?)</\1>", re.I | re.S)
+# Arrowhead dispatch markup: <i=1>/<ci=3>; a bare <i>/<ci> means "1" (site parity).
+_RICH_TAG_RE = re.compile(r"<(i|ci)(?:=([0-9]+))?>([\s\S]*?)</\1>", re.I)
 _HTML_TAG_RE = re.compile(r"<[^>]*>")
+_SCRIPT_STYLE_RE = re.compile(
+    r"<\s*(?:script|style)\b[^>]*>[\s\S]*?</\s*(?:script|style)\s*>", re.I
+)
+_BREAK_RE = re.compile(r"<br\s*/?>", re.I)
+_RICH_TONES = {"1": "yellow", "3": "blue"}
+_TONE_MARK = {"yellow": "\x01Y\x01", "blue": "\x01B\x01", None: "\x01E\x01"}
+_TONE_MARK_RE = re.compile("\x01[YBE]\x01")
+
+
+def _rich_text(value, tones=False):
+    """Strip dispatch markup; optionally leave tone markers for ``rich_text_runs``.
+
+    Safety mirrors the site: script/style blocks are removed, only the whitelisted
+    ``<i>/<ci>`` pair is interpreted, every other tag loses its shell while its text
+    survives, and HTML entities are decoded once at the very end.  Nothing is ever
+    re-emitted as HTML.
+    """
+    text = str(value or "")
+    for marker in _TONE_MARK.values():
+        text = text.replace(marker, "")
+    text = text.replace("\x01", "").replace("\x02", "")
+    text = _SCRIPT_STYLE_RE.sub("", text).replace("\r\n", "\n").replace("\r", "\n")
+
+    def replace(match):
+        tone = _RICH_TONES.get(match.group(2) or "1")
+        inner = match.group(3)
+        if not tones or tone is None:
+            return inner
+        return _TONE_MARK[tone] + inner + _TONE_MARK[None]
+
+    text = _RICH_TAG_RE.sub(replace, text)
+    text = _BREAK_RE.sub("\n", text)
+    text = _HTML_TAG_RE.sub("", text)
+    return html.unescape(text)
 
 
 def _plain_rich_text(value):
-    text = html.unescape(str(value or ""))
-    text = _RICH_TAG_RE.sub(lambda match: _HTML_TAG_RE.sub("", match.group(3)), text)
-    text = _HTML_TAG_RE.sub("", text)
-    return html.unescape(text).replace("\r\n", "\n").replace("\r", "\n").strip()
+    return _rich_text(value).strip()
 
 
 def rich_text_runs(value):
-    """Return styled runs while stripping every unsupported HTML tag."""
-    text = html.unescape(str(value or "")).replace("\r\n", "\n").replace("\r", "\n")
+    """Return ``[(text, "yellow"|"blue"|None), ...]`` with adjacent runs merged."""
+    text = _rich_text(value, tones=True)
     runs = []
+    stack = []
     position = 0
-    for match in _RICH_TAG_RE.finditer(text):
-        prefix = _HTML_TAG_RE.sub("", text[position:match.start()])
-        if prefix:
-            runs.append((prefix, None))
-        inner = _HTML_TAG_RE.sub("", match.group(3))
-        tone = {"1": "yellow", "3": "blue"}.get(match.group(2))
-        if inner:
-            runs.append((inner, tone))
+    for match in _TONE_MARK_RE.finditer(text):
+        chunk = text[position:match.start()]
+        if chunk:
+            runs.append((chunk, stack[-1] if stack else None))
+        marker = match.group(0)
+        if marker == _TONE_MARK[None]:
+            if stack:
+                stack.pop()
+        else:
+            stack.append("yellow" if marker == _TONE_MARK["yellow"] else "blue")
         position = match.end()
-    tail = _HTML_TAG_RE.sub("", text[position:])
+    tail = text[position:]
     if tail:
-        runs.append((tail, None))
+        runs.append((tail, stack[-1] if stack else None))
     combined = []
     for part, tone in runs:
         if combined and combined[-1][1] == tone:
@@ -298,6 +333,30 @@ def rich_text_runs(value):
         elif part:
             combined.append((part, tone))
     return combined
+
+
+def split_rich_text(value):
+    """Split a dispatch headline from its body, keeping the body's emphasis runs."""
+    title, body = _split_text(value)
+    raw = _BREAK_RE.sub("\n", str(value or ""))
+    kept, dropped = [], False
+    for line in raw.splitlines():
+        if not dropped and _plain_rich_text(line):
+            dropped = True
+            continue
+        if dropped:
+            kept.append(line)
+    return title, body, rich_text_runs("\n".join(kept).strip())
+
+
+def _split_text(value):
+    plain = _plain_rich_text(value)
+    lines = [line.strip() for line in plain.splitlines()]
+    first = next((line for line in lines if line), "")
+    body = plain
+    if first:
+        body = re.sub(r"^\s*" + re.escape(first) + r"\s*", "", plain, count=1).strip()
+    return first, body
 
 
 def _stable_major_order_revision(doc, assignment):
@@ -354,9 +413,18 @@ def major_order_content(doc):
             {},
         )
     candidates = [
+        # Tagged dispatch sources first, by field kind (official > raw > original):
+        # only these carry <i=N>; a lower-priority field on one object must not
+        # outrank a higher-priority field on another.
         ("official_message", news_item.get("official_message")),
+        ("major_order.official_message", major_order.get("official_message")),
+        ("raw_message", news_item.get("raw_message")),
+        ("major_order.raw_message", major_order.get("raw_message")),
+        ("message", news_item.get("message")),
+        # Translation-chain fields are plain text; keep them as fallback only.
         ("translated", news_item.get("translated")),
         ("message_zh", news_item.get("message_zh")),
+        ("major_order.translated", major_order.get("translated")),
     ]
     raw_text, text_source = "", ""
     for source, value in candidates:

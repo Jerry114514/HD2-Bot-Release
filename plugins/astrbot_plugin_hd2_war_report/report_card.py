@@ -48,8 +48,10 @@ DIM = (176, 192, 208)  # 蓝灰次级文字
 MUTE = (128, 148, 168) # 蓝灰辅助标签
 GOLD = (248, 232, 0)   # favicon 亮黄 #f8e800
 GOLD2 = (255, 243, 118)# 高亮黄
+RICH_YELLOW = (245, 197, 24)  # 主站 --mo-yellow #F5C518（dispatch <i=1>）
 BRASS = (199, 176, 31) # 暗黄（次级强调）
-BLUE = (91, 163, 208)  # 阵营色：超级地球（保持不变）
+BLUE = (91, 163, 208)  # 主站 --mo-place #5BA3D0（dispatch <i=3> / 超级地球）
+RICH_COLORS = {"yellow": RICH_YELLOW, "blue": BLUE}
 GREEN = (31, 168, 74)
 RED = (255, 77, 46)
 W = 1080
@@ -284,11 +286,20 @@ def section_label(dr, x, y, text, f_label):
     dr.text((x + 16, y), text, font=f_label, fill=TEXT)
 
 
+def _rich_font(font, tone):
+    """Same-size bold face for highlighted runs (``F`` adds 2pt below 25)."""
+    if tone not in ("yellow", "blue"):
+        return font
+    size = font.size
+    return F(size - 2 if size <= 24 else size, True)
+
+
 def _wrap_rich_runs(runs, max_width, font, dr):
     lines = []
     line = []
     width = 0
     for text, tone in runs or ():
+        run_font = _rich_font(font, tone)
         for char in str(text or ""):
             if char in "\r":
                 continue
@@ -297,7 +308,7 @@ def _wrap_rich_runs(runs, max_width, font, dr):
                     lines.append(line)
                 line, width = [], 0
                 continue
-            char_width = dr.textlength(char, font=font)
+            char_width = dr.textlength(char, font=run_font)
             if line and width + char_width > max_width:
                 lines.append(line)
                 line, width = [], 0
@@ -311,13 +322,17 @@ def _wrap_rich_runs(runs, max_width, font, dr):
     return lines
 
 
+def _draw_rich_line(dr, x, y, line, font, color=DIM):
+    for text, tone in line:
+        run_font = _rich_font(font, tone)
+        dr.text((x, y), text, font=run_font, fill=RICH_COLORS.get(tone, color))
+        x += dr.textlength(text, font=run_font)
+    return x
+
+
 def _draw_rich_lines(dr, x, y, lines, font, line_height, color=DIM):
-    rich_colors = {"yellow": GOLD2, "blue": BLUE}
     for line in lines:
-        xx = x
-        for text, tone in line:
-            dr.text((xx, y), text, font=font, fill=rich_colors.get(tone, color))
-            xx += dr.textlength(text, font=font)
+        _draw_rich_line(dr, x, y, line, font, color)
         y += line_height
     return y
 
@@ -433,7 +448,9 @@ def render_report_card(out_dir=None):
         mo = data.get("major_order") or {}
         mtask = mo.get("tasks") or {}
         tasks = mo_tasks(data)
-        brief = shared.major_order_content(data).get("text") or ""
+        content = shared.major_order_content(data)
+        brief = content.get("text") or ""
+        brief_runs = content.get("rich_text") or []
         war = data.get("war") or {}
         online = distribution["total"]
         campaigns = data.get("campaigns") or []
@@ -477,7 +494,7 @@ def render_report_card(out_dir=None):
 
         # ══ 重要指令面板 ══
         if tasks:
-            brief_lines = wrap(brief, 44)
+            brief_lines = _wrap_rich_runs(brief_runs, W - PAD * 2 - 36, f_body, dr)
             head_h = 52
             # brief 区：16 顶距 + 30/行 + 10 底距 + 分隔线 8
             brief_h = (16 + 30 * len(brief_lines) + 18) if brief_lines else 0
@@ -498,9 +515,7 @@ def render_report_card(out_dir=None):
                     pass
             yy = y + head_h
             if brief_lines:
-                for ln in brief_lines:
-                    dr.text((PAD + 18, yy), ln, font=f_body, fill=DIM)
-                    yy += 30
+                yy = _draw_rich_lines(dr, PAD + 18, yy, brief_lines, f_body, 30, color=DIM)
                 yy += 10
                 dr.line([(PAD + 18, yy), (W - PAD - 18, yy)], fill=LINE)
                 yy += 8
@@ -569,7 +584,10 @@ def render_report_card(out_dir=None):
         if news_show:
             blocks = []
             for n in news_show:
-                blocks.append(wrap(n.get("translated") or n.get("original") or n.get("message") or "", 44))
+                value = n.get("translated") or n.get("original") or n.get("message") or ""
+                blocks.append(_wrap_rich_runs(
+                    shared.rich_text_runs(value), W - PAD * 2 - 52, f_body, dr
+                ))
             panel_h = 56 + sum(18 + 28 * len(ls) + 16 for ls in blocks) + 4
             dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
             dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
@@ -580,10 +598,10 @@ def render_report_card(out_dir=None):
                 for ln in lines:
                     if first:
                         dr.rectangle([PAD + 18, yy + 11, PAD + 24, yy + 29], fill=BRASS)
-                        dr.text((PAD + 34, yy), ln, font=f_body, fill=TEXT)
+                        _draw_rich_line(dr, PAD + 34, yy, ln, f_body, color=TEXT)
                         first = False
                     else:
-                        dr.text((PAD + 34, yy), ln, font=f_body, fill=DIM)
+                        _draw_rich_line(dr, PAD + 34, yy, ln, f_body, color=DIM)
                     yy += 28
                 yy += 16
             y_after_news = y + panel_h + 20

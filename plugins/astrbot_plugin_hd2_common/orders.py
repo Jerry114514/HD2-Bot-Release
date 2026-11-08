@@ -73,13 +73,8 @@ def _assignment_translation(doc, assignment):
 
 
 def _split_dispatch(message):
-    plain = _text(message)
-    lines = [line.strip() for line in plain.splitlines()]
-    first = next((line for line in lines if line), "")
-    body = plain
-    if first:
-        body = re.sub(r"^\s*" + re.escape(first) + r"\s*", "", plain, count=1).strip()
-    return first, body
+    title, body, _runs = shared.split_rich_text(message)
+    return title, body
 
 
 def _dispatch_maps(doc):
@@ -131,26 +126,31 @@ def resolve_dispatch(doc, matcher=None, preferred_id=None):
     news_item, official_item = news.get(key, {}), official.get(key, {})
     content = next((
         value for value in (
+            # Tagged sources first, by field kind (official > raw > original),
+            # regardless of which object carries the field.
             news_item.get("official_message"),
+            official_item.get("official_message"),
+            news_item.get("raw_message"),
+            official_item.get("raw_message"),
+            news_item.get("message"),
+            row.get("raw_message"),
+            row.get("message"),
+            # Translation-chain fields are plain text and only serve as fallback.
             news_item.get("translated"),
             news_item.get("message_zh"),
-            official_item.get("official_message"),
-            official_item.get("raw_message"),
             official_item.get("translated"),
-            row.get("message"),
-            row.get("raw_message"),
-            official_item.get("original"),
             row.get("original"),
+            official_item.get("original"),
         )
         if _text(value)
     ), "")
-    title, body = _split_dispatch(content)
+    title, body, rich_runs = shared.split_rich_text(content)
     return {
         "id": row.get("id"),
         "published": row.get("published") or row.get("published_at") or official_item.get("published_at"),
         "title": title or _text(row.get("title")),
         "body": body,
-        "rich_text": shared.rich_text_runs(body),
+        "rich_text": rich_runs,
         "source": official_item.get("text_source") or ("news" if news_item else "dispatch"),
     }
 
@@ -228,12 +228,15 @@ def _model(doc, kind, assignment=None, dispatch=None, opening_dispatch=None, tas
         or _text((assignment or {}).get("title"))
         or meta["cn"]
     )
-    body = (
-        (dispatch or {}).get("body")
-        or _text(assignment_translation.get("raw_message") or assignment_translation.get("translated"))
-        or _text((assignment or {}).get("briefing"))
+    raw_body = (dispatch or {}).get("body") or ""
+    raw_source = (
+        raw_body
+        or assignment_translation.get("raw_message")
+        or assignment_translation.get("translated")
+        or (assignment or {}).get("briefing")
         or ""
     )
+    body = raw_body or _text(raw_source)
     is_active = _assignment_active(doc, assignment) if active is None and assignment else bool(active)
     if not assignment and dispatch:
         is_active = bool(active)
@@ -245,7 +248,7 @@ def _model(doc, kind, assignment=None, dispatch=None, opening_dispatch=None, tas
         "opening_dispatch": opening_dispatch,
         "title": title,
         "body": body,
-        "rich_text": shared.rich_text_runs(body),
+        "rich_text": (dispatch or {}).get("rich_text") or shared.rich_text_runs(raw_source),
         "tasks": list(tasks or ()),
         "active": is_active,
         "status_cn": status_cn or ("进行中" if is_active else "已结束" if assignment or dispatch else ""),
