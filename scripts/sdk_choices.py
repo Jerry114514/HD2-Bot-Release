@@ -100,13 +100,21 @@ async def check_choices(modules, scheduler, config, Event, sandbox):
         await send("2",expected=0)
         assert not choices.menus
 
-        # Mentions to others and quoted numbers must never select a candidate.
-        for component in (At(qq="somebody-else"), Reply(id="old-menu", sender_id="fixture-bot")):
+        # Mentions to others must never select a candidate.
+        for component in (At(qq="somebody-else"),):
             await menu()
             event=make("2")
             event.message_obj.message=[component,Plain("2")]
             await scheduler.execute(event)
             assert not event.sent and not choices.menus
+
+        # Unknown quotes produce a selection hint instead of entering chat.
+        initial = await menu()
+        event = make("2")
+        event.message_obj.message = [Reply(id="old-menu", sender_id="fixture-bot"), Plain("2")]
+        await scheduler.execute(event)
+        assert event.is_stopped() and "无法确认" in event.sent[0][0].text
+        assert owner(initial) in choices.menus
 
         initial=await menu()
         with patch.object(modules["guard"],"setting",side_effect=lambda *k,default=None:

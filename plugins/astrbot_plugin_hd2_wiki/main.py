@@ -19,6 +19,7 @@ from astrbot_plugin_hd2_wiki.chat_context import (
 )
 from astrbot_plugin_hd2_common.search import normalize
 from astrbot_plugin_hd2_common.choices import choices, PAGE_SIZE
+from astrbot_plugin_hd2_common.menu_receipts import capture_menu_receipts
 
 
 def render(keyword, value):
@@ -215,12 +216,16 @@ class Hd2WikiPlugin(Star):
         if not choices.current(menu):
             return
         try:
-            yield text_reply(event, format_text(menu.value, choice_page=menu.page,
-                official=event.get_platform_name() in ("qq_official", "qq_official_webhook")))
+            prompt = format_text(menu.value, choice_page=menu.page,
+                official=event.get_platform_name() in ("qq_official", "qq_official_webhook"))
+            result = text_reply(event, prompt)
+            with capture_menu_receipts(event, result) as receipts:
+                yield result
             # Code after yield runs only after the framework sends the prompt.
             # A stopped hook or failed send must not leave an invisible menu.
             if getattr(event, "_has_send_oper", True):
                 choices.activate(menu, refresh=fresh)
+                choices.bind(menu, receipts)
         finally:
             if menu.state == "publishing":
                 choices.discard(menu)
@@ -239,6 +244,15 @@ class Hd2WikiPlugin(Star):
             if action is not None:
                 menu = action.menu
                 if action.kind == "duplicate":
+                    return
+                quote_errors = {
+                    "quote_unknown": "无法确认你引用的候选菜单。请重新发送 /wiki 关键词；若仍无法引用，可不引用消息，直接 @机器人 回复编号。",
+                    "quote_owner": "这是其他人的 Wiki 候选菜单，请先发送 /wiki 关键词，获取自己的候选。",
+                    "quote_expired": "你引用的 Wiki 候选菜单已失效，请重新发送 /wiki 关键词，或引用你最新的有效候选菜单。",
+                    "quote_page": "你引用的是旧一页候选，请引用最新显示的那一页，再回复对应编号。",
+                }
+                if action.kind in quote_errors:
+                    yield text_reply(event, quote_errors[action.kind])
                     return
                 if action.kind == "cancelled":
                     yield text_reply(event, "已取消本次 Wiki 选择。")

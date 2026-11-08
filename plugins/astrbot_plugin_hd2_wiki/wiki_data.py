@@ -332,7 +332,7 @@ def format_text(value, *, choice_page=None, official=False):
         page_count = (len(candidates)+4)//5
         lines.append(f"第 {choice_page+1}/{page_count} 页，共 {len(candidates)} 项。")
         lines.append("仅本次查询者可选，自列出候选起2分钟有效；翻页不延时，发其他消息结束选择。")
-        lines.append("回复编号或“选 编号”查看；“下一页”/“上一页”翻页，“取消”退出。")
+        lines.append("可引用本条菜单，回复编号或“选 编号”查看；也可直接回复。“下一页”/“上一页”翻页，“取消”退出。")
         if official:
             lines.append("群内建议 @机器人 后回复编号；仅在已接收所有消息时可直接发数字。")
     elif len(candidates)>5:
