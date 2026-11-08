@@ -50,10 +50,18 @@ async def audit(modules, scheduler, config, Event, sandbox, check, llm_attempts)
             "unknown_effects": [], "warnings": []}
     with patch.object(modules["wiki"], "wiki_lookup", return_value=wiki_value), \
          patch.object(modules["wiki"], "render", side_effect=ImportError("fixture")), \
-         patch.object(modules["btk"], "_run_bridge", return_value={"ok": True, "weapon": "AR-23 解放者", "enemy": "武斗虫", "part": "头部", "btk": 2, "ttk": 0.1, "path": "part", "label": "打爆致死部位", "perShotDamage": 150, "pelletsPerShot": 1, "stuck": None}), \
+         patch.object(modules["btk"], "_run_bridge", return_value={"ok": True, "weapon": "AR-23 解放者", "enemy": "武斗虫", "part": "头部", "btk": 2, "ttk": 0.1, "path": "part", "label": "打爆致死部位", "perShotDamage": 150, "pelletsPerShot": 1, "stuck": None}) as btk_bridge, \
          patch.object(modules["variant_query"], "_scan_all_variants", new=AsyncMock(return_value=scan)):
         for command in ("/战线", "/dss", "/战役", "/银河星图", "/查询 X45", "/X45信息", "/wiki AR23", "/btk AR-23 武斗虫 头部", "/变种 孢裂变种", "/帮助 t", "/help t", "/roll 纯随机 t"):
-            await case("command " + command, lambda command=command: check(command))
+            await case("command " + command,
+                       lambda command=command: check(command, image_pages=1 if command.startswith("/btk ") else 0))
+        async def btk_fallback():
+            before = btk_bridge.call_count
+            with patch.object(modules["btk"], "render", side_effect=ImportError("fixture renderer")) as render:
+                await check("/btk AR-23 武斗虫 头部", contains="BTK 武器伤害测试")
+                render.assert_called_once()
+            assert btk_bridge.call_count == before + 1, "Image fallback must not rerun the calculation"
+        await case("BTK image failure sends one text reply without recalculation", btk_fallback)
         for module, method, command in ((modules["wiki"], "render", "/wiki AR23"), (modules["lookup"], "_render_help_card", "/帮助")):
             async def image(module=module, method=method, command=command):
                 with patch.object(module, method, return_value=str(sandbox / "fixture.png")):
@@ -117,18 +125,33 @@ async def audit(modules, scheduler, config, Event, sandbox, check, llm_attempts)
     await case("real OneBot notice conversion and restrictions", notice_limits)
 
     async def lifecycle():
-        entered = asyncio.Event()
+        warm_entered, api_entered = asyncio.Event(), asyncio.Event()
         async def warm():
-            entered.set()
+            warm_entered.set()
             await asyncio.Future()
-        with patch.object(war, "_warm_loop", warm):
-            await war.initialize()
-            await entered.wait()
-            task = war._warm_task
+        async def api_watch():
+            api_entered.set()
+            await asyncio.Future()
+        for enabled in (False, True):
+            def setting(*keys, default=None):
+                return enabled if keys in (("data", "report_warm_enable"), ("data", "api_watch_enable")) else default
+            with patch.object(war, "_warm_loop", warm), patch.object(war, "_api_watch_loop", api_watch), \
+                 patch.object(modules["war_report"].data, "setting", side_effect=setting):
+                try:
+                    await war.initialize()
+                    tasks = (war._warm_task, war._api_task)
+                    if enabled:
+                        await asyncio.wait_for(asyncio.gather(warm_entered.wait(), api_entered.wait()), 2)
+                        assert all(task is not None and not task.done() for task in tasks)
+                    else:
+                        assert tasks == (None, None)
+                        assert not warm_entered.is_set() and not api_entered.is_set()
+                finally:
+                    await war.terminate()
+            assert war._warm_task is None and war._api_task is None
+            assert all(task.cancelled() for task in tasks if task is not None)
             await war.terminate()
-            assert task.cancelled() and war._warm_task is None
-            await war.terminate()
-    await case("war warm task unload", lifecycle)
+    await case("war warm/API task switches and unload", lifecycle)
 
     async def cancelled_query():
         import threading
