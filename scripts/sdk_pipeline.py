@@ -209,6 +209,8 @@ def main():
             PillowImage.new("RGB", (2, 2), "black").save(fixture_image)
             with patch.object(modules["roll"], "render", return_value=str(fixture_image)):
                 await check("/roll", image_pages=1)
+            with patch.object(modules["btk"], "render", return_value=str(fixture_image)):
+                await check("/btk AR-23 武斗虫 头部", image_pages=1)
             with patch.object(commands, "render_result", return_value=[str(fixture_image)] * 2):
                 await check("/战报", image_pages=2)
             from sdk_contracts import audit
