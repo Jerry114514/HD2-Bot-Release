@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-"""市场上架规范守卫：日志来源、持久化位置、插件元数据与打包精简。
+"""市场上架规范守卫：日志来源、持久化位置、提示词注入、元数据与打包精简。
 
-对应 AstrBot Cloud 插件市场审核的两条硬性规则：
+对应 AstrBot Cloud 插件市场审核的三条硬性规则：
 
 1. 日志只能来自 ``astrbot.api``，禁止使用 Python 内置 ``logging``；
-2. 缓存 / 状态 / 日志必须写入 ``data/plugin_data/<plugin_name>``，不得写入插件安装目录。
+2. 缓存 / 状态 / 日志必须写入 ``data/plugin_data/<plugin_name>``，不得写入插件安装目录；
+3. 禁止改写 ``req.system_prompt``，动态上下文只能作为临时内容块追加到
+   ``req.extra_user_content_parts``（``mark_as_temp()``）。
 
 本测试不依赖 AstrBot 框架，CI 与本地 ``python -X utf8 scripts/check.py`` 都会执行。
 """
@@ -81,6 +83,35 @@ class PersistenceComplianceTests(unittest.TestCase):
 
     def test_gitignore_ignores_plugin_data(self):
         self.assertIn("data/plugin_data/", (ROOT / ".gitignore").read_text(encoding="utf-8"))
+
+
+class PromptComplianceTests(unittest.TestCase):
+    """第二轮评审：on_llm_request 不得改写系统提示词，动态内容只能用临时内容块。"""
+
+    def test_plugins_never_assign_to_system_prompt(self):
+        offenders = []
+        for path in plugin_sources():
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Assign):
+                    targets = node.targets
+                elif isinstance(node, (ast.AugAssign, ast.AnnAssign)):
+                    targets = [node.target]
+                else:
+                    continue
+                for target in targets:
+                    if isinstance(target, ast.Attribute) and target.attr == "system_prompt":
+                        offenders.append(f"{path.relative_to(ROOT)}:{node.lineno}: 改写 system_prompt")
+        self.assertEqual(
+            [], offenders,
+            "插件不得改写 req.system_prompt；动态上下文请追加 extra_user_content_parts 并 mark_as_temp()",
+        )
+
+    def test_wiki_grounding_uses_temp_content_parts(self):
+        text = (PLUGINS / "astrbot_plugin_hd2_wiki" / "main.py").read_text(encoding="utf-8")
+        self.assertIn("extra_user_content_parts", text)
+        self.assertIn("mark_as_temp", text)
+        self.assertNotIn("system_prompt =", text)
 
 
 class MarketPackagingTests(unittest.TestCase):

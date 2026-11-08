@@ -114,7 +114,7 @@ class ChatGroundingTests(unittest.TestCase):
         self.assertIn("may not replace the fact", rendered)
         self.assertIn("标准伤害 90", rendered)
 
-    def test_llm_request_hook_appends_once_and_skips_commands(self):
+    def test_llm_request_hook_appends_temp_parts_without_touching_system_prompt(self):
         plugin = handler.Hd2WikiPlugin(None)
         req = types.SimpleNamespace(prompt="武斗虫怎么打", system_prompt="人格提示词")
         value = {
@@ -130,17 +130,22 @@ class ChatGroundingTests(unittest.TestCase):
              patch.object(handler, "setting", side_effect=lambda *keys, default=None: default):
             event = Event("武斗虫怎么打")
             asyncio.run(plugin.ground_chat_with_wiki(event, req))
-            first_prompt = req.system_prompt
+            parts_after_first = list(req.extra_user_content_parts)
             asyncio.run(plugin.ground_chat_with_wiki(event, req))
-        self.assertIn("人格提示词", first_prompt)
-        self.assertIn("[HD2_WIKI_REFERENCE_BEGIN]", first_prompt)
-        self.assertEqual(req.system_prompt, first_prompt)
+        self.assertEqual(req.system_prompt, "人格提示词")
+        text = "".join(getattr(part, "text", "") or "" for part in req.extra_user_content_parts)
+        self.assertIn("[HD2_CHAT_LENGTH_POLICY]", text)
+        self.assertIn("[HD2_WIKI_REFERENCE_BEGIN]", text)
+        self.assertEqual(len(req.extra_user_content_parts), len(parts_after_first))
+        self.assertTrue(all(getattr(part, "_no_save", False) for part in req.extra_user_content_parts))
 
-        command_req = types.SimpleNamespace(prompt="/wiki AR-23", system_prompt="人格提示词")
+        command_req = types.SimpleNamespace(
+            prompt="/wiki AR-23", system_prompt="人格提示词", extra_user_content_parts=[])
         with patch.object(handler, "should_ground") as should:
             asyncio.run(plugin.ground_chat_with_wiki(Event("/wiki AR-23"), command_req))
         should.assert_not_called()
         self.assertEqual(command_req.system_prompt, "人格提示词")
+        self.assertEqual(command_req.extra_user_content_parts, [])
 
     def test_llm_request_hook_uses_quoted_message_as_search_scope(self):
         plugin = handler.Hd2WikiPlugin(None)
@@ -165,7 +170,9 @@ class ChatGroundingTests(unittest.TestCase):
              patch.object(handler, "setting", side_effect=lambda *keys, default=None: default):
             asyncio.run(plugin.ground_chat_with_wiki(Event("这个怎么打"), req))
         self.assertIn("噪轰引擎", build.call_args.args[0])
-        self.assertIn("攻击六个散热器", req.system_prompt)
+        text = "".join(getattr(part, "text", "") or "" for part in req.extra_user_content_parts)
+        self.assertIn("攻击六个散热器", text)
+        self.assertEqual(req.system_prompt, "人格提示词")
 
     def test_managed_wiki_tool_is_reinserted_into_request(self):
         plugin = handler.Hd2WikiPlugin(None)
@@ -185,8 +192,18 @@ class ChatGroundingTests(unittest.TestCase):
         with patch.object(handler, "wiki_blocking", new=AsyncMock(side_effect=TimeoutError("fixture"))), \
              patch.object(handler, "setting", side_effect=lambda *keys, default=None: default):
             asyncio.run(plugin.ground_chat_with_wiki(event, req))
-        self.assertIn('"status":"unavailable"', req.system_prompt)
-        self.assertIn("archive cannot confirm", req.system_prompt)
+        text = "".join(getattr(part, "text", "") or "" for part in req.extra_user_content_parts)
+        self.assertIn('"status":"unavailable"', text)
+        self.assertIn("archive cannot confirm", text)
+        self.assertEqual(req.system_prompt, "人格提示词")
+
+    def test_temp_text_part_is_marked_not_to_persist(self):
+        part = handler._temp_text_part("一次性上下文")
+        dumped = part.model_dump_for_context()
+        self.assertEqual(dumped["type"], "text")
+        self.assertIn("一次性上下文", dumped["text"])
+        self.assertTrue(dumped.get("_no_save"))
+        self.assertTrue(getattr(part, "_no_save", True))
 
     def test_llm_response_hook_never_truncates_chat_or_commands(self):
         plugin = handler.Hd2WikiPlugin(None)

@@ -30,8 +30,25 @@ def install():
     class Component:
         def __init__(self, *args, **kwargs):
             self.__dict__.update(kwargs)
-    modules = {name:types.ModuleType(name) for name in ["astrbot", "astrbot.api", "astrbot.api.event", "astrbot.api.star", "astrbot.api.message_components", "astrbot.core", "astrbot.core.message", "astrbot.core.message.components"]}
+    class TextPart:
+        """Stand-in for ``astrbot.core.agent.message.TextPart``."""
+
+        def __init__(self, text="", *args, **kwargs):
+            self.text = text
+            self._no_save = False
+
+        def mark_as_temp(self):
+            self._no_save = True
+            return self
+
+        def model_dump_for_context(self):
+            data = {"type": "text", "text": self.text}
+            if self._no_save:
+                data["_no_save"] = True
+            return data
+    modules = {name:types.ModuleType(name) for name in ["astrbot", "astrbot.api", "astrbot.api.event", "astrbot.api.star", "astrbot.api.message_components", "astrbot.core", "astrbot.core.agent", "astrbot.core.agent.message", "astrbot.core.message", "astrbot.core.message.components"]}
     modules["astrbot.api"].logger = _NullLogger()
+    modules["astrbot.core.agent.message"].TextPart = TextPart
     modules["astrbot.api.event"].AstrMessageEvent = Event
     modules["astrbot.api.event"].filter = types.SimpleNamespace(
         event_message_type=decorator, on_llm_request=decorator,

@@ -26,6 +26,50 @@ def render(keyword, value):
     return render_wiki_card(keyword, data=value)
 
 
+class _LocalTempTextPart:
+    """离线环境（无 AstrBot）下与 ``TextPart.mark_as_temp`` 等价的最小内容块。"""
+
+    type = "text"
+
+    def __init__(self, text):
+        self.text = text
+        self._no_save = True
+
+    def mark_as_temp(self):
+        return self
+
+    def model_dump_for_context(self):
+        return {"type": "text", "text": self.text, "_no_save": True}
+
+
+def _temp_text_part(text):
+    """构造只发给模型、不写入会话历史的文本块（`_no_save` 由框架过滤）。"""
+    try:
+        from astrbot.core.agent.message import TextPart
+    except Exception:
+        return _LocalTempTextPart(text)
+    part = TextPart(text=str(text))
+    marker = getattr(part, "mark_as_temp", None) or getattr(part, "make_as_temp", None)
+    if callable(marker):
+        marker()
+    else:
+        part._no_save = True
+    return part
+
+
+def _append_temp_context(req, text):
+    """把一次性上下文追加到用户消息尾部，保持系统提示词稳定、可缓存。"""
+    parts = getattr(req, "extra_user_content_parts", None)
+    if parts is None:
+        try:
+            parts = []
+            req.extra_user_content_parts = parts
+        except Exception:
+            return False
+    parts.append(_temp_text_part(text))
+    return True
+
+
 class Hd2WikiPlugin(Star):
     async def terminate(self):
         choices.clear()
@@ -78,10 +122,7 @@ class Hd2WikiPlugin(Star):
                 reply_chars = int(setting("chat", "max_reply_chars", default=180))
             except (TypeError, ValueError):
                 reply_chars = 180
-            req.system_prompt = (
-                (getattr(req, "system_prompt", "") or "").rstrip()
-                + "\n\n" + render_reply_policy(current_message, reply_chars)
-            )
+            _append_temp_context(req, render_reply_policy(current_message, reply_chars))
             event.set_extra("_hd2_chat_policy_done", True)
             self._ensure_wiki_tool(req)
             if not setting("chat", "wiki_grounding", default=True):
@@ -102,7 +143,7 @@ class Hd2WikiPlugin(Star):
                 timeout=max(1.1, deadline - time.monotonic() + 0.5),
             )
             reference = render_chat_reference(value)
-            req.system_prompt = (getattr(req, "system_prompt", "") or "").rstrip() + "\n\n" + reference
+            _append_temp_context(req, reference)
             hd2_log("generated", plugin="chat_grounding", source=value.get("source"),
                     output_mode="prompt", search={"status": value.get("status"),
                     "terms": value.get("terms"), "pages": [p.get("title") for p in value.get("pages", [])],
@@ -116,7 +157,7 @@ class Hd2WikiPlugin(Star):
                     "pages": [], "candidates": [],
                     "warnings": [type(error).__name__],
                 }
-                req.system_prompt = (getattr(req, "system_prompt", "") or "").rstrip() + "\n\n" + render_chat_reference(fallback)
+                _append_temp_context(req, render_chat_reference(fallback))
             except Exception:
                 pass
             hd2_log("failed", plugin="chat_grounding", detail=type(error).__name__,
