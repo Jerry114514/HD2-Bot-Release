@@ -356,10 +356,13 @@ def _slug_to_index(slug: str):
     return _INDEX_CACHE["map"].get(slug)
 
 
-def _fetch_planet_official(idx: int) -> dict:
-    """官方源星球详情：抵抗度/防御战/行动变量/占领方 -> info dict"""
-    st = _fetch_official(f"/api/WarSeason/{OFFICIAL_WAR_ID}/Status")
-    wi = _fetch_official(f"/api/WarSeason/{OFFICIAL_WAR_ID}/WarInfo")
+async def _fetch_planet_official(idx: int) -> dict:
+    """官方源星球详情：抵抗度/防御战/行动变量/占领方 -> info dict
+
+    所有网络读取都经 ``blocking``（线程池）执行，不在事件循环上做同步 I/O。
+    """
+    st = await blocking(_fetch_official, f"/api/WarSeason/{OFFICIAL_WAR_ID}/Status")
+    wi = await blocking(_fetch_official, f"/api/WarSeason/{OFFICIAL_WAR_ID}/WarInfo")
     ps = {p.get("index"): p for p in st.get("planetStatus") or []}
     pi = {p.get("index"): p for p in wi.get("planetInfos") or []}
     p = ps.get(idx, {})
@@ -372,8 +375,7 @@ def _fetch_planet_official(idx: int) -> dict:
 
     # 跃迁航道封锁（Warp Link Blockade）：光能族占领 + 无战役 + 连接点有我方未被防御
     try:
-        wi2 = _fetch_official(f"/api/WarSeason/{OFFICIAL_WAR_ID}/WarInfo")
-        routes = {q.get("index"): (q.get("waypoints") or []) for q in wi2.get("planetInfos") or []}
+        routes = {q.get("index"): (q.get("waypoints") or []) for q in wi.get("planetInfos") or []}
         camp_idx = set(c.get("planetIndex") for c in st.get("campaigns") or [])
         defend_idx = set(ev.get("planetIndex") for ev in st.get("planetEvents") or [])
         if owner == 4 and idx not in camp_idx:
@@ -434,7 +436,7 @@ def _fetch_planet_official(idx: int) -> dict:
 
     # MO 目标（官方 Assignment）
     try:
-        ass = _fetch_official(f"/api/v2/Assignment/War/{OFFICIAL_WAR_ID}")
+        ass = await blocking(_fetch_official, f"/api/v2/Assignment/War/{OFFICIAL_WAR_ID}")
         if ass:
             for t in (ass[0].get("setting") or {}).get("tasks") or []:
                 vtypes = t.get("valueTypes") or []

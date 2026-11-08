@@ -219,7 +219,7 @@ class IntegrationTests(unittest.TestCase):
             raise AssertionError(path)
         with patch.object(planet, "_fetch_official", side_effect=fetch), \
              patch.object(planet, "_load_effect_id_cn", return_value=mapping):
-            info = planet._fetch_planet_official(43)
+            info = asyncio.run(planet._fetch_planet_official(43))
             text = planet._translate_planet_info(info)
         self.assertEqual(info["official_effects"], ["腐蚀变种", "毒瘴变种"])
         self.assertEqual(text.count("腐蚀变种"), 1)

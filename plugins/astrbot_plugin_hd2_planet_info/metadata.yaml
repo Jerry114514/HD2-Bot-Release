@@ -3,5 +3,5 @@ display_name: HD2 星球情报
 desc: 绝地潜兵2 星球信息查询插件 - 当被@并提及"星球名+信息"时，抓取 helldiverscompanion 星球页面，返回敌方抵抗度、行动变量（部队/环境/特殊变种）、特殊状态（POI）等情报。
 short_desc: 星球情报：抵抗度、行动变量（部队/环境/变种）与特殊状态（POI）。
 author: Jerry114514
-version: 1.0.1
+version: 1.0.2
 repo: https://github.com/Jerry114514/HD2-Bot-Release

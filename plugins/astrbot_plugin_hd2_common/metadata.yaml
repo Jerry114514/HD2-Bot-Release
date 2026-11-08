@@ -3,5 +3,5 @@ display_name: HD2 公共库
 desc: HD2 公共库 - 共享常量/HTTP 抓取/表加载/译名映射（供其他 HD2 插件 import，不注册指令）
 short_desc: 12 个 HD2 插件共用的基础模块：异步 HTTP 抓取、表加载、译名与插件数据目录解析。
 author: Jerry114514
-version: 1.0.1
+version: 1.0.2
 repo: https://github.com/Jerry114514/HD2-Bot-Release

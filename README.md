@@ -17,6 +17,8 @@
 
 ## 最近更新（2026-11）
 
+- **v1.0.4**：Wiki 候选菜单支持**引用回复选择**（回复机器人发的那条菜单即可选中，含多页菜单、过期/非本人/无关引用的中文提示，合入 PR #11）；落实市场安全审查建议——`planet_info` 官方源抓取全部改走线程池，不再在事件循环上做同步网络 I/O；`config.example.json` 移除无引用的 `llm` 密钥段并补齐当前配置键（新增 `runtime.btk_timeout_seconds`、两个缓存 TTL，删除失效键），`data.report_warm_interval` 现在真实生效。
+
 - **协议端迁移 NapCat → SnowLuma**：OneBot v11 协议端改用 SnowLuma（NapCat 同团队新一代实现）。启动链路改为 `launcher.bat` / `launcher.sh`（自动注入 QQ）；推送改走标准 OneBot HTTP（3000 端口 + accessToken）；WebUI 5099；扫码在 QQ 窗口完成。配置键 `napcat.*` → `snowluma.*`，`bot.platform` 兼容 `snowluma`/`onebot` 别名。详见下文「协议端：SnowLuma」。
 - **消息卡片重构**：超长卡不再拆成多张图连发，合并为**单张宽图**，分区自左向右连续阅读（每列带分区标签，均衡切分）；可读性提升——次要文字对比度提亮、正文 20px/行距统一、战线列表斑马纹、修复任务面板高度溢出。
 - **报错提示统一**：新增 `astrbot_plugin_hd2_common/errors.py`，按「网络异常 / 参数与数据 / 未知错误」三类给出可操作提示，并附各指令用法示例；不再向群聊暴露异常类名。

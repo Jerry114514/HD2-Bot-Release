@@ -3,5 +3,5 @@ display_name: HD2 Wiki 查询
 desc: 绝地潜兵2 Wiki 查询与对话事实检索 - /wiki 图文查询，并为 LLM 角色聊天提供 helldivers.wiki.gg/zh 证据和查询工具。
 short_desc: 中文 Wiki 图文查询，同时为角色扮演对话提供维基事实检索。
 author: Jerry114514
-version: 1.0.3
+version: 1.1.0
 repo: https://github.com/Jerry114514/HD2-Bot-Release

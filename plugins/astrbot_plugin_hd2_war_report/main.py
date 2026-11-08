@@ -178,12 +178,17 @@ class Hd2WarReportPlugin(Star):
         return (await blocking(commands.result, "report")).text
 
     async def _warm_loop(self):
+        try:
+            interval = int(data.setting("data", "report_warm_interval", default=240) or 240)
+        except (TypeError, ValueError):
+            interval = 240
+        interval = max(60, interval)
         while True:
             try:
                 await blocking(data.site_doc)
             except Exception as error:
                 logger.warning(f"[HD2] 快照预热失败：{error}")
-            await asyncio.sleep(240)
+            await asyncio.sleep(interval)
 
     async def _notify_api_sessions(self, issue):
         if self.context is None or not issue:

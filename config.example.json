@@ -1,6 +1,7 @@
 {
-  "_说明": "复制本文件为 config.json 并填写你的信息。所有含 YOUR 的值都必须替换。相对路径基于项目根。",
+  "_说明": "复制本文件为 config.json 并填写你的信息。所有含 YOUR 的值都必须替换。相对路径基于项目根。本文件不含任何 LLM 密钥：普通聊天与 /分析 的模型由 AstrBot 的 Provider 配置提供，插件不直连外部 API。",
   "bot": {
+    "_platform说明": "bot.platform 指 OneBot 协议端类型：snowluma（与 napcat / onebot 等价，均指 OneBot v11 通道）；接入官方 QQ 适配器时填 qq_official。",
     "self_id": "YOUR_QQ_NUMBER",
     "admin_qq": "YOUR_ADMIN_QQ",
     "groups": [
@@ -8,7 +9,7 @@
       222222222
     ],
     "default_group": 111111111,
-    "platform": "napcat",
+    "platform": "snowluma",
     "platform_id": "",
     "allow_chat": false
   },
@@ -33,12 +34,8 @@
     "dashboard_user": "astrbot",
     "dashboard_password": ""
   },
-  "llm": {
-    "api_key": "YOUR_DEEPSEEK_API_KEY",
-    "api_url": "https://api.deepseek.com/v1/chat/completions"
-  },
   "chat": {
-    "_说明": "LLM 普通聊天仅在 bot.allow_chat=true 时放行；Wiki 证据会自动注入游戏知识问答。",
+    "_说明": "LLM 普通聊天仅在 bot.allow_chat=true 时放行；Wiki 证据会自动注入游戏知识问答。模型走 AstrBot 的 Provider 配置，本文件不保存任何密钥。",
     "wiki_grounding": true,
     "wiki_timeout_seconds": 5.5,
     "wiki_context_chars": 2600,
@@ -47,12 +44,12 @@
   "data": {
     "_说明": "可选。信息流与 /战报 后台预热相关设置，留空则用 hd2_config.py 里的默认值。",
     "news_json_url": "https://jerry114514.github.io/HD2-Galatic_war-Map/data.json",
-    "news_source": "hd2map",
     "news_cache_ttl": 120,
-    "_report_warm说明": "后台静默预热 /战报 快照：report_warm_enable=1 开启；report_warm_interval 预热间隔（秒，≥60）；report_snapshot_ttl 快照有效期（秒，超时才现抓）。前台命中快照时响应在毫秒级、且不调用 LLM。",
+    "campaign_zh_cache_ttl": 300,
+    "official_texts_cache_ttl": 300,
+    "_report_warm说明": "后台静默预热 /战报 快照：report_warm_enable=1 开启；report_warm_interval 预热间隔（秒，小于 60 会被夹到 60，默认 240）。快照是否仍然新鲜由 max_stale_seconds 判定，超时才现抓。前台命中快照时响应在毫秒级、且不调用 LLM。",
     "report_warm_enable": 1,
     "report_warm_interval": 240,
-    "report_snapshot_ttl": 900,
     "api_watch_enable": 1,
     "api_watch_interval": 60,
     "site_base": "https://jerry114514.github.io/HD2-Galatic_war-Map",
@@ -74,6 +71,7 @@
   },
   "runtime": {
     "node": "node",
-    "draw_timeout_seconds": 20
+    "draw_timeout_seconds": 20,
+    "btk_timeout_seconds": 15
   }
 }
