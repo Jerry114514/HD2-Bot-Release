@@ -4,6 +4,8 @@
 def extract(html):
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(html, "html.parser")
+    for edit in soup.select(".mw-editsection"):
+        edit.decompose()
     out, section, unsupported = [], "数据", 0
     for el in soup.find_all(["h2", "h3", "table"]):
         if el.name != "table":
@@ -29,6 +31,11 @@ def extract(html):
                     if not 1 <= rs <= len(trs)-ri or not 1 <= cs <= 16 or ci+cs > 16:
                         raise ValueError("unsupported span")
                     value = cell.get_text(" ", strip=True)
+                    if not value and cell.find("img"):
+                        # Image-only values are not empty fields. Keep readable
+                        # alternatives, or explicitly refer readers to the source.
+                        value = " / ".join(img.get("alt") or img.get("title") or "图片（见原文）"
+                                           for img in cell.find_all("img"))
                     if len(value) > 500:
                         value = value[:500] + "…"; bad = True
                     for rr in range(ri, ri+rs):
@@ -48,6 +55,12 @@ def extract(html):
         if not rows:
             continue
         caption = el.find("caption", recursive=False)
-        out.append({"section":section, "title":caption.get_text(" ",strip=True) if caption else "",
+        title = caption.get_text(" ", strip=True) if caption else ""
+        if not title and "enemy-attack-stats" in el.get("class", []):
+            box = el.find_parent(class_="biome-box")
+            heading = box.find(class_="MPheading", recursive=False) if box else None
+            title = heading.get_text(" ", strip=True) if heading else ""
+        kind = "key_value" if "table-weapon-stats" in el.get("class", []) and width == 2 else "grid"
+        out.append({"section":section, "title":title, "kind":kind,
                     "rows":rows, "headers":headers, "origins":origins, "position":len(out), "unsupported":bad})
     return out, unsupported

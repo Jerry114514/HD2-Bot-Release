@@ -160,6 +160,12 @@ def main():
              patch.object(modules["demolition"], "build_view", return_value={"kind": "info", "text": "fixture demolition"}), \
              patch.object(modules["lookup"], "_render_help_card", None), \
              patch.object(modules["lookup"], "_build_help_text", return_value="fixture help"):
+            if "--wiki-tables" in sys.argv:
+                from sdk_wiki_tables import audit_wiki_tables
+                count = await audit_wiki_tables(modules, scheduler, CaptureEvent, sandbox)
+                assert not llm_attempts, f"Unexpected default LLM requests: {llm_attempts}"
+                print(f"AstrBot {importlib.metadata.version('AstrBot')}: {count} Wiki table pipeline cases passed; no real sends")
+                return
             for platform in ("qq_official", "aiocqhttp"):
                 for mention in (False, True):
                     for text in ("/roll", "/api", "/战报", "/战报 t", "/wiki", "/btk AR-23 武斗虫 头部",
