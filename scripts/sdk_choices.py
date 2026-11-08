@@ -86,9 +86,10 @@ async def check_choices(modules, scheduler, config, Event, sandbox):
         await send("6",expected=0,mid="selected-once")
         assert queried.call_count == before and selected_ids[-1] == 106
 
-        for interruption in ("/roll t", "普通文字", "/unknown"):
+        for interruption, expected, hint in (("/roll t", 1, "fixture seven slots"),
+                                             ("普通文字", 0, None), ("/unknown", 1, "未知指令")):
             initial=await menu()
-            await send(interruption,expected=int(interruption=="/roll t"))
+            await send(interruption,expected=expected,contains=hint)
             assert owner(initial) not in choices.menus
             await send("2",expected=0)
         await menu()
@@ -163,7 +164,7 @@ async def check_choices(modules, scheduler, config, Event, sandbox):
 
         # Lookup failure allows an explicit retry; it does not rerun automatically.
         with patch.object(wiki,"wiki_lookup",side_effect=TimeoutError("fixture")):
-            await send("2",contains="查询超时")
+            await send("2",contains="Wiki 查询超时")
         await send("选 2",contains="选定正文")
 
         # The waiting window bounds admission, not an already admitted lookup.

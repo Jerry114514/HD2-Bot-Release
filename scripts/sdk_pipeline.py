@@ -132,7 +132,8 @@ def main():
                 yield
         scheduler.stages[2].agent_sub_stage.process = no_default_llm
 
-        async def check(text, platform="qq_official", mention=True, private=False, expected=True, image_pages=0):
+        async def check(text, platform="qq_official", mention=True, private=False, expected=True, image_pages=0,
+                        reply_prefix=None, contains=None):
             nonlocal count
             event = CaptureEvent(text, platform, mention, private)
             await scheduler.execute(event)
@@ -142,7 +143,13 @@ def main():
             if expected:
                 for chain in event.sent:
                     assert any(isinstance(c, Image) if image_pages else isinstance(c, Plain) and c.text.strip() for c in chain), text
-                    assert not any(isinstance(c, Plain) and c.text.startswith(("⚠️", ":(")) for c in chain), chain
+                    reply = "\n".join(c.text for c in chain if isinstance(c, Plain))
+                    if reply_prefix is not None:
+                        assert reply.startswith(reply_prefix), (text, reply)
+                    else:
+                        assert not any(isinstance(c, Plain) and c.text.startswith(("⚠️", ":(")) for c in chain), chain
+                    if contains is not None:
+                        assert contains in reply, (text, reply)
             assert event.is_stopped(), text
             count += 1
             return event
@@ -160,15 +167,26 @@ def main():
              patch.object(modules["demolition"], "build_view", return_value={"kind": "info", "text": "fixture demolition"}), \
              patch.object(modules["lookup"], "_render_help_card", None), \
              patch.object(modules["lookup"], "_build_help_text", return_value="fixture help"):
+            if "--wiki-tables" in sys.argv:
+                from sdk_wiki_tables import audit_wiki_tables
+                count = await audit_wiki_tables(modules, scheduler, CaptureEvent, sandbox)
+                assert not llm_attempts, f"Unexpected default LLM requests: {llm_attempts}"
+                print(f"AstrBot {importlib.metadata.version('AstrBot')}: {count} Wiki table pipeline cases passed; no real sends")
+                return
             for platform in ("qq_official", "aiocqhttp"):
                 for mention in (False, True):
-                    for text in ("/roll", "/api", "/战报", "/战报 t", "/wiki", "/btk AR-23 武斗虫 头部",
-                                 "/拆毁值 EAT-17 炮舰设施", "/星球", "/变种", "/帮助"):
+                    for text in ("/roll", "/api", "/战报", "/战报 t", "/wiki",
+                                 "/拆毁值 EAT-17 炮舰设施", "/星球 X-45", "/变种", "/帮助"):
                         await check(text, platform, mention)
-                for text in ("roll", "api", "战报", "普通消息", "/unknown"):
-                    await check(text, platform, expected=False)
+                    await check("/btk AR-23 武斗虫 头部", platform, mention, image_pages=1)
+                    await check("/星球", platform, mention,
+                                reply_prefix="⚠️ 星球查询缺少星球名。", contains="/查询 X-45")
+                for text, suggestion in (("roll", "/roll"), ("api", "/api"), ("战报", "/战报"),
+                                         ("/unknown", "/帮助")):
+                    await check(text, platform, reply_prefix="未知指令", contains=suggestion)
+                await check("普通消息", platform, expected=False)
                 await check("/roll", platform, mention=False, private=True)
-                await check("roll", platform, mention=False, private=True, expected=False)
+                await check("roll", platform, mention=False, private=True, reply_prefix="未知指令", contains="/roll")
             # Receiving an @ with no configured slash wake prefix also works.
             config["wake_prefix"] = ["!"]
             await check("/roll", expected=True)
@@ -197,6 +215,8 @@ def main():
             count += await audit(modules, scheduler, config, CaptureEvent, sandbox, check, llm_attempts)
             from sdk_choices import check_choices
             count += await check_choices(modules, scheduler, config, CaptureEvent, sandbox)
+            from sdk_wiki_tables import audit_wiki_tables
+            count += await audit_wiki_tables(modules, scheduler, CaptureEvent, sandbox)
             assert not llm_attempts, f"Unexpected default LLM requests: {llm_attempts}"
         print(f"AstrBot {importlib.metadata.version('AstrBot')}: {count} pipeline cases passed; no real sends")
 

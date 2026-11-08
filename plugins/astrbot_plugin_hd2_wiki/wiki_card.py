@@ -2,7 +2,8 @@
 """Wiki 卡：全量内容渲染，超长时按分区合并为单张宽图（自左向右连续阅读）。
 
 2026-11 改版：旧实现只画前 8 张表、每表 26 行、单元格 60 字、画布 30000px 封顶，
-长页面大量内容被丢弃；现按用户要求**全量渲染**——所有表格、所有行、完整单元格文本，
+长页面大量内容被丢弃；现完整保留已填写的数据与单元格文本，
+仅在展示层收起空字段、空分类、空表及合并单元格造成的重复列，
 正文不再 900 字截断；超高内容复用 report_card.save_pages 的多页合并逻辑
 （均衡切段、分区标签、统一页脚），不再依赖单图高度上限。
 """
@@ -16,6 +17,7 @@ from astrbot_plugin_hd2_war_report.report_card import (
 )
 from astrbot_plugin_hd2_common.paths import plugin_cache_dir
 from .wiki_data import wiki_lookup, _fetch_thumb
+from .table_display import compact, display_cells
 
 # 成品卡与缩略图缓存统一落 wiki 插件数据目录，不写插件安装目录。
 CACHE_DIR = str(plugin_cache_dir("astrbot_plugin_hd2_wiki", create=False))
@@ -75,7 +77,7 @@ def render_wiki_card(keyword, out_dir=None, data=None):
             pass
     visible = {k:v for k,v in value.items() if k not in ("diagnostics", "deadline")}
     visible["thumb_available"] = thumb_image is not None
-    digest = hashlib.sha256(json.dumps([keyword,visible,"wiki-layout-7-wide"],ensure_ascii=False,sort_keys=True).encode()).hexdigest()
+    digest = hashlib.sha256(json.dumps([keyword,visible,"wiki-layout-8-compact"],ensure_ascii=False,sort_keys=True).encode()).hexdigest()
     directory = out_dir or CACHE_DIR
     os.makedirs(directory,exist_ok=True)
     measure = ImageDraw.Draw(Image.new("RGB", (W,1)))
@@ -93,9 +95,10 @@ def render_wiki_card(keyword, out_dir=None, data=None):
     paragraph(value.get("text") or "暂无正文摘要")
     if value.get("table_status") in ("unavailable","unsupported"):
         paragraph("表格未完整取得或含不支持布局，请核对原文。",16,GOLD)
-    tables=value.get("tables",[])
+    source_tables = value.get("tables", [])
+    tables = [view for tb in source_tables if (view := compact(tb)) is not None]
     for tb in tables:
-        heading=tb.get("section","")+" · "+tb.get("title","")
+        heading = " · ".join(filter(None, (tb.get("section", ""), tb.get("title", ""))))
         rows=tb["rows"]
         if not rows: continue
         columns=max(map(len,rows)); cw=(W-2*PAD)/columns
@@ -104,20 +107,16 @@ def render_wiki_card(keyword, out_dir=None, data=None):
             for cell in row:
                 lines.append(_help_wrap(cell,F(15),max(12,cw-12),measure) or [""])
             return lines, max(map(len,lines))*22+12
-        headers=[]
-        for i,row in enumerate(rows):
-            flags=(tb.get("headers") or [])[i] if i<len(tb.get("headers",[])) else []
-            if flags and all(flags): headers.append(row)
-            else: break
         paragraph(heading,19,GOLD)
-        for header in headers:
-            lines,h=layout(header)
-            items.append(("row",y,lines,cw,True));y+=h
-        for row in rows[len(headers):]:
-            lines,h=layout(row)
-            items.append(("row",y,lines,cw,False));y+=h
+        for i in range(len(rows)):
+            flags = tb.get("headers", [])[i] if i < len(tb.get("headers", [])) else []
+            lines,h=layout(display_cells(tb, i))
+            items.append(("row",y,lines,cw,bool(flags) and all(flags)));y+=h
     total_rows=sum(len(t["rows"]) for t in tables)
-    paragraph(f"全文渲染：{len(tables)} 张表 · {total_rows} 行 · 单元格完整显示",14,MUTE)
+    hidden_rows = sum(len(t["rows"]) for t in source_tables) - total_rows
+    paragraph(f"表格：{len(tables)} 张 · {total_rows} 行 · 有效单元格完整显示",14,MUTE)
+    if hidden_rows:
+        paragraph(f"已收起空字段及空分类 {hidden_rows} 行（含 {len(source_tables)-len(tables)} 张空表）；空白不代表数值为0。",14,MUTE)
     paragraph("原文："+value["url"],13,MUTE)
     paragraph("页面版本 #"+str(value.get("rev","0")),14,MUTE)
 
