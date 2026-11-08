@@ -20,7 +20,7 @@
 - **协议端迁移 NapCat → SnowLuma**：OneBot v11 协议端改用 SnowLuma（NapCat 同团队新一代实现）。启动链路改为 `launcher.bat` / `launcher.sh`（自动注入 QQ）；推送改走标准 OneBot HTTP（3000 端口 + accessToken）；WebUI 5099；扫码在 QQ 窗口完成。配置键 `napcat.*` → `snowluma.*`，`bot.platform` 兼容 `snowluma`/`onebot` 别名。详见下文「协议端：SnowLuma」。
 - **消息卡片重构**：超长卡不再拆成多张图连发，合并为**单张宽图**，分区自左向右连续阅读（每列带分区标签，均衡切分）；可读性提升——次要文字对比度提亮、正文 20px/行距统一、战线列表斑马纹、修复任务面板高度溢出。
 - **报错提示统一**：新增 `astrbot_plugin_hd2_common/errors.py`，按「网络异常 / 参数与数据 / 未知错误」三类给出可操作提示，并附各指令用法示例；不再向群聊暴露异常类名。
-- **Linux 适配分支**：[`Linux-Branch`](https://github.com/Jerry114514/HD2-Bot-Release/tree/Linux-Branch) 提供 `start.sh`、跨平台 CJK 字体解析（`HD2_FONT` 环境变量可覆盖）与 /proc 进程管理，见 `docs/Linux部署指南.md`。
+- **Linux 适配并入主线**：跨平台 CJK 字体解析（自动探测 wqy/Noto/思源，可用 `HD2_FONT`/`HD2_FONT_BOLD` 覆盖）、`start.sh` 启动链路与 `/proc` 进程管理已合入 main——**Windows 与 Linux 共用同一个插件包**，无需切换分支，详见 `docs/Linux部署指南.md`。
 
 ## 指令
 
@@ -66,7 +66,9 @@ Bot只提供整套七槽抽取，不提供单件替换、锁定或手动选装�
 
 ## 安装与平台
 
-部署面向 Windows + AstrBot 桌面版。代码离线检查同时覆盖 Windows/Linux；Linux 运行需要自行准备中文字体和对应平台接入。
+主流程面向 Windows + AstrBot 桌面版；Linux 使用**同一个插件包**（字体解析、`start.sh` 启动链路与进程管理已跨平台化，CI 也在 Linux 上跑离线检查）。
+
+> **Linux 用户**：装本包即可，无需切换分支（原 `Linux-Branch` 已合入 main）。系统装有任一中文 CJK 字体（wqy-microhei、Noto Sans CJK、思源黑体等）时自动选用，也可用 `HD2_FONT` / `HD2_FONT_BOLD` 指定字体文件；启动、Docker 接入与常见问题见 [docs/Linux部署指南.md](docs/Linux部署指南.md)。
 
 使用 Python 3.12（与本轮验证的 AstrBot 4.29.3 匹配）和 Node.js 22 或更高版本；AstrBot 使用支持事件优先级的版本（建议与部署使用的当前桌面版一并验证）。基础依赖：
 

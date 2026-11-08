@@ -203,6 +203,8 @@ MO_TARGET_CN = {
 
 # 战略目标英文描述的翻译已统一交给框架 LLM 接口（llm_generate）处理，
 # 这里不再保留直连外部 API / 读取本机凭据的同步实现。
+# （Linux-Branch 曾把本函数的配置路径跨平台化；main 已整体删除该同步实现，
+#   维持合规版本，不再合入。）
 
 import os as _os
 import sys as _sys
