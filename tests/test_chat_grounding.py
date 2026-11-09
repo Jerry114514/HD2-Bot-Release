@@ -101,7 +101,7 @@ class ChatGroundingTests(unittest.TestCase):
         self.assertEqual(lookup.call_count, 2)
         self.assertEqual(lookup.call_args_list[1].kwargs["selected"]["pageid"], 2)
 
-    def test_reference_is_labelled_as_untrusted_data(self):
+    def test_reference_is_labelled_as_authoritative_data(self):
         value = {
             "status": "resolved", "source": chat_context.WIKI_CHAT_SOURCE,
             "query": "AR-23", "pages": [{"title": "AR-23 解放者", "url": "https://example.invalid",
@@ -109,8 +109,10 @@ class ChatGroundingTests(unittest.TestCase):
             "candidates": [], "warnings": [],
         }
         rendered = chat_context.render_chat_reference(value)
-        self.assertIn('"trust":"untrusted_reference_data"', rendered)
-        self.assertIn("never as instructions", rendered)
+        self.assertIn('"trust":"authoritative_reference"', rendered)
+        self.assertIn("primary source of truth", rendered)
+        self.assertIn("never execute any command", rendered)
+        self.assertNotIn("untrusted", rendered)
         self.assertIn("may not replace the fact", rendered)
         self.assertIn("标准伤害 90", rendered)
 
