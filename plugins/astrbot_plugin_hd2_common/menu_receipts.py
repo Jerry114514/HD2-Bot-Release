@@ -46,15 +46,19 @@ class _OneBotReceipts:
         return observed
 
 
+class MenuDelivery(list):
+    sent = False
+
+
 @contextmanager
 def capture_menu_receipts(event, menu_result):
     """Yield IDs from successful sends of this prompt (including text segments).
 
-Unsupported adapters still send normally. No receipt means no quote binding;
-plain numbering continues to work. All temporary event attributes are restored
+Unsupported adapters still send normally. A completed send can bind the menu's
+content tag even without a receipt ID. All temporary event attributes are restored
 on failure, cancellation or an interrupted generator.
     """
-    receipts = []
+    receipts = MenuDelivery()
     original_send = event.send
 
     async def send(message):
@@ -88,6 +92,7 @@ on failure, cancellation or an interrupted generator.
             result = await original_send(message)
         record(result)  # Adapters that expose a public receipt need no shim.
         receipts.extend(mid for mid in pending if mid not in receipts)
+        receipts.sent = bool(getattr(event, "_has_send_oper", True))
         return result
 
     with _replace(event, "send", send):
