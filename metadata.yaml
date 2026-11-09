@@ -12,11 +12,15 @@ desc: |
   · 战役简报档案墙、星球指挥台、民主空间站、Wiki 全文长卡、七格配装抽取、BTK 武器测伤
   · LLM 行动建议（/分析，可选）、进群欢迎、指令防护、命令日志埋点、API 变更监测
 
+  版本要求：AstrBot ≥ 4.29.3（低于该版本 /roll 抽取行为不同，加载时会被版本闸门拦截）。
+
   部署前提：AstrBot 已接入 OneBot v11（SnowLuma/NapCat）或官方 QQ 适配器；
   需复制 config.example.json 为插件目录内 config.json 并填写配置（详见仓库 README 与部署文档）。
 
   本插件及其文档由 AI（DeepSeek Agent）辅助生成并维护，人工审核后发布。
 version: 1.0.4
+# PEP 440 版本范围：低于 4.29.3 时 AstrBot 会阻止加载（/roll 的抽取行为依赖 4.29.3 起的框架实现）
+astrbot_version: ">=4.29.3"
 short_desc: 绝地潜兵2中文战况全家桶：HUD 战报卡、MO 推送、Wiki 长图、BTK 测伤与配装抽取。
 author: Jerry114514
 repo: https://github.com/Jerry114514/HD2-Bot-Release

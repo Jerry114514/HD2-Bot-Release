@@ -13,6 +13,8 @@
 3. 配置 AstrBot 消息平台（OneBot v11 反向 WS 指向 AstrBot）与 LLM Provider（/分析 需要）
 4. 群里发 `/帮助` 验证
 
+> **版本要求：AstrBot ≥ 4.29.3**（`metadata.yaml` 中声明 `astrbot_version: ">=4.29.3"`）。低于该版本时 WebUI/插件市场会给出不兼容提示并**阻止加载**：`/roll` 的抽取算法依赖 4.29.3 起的框架行为，在 4.27.x 等旧版上会得到不同结果。WebUI 安装弹窗虽有「无视警告，继续安装」，但加载闸门仍会生效，请先升级 AstrBot。
+
 > 仓库的其余部署方式（`start.bat` 一键启动、Web 控制台、12 插件分散部署）见下文——市场安装是其中"插件就位"步骤的快捷方式，配置与协议端接入仍需按文档完成。
 
 ## 最近更新（2026-11）
@@ -72,7 +74,7 @@ Bot只提供整套七槽抽取，不提供单件替换、锁定或手动选装�
 
 > **Linux 用户**：装本包即可，无需切换分支（原 `Linux-Branch` 已合入 main）。系统装有任一中文 CJK 字体（wqy-microhei、Noto Sans CJK、思源黑体等）时自动选用，也可用 `HD2_FONT` / `HD2_FONT_BOLD` 指定字体文件；启动、Docker 接入与常见问题见 [docs/Linux部署指南.md](docs/Linux部署指南.md)。
 
-使用 Python 3.12（与本轮验证的 AstrBot 4.29.3 匹配）和 Node.js 22 或更高版本；AstrBot 使用支持事件优先级的版本（建议与部署使用的当前桌面版一并验证）。基础依赖：
+使用 Python 3.12 和 Node.js 22 或更高版本；**AstrBot 最低 4.29.3**（本次在 4.29.3 上验收，`astrbot_version: ">=4.29.3"` 会在旧版上拦截加载；4.27.2 的 `/roll` 行为与本插件不一致）。基础依赖：
 
 ```powershell
 python -m pip install -r requirements.txt
