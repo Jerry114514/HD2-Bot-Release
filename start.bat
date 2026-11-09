@@ -13,9 +13,9 @@ if not exist "%HD2_PROJECT_DIR%config.json" (
     echo [WARN] config.json not found.
     echo   Copy config.example.json to config.json first, then fill in:
     echo   - bot.self_id / bot.groups
-    echo   - snowluma.dir / snowluma.access_token
+    echo   - snowluma.dir / snowluma.access_token（OneBot 通道）
     echo   - astrbot.exe / astrbot.python
-    echo   - llm.api_key
+    echo   - bot.platform / bot.platform_id（官方 QQ 填 qq_official）
     echo.
     pause
     exit /b 1

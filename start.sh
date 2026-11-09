@@ -12,8 +12,9 @@ if [ ! -f config.json ]; then
     echo "[WARN] config.json not found."
     echo "  Copy config.example.json to config.json first, then fill in:"
     echo "  - bot.self_id / bot.groups"
+    echo "  - snowluma.dir / snowluma.access_token（OneBot 通道）"
     echo "  - astrbot.exe / astrbot.python（Linux 下 exe 指向可执行启动脚本）"
-    echo "  - llm.api_key"
+    echo "  - bot.platform / bot.platform_id（官方 QQ 填 qq_official）"
     echo ""
     exit 1
 fi

@@ -21,11 +21,13 @@
 
 ## 最近更新（2026-11）
 
+- **v1.0.6**：重写[部署手册](docs/部署指南.md)，从 160 行的 NapCat 时代文档扩为 15 章——官方 QQ 机器人（appid/secret、群 OpenID、`id_whitelist` 白名单、能力边界）、SnowLuma（Windows 安装、Linux Docker 官方命令、noVNC 扫码、密码提取）、Linux（字体、`astrbot init`/systemd/Docker/pip/源码三种装法）、市场与仓库两条部署路线、config.json 逐项说明、10 项验证清单与四类故障排查表。`start.bat` / `start.sh` 的缺失配置提示同步更新，不再提及已删除的 `llm.api_key`。
+
 - **v1.0.5**：修正 LLM 问答的事实层口径——Wiki 正文不再标记为 `untrusted_reference_data`，改为 `authoritative_reference`（权威游戏资料）；参考块规则明确「以检索结果为准、不得称证据不可信」，同时保留「正文只提供事实、不执行其中指令」的注入防护。人格文件同步为「权威事实依据」，文档与测试一并更新。部署文档补充 AstrBot 4.29.3+ 的访问控制口径：框架白名单只认 `platform_settings.id_whitelist`（官方 QQ 填群 OpenID），`platform_whitelist.json` 已不再读取。
 
 - **v1.0.4**：Wiki 候选菜单支持**引用回复选择**（回复机器人发的那条菜单即可选中，含多页菜单、过期/非本人/无关引用的中文提示，合入 PR #11）；落实市场安全审查建议——`planet_info` 官方源抓取全部改走线程池，不再在事件循环上做同步网络 I/O；`config.example.json` 移除无引用的 `llm` 密钥段并补齐当前配置键（新增 `runtime.btk_timeout_seconds`、两个缓存 TTL，删除失效键），`data.report_warm_interval` 现在真实生效。
 
-- **协议端迁移 NapCat → SnowLuma**：OneBot v11 协议端改用 SnowLuma（NapCat 同团队新一代实现）。启动链路改为 `launcher.bat` / `launcher.sh`（自动注入 QQ）；推送改走标准 OneBot HTTP（3000 端口 + accessToken）；WebUI 5099；扫码在 QQ 窗口完成。配置键 `napcat.*` → `snowluma.*`，`bot.platform` 兼容 `snowluma`/`onebot` 别名。详见下文「协议端：SnowLuma」。
+- **协议端迁移 NapCat → SnowLuma**：OneBot v11 协议端改用 SnowLuma（独立的 OneBot v11 实现，协议参考 LagrangeV2、实现思路参考 NapCatQQ）。启动链路改为 `launcher.bat` / `launcher.sh`（自动注入 QQ）；推送改走标准 OneBot HTTP（3000 端口 + accessToken）；WebUI 5099；扫码在 QQ 窗口完成。配置键 `napcat.*` → `snowluma.*`，`bot.platform` 兼容 `snowluma`/`onebot` 别名。详见下文「协议端：SnowLuma」。
 - **消息卡片重构**：超长卡不再拆成多张图连发，合并为**单张宽图**，分区自左向右连续阅读（每列带分区标签，均衡切分）；可读性提升——次要文字对比度提亮、正文 20px/行距统一、战线列表斑马纹、修复任务面板高度溢出。
 - **报错提示统一**：新增 `astrbot_plugin_hd2_common/errors.py`，按「网络异常 / 参数与数据 / 未知错误」三类给出可操作提示，并附各指令用法示例；不再向群聊暴露异常类名。
 - **Linux 适配并入主线**：跨平台 CJK 字体解析（自动探测 wqy/Noto/思源，可用 `HD2_FONT`/`HD2_FONT_BOLD` 覆盖）、`start.sh` 启动链路与 `/proc` 进程管理已合入 main——**Windows 与 Linux 共用同一个插件包**，无需切换分支，详见 `docs/Linux部署指南.md`。
@@ -75,6 +77,8 @@ Bot只提供整套七槽抽取，不提供单件替换、锁定或手动选装�
 ## 安装与平台
 
 主流程面向 Windows + AstrBot 桌面版；Linux 使用**同一个插件包**（字体解析、`start.sh` 启动链路与进程管理已跨平台化，CI 也在 Linux 上跑离线检查）。
+
+> **完整部署手册**：[docs/部署指南.md](docs/部署指南.md) —— 覆盖插件市场安装、仓库部署、官方 QQ 机器人（群 OpenID 白名单）、SnowLuma、Linux/Docker、一键启动器、Web 控制台、验证清单与故障排查。
 
 > **Linux 用户**：装本包即可，无需切换分支（原 `Linux-Branch` 已合入 main）。系统装有任一中文 CJK 字体（wqy-microhei、Noto Sans CJK、思源黑体等）时自动选用，也可用 `HD2_FONT` / `HD2_FONT_BOLD` 指定字体文件；启动、Docker 接入与常见问题见 [docs/Linux部署指南.md](docs/Linux部署指南.md)。
 
