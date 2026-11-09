@@ -20,15 +20,21 @@ class PlatformTests(unittest.TestCase):
                 launch.main();snowluma.assert_not_called()
 
     def test_wrong_port_owner_is_never_selected(self):
+        app = ROOT / "fixture App"
+        python = str(app / "python.exe")
+        backend = str(app / "launch_backend.py")
         def get(*keys,default=None):
-            return {("astrbot","exe"):r"D:\App\astrbot.exe",("astrbot","python"):r"D:\App\python.exe",("astrbot","app_dir"):r"D:\App"}.get(keys,default)
+            return {("astrbot","exe"):str(app / "astrbot.exe"),
+                    ("astrbot","python"):python,("astrbot","app_dir"):str(app)}.get(keys,default)
         with patch.object(cfg,"get",side_effect=get):
-            records=[{"ProcessId":1,"ExecutablePath":r"D:\App\python.exe","CommandLine":r'"D:\App\python.exe" "D:\App\launch_backend.py"'},
-                     {"ProcessId":2,"ExecutablePath":r"D:\Elsewhere\python.exe","CommandLine":"AstrBot launch_backend.py"}]
-            self.assertEqual(instance.select(records,[1],"astrbot"),[1])
-            self.assertEqual(instance.select(records,[1,1],"astrbot"),[1])
-            with self.assertRaises(RuntimeError):instance.select(records,[2],"astrbot")
-            with self.assertRaises(RuntimeError):instance.select(records,[999],"astrbot")
+            for command in ({"CommandLine":f'"{python}" "{backend}"'}, {"Argv":[python,backend]}):
+                records=[{"ProcessId":1,"ExecutablePath":python,**command},
+                         {"ProcessId":2,"ExecutablePath":str(ROOT / "Elsewhere" / "python.exe"),
+                          "CommandLine":"AstrBot launch_backend.py"}]
+                self.assertEqual(instance.select(records,[1],"astrbot"),[1])
+                self.assertEqual(instance.select(records,[1,1],"astrbot"),[1])
+                with self.assertRaises(RuntimeError):instance.select(records,[2],"astrbot")
+                with self.assertRaises(RuntimeError):instance.select(records,[999],"astrbot")
         with patch.object(cfg,"get",return_value=""):
             self.assertFalse(instance.matches({"ExecutablePath":None},"napcat"))
 
