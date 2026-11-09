@@ -1,7 +1,7 @@
 {
   "_说明": "复制本文件为 config.json 并填写你的信息。所有含 YOUR 的值都必须替换。相对路径基于项目根。本文件不含任何 LLM 密钥：普通聊天与 /分析 的模型由 AstrBot 的 Provider 配置提供，插件不直连外部 API。",
   "bot": {
-    "_platform说明": "bot.platform 指 OneBot 协议端类型：snowluma（与 napcat / onebot 等价，均指 OneBot v11 通道）；接入官方 QQ 适配器时填 qq_official。",
+    "_platform说明": "bot.platform 指 OneBot 协议端类型：snowluma（与 napcat / onebot 等价，均指 OneBot v11 通道）；接入官方 QQ 适配器时填 qq_official。官方 QQ 的 bot.groups 要填群 OpenID（AstrBot 上报的 32 位串），与协议端的数字群号不能混用；同一批 ID 还要加进 AstrBot 的访问控制白名单（4.29.3+ 为 cmd_config.json 的 platform_settings.id_whitelist，4.27.x 及更早为 platform_whitelist.json）。",
     "self_id": "YOUR_QQ_NUMBER",
     "admin_qq": "YOUR_ADMIN_QQ",
     "groups": [
@@ -28,7 +28,7 @@
     "app_dir": "D:/AstrBot/backend/app",
     "webui_port": 6185,
     "ws_port": 6199,
-    "_data_dir说明": "AstrBot 数据目录（含 cmd_config.json / platform_whitelist.json）。控制台「群号管理」用它读写入群白名单；留空则自动探测（候选：~/.astrbot/data、config.example 同级 data/、astrbot.app_dir 的上级 data/），按 data_v4.db-wal 是否存在等特征挑选正在使用的那份。多份 AstrBot 共存时建议显式填写。",
+    "_data_dir说明": "AstrBot 数据目录（含 cmd_config.json）。控制台「群号管理」用它读取/写入群名单（写本项目的 bot.groups，并维护旧版 platform_whitelist.json）；AstrBot 4.29.3 起框架白名单只认 cmd_config.json 的 platform_settings.id_whitelist，请在 WebUI 的访问控制里维护。留空则自动探测（候选：~/.astrbot/data、config.example 同级 data/、astrbot.app_dir 的上级 data/），按 data_v4.db-wal 是否存在等特征挑选正在使用的那份。多份 AstrBot 共存时建议显式填写。",
     "data_dir": "",
     "_dashboard_password说明": "AstrBot Dashboard 密码（默认 astrbot）。填了才能用「零重启热重载」；仍是默认密码时 AstrBot 会拒绝登录，控制台会自动降级为重启 AstrBot。",
     "dashboard_user": "astrbot",
