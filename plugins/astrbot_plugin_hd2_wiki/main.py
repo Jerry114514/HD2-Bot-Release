@@ -18,7 +18,7 @@ from astrbot_plugin_hd2_wiki.chat_context import (
     render_reply_policy, render_tool_result, reply_limit, should_ground,
 )
 from astrbot_plugin_hd2_common.search import normalize
-from astrbot_plugin_hd2_common.choices import choices, PAGE_SIZE
+from astrbot_plugin_hd2_common.choices import choices, PAGE_SIZE, OFFICIAL, quote_diagnostics
 from astrbot_plugin_hd2_common.menu_receipts import capture_menu_receipts
 
 
@@ -217,7 +217,10 @@ class Hd2WikiPlugin(Star):
             return
         try:
             prompt = format_text(menu.value, choice_page=menu.page,
-                official=event.get_platform_name() in ("qq_official", "qq_official_webhook"))
+                official=event.get_platform_name() in OFFICIAL)
+            if event.get_platform_name() in OFFICIAL:
+                title, newline, body = prompt.partition("\n")
+                prompt = f"{title} 〔菜单 {menu.tag}〕{newline}{body}"
             result = text_reply(event, prompt)
             with capture_menu_receipts(event, result) as receipts:
                 yield result
@@ -225,7 +228,9 @@ class Hd2WikiPlugin(Star):
             # A stopped hook or failed send must not leave an invisible menu.
             if getattr(event, "_has_send_oper", True):
                 choices.activate(menu, refresh=fresh)
-                choices.bind(menu, receipts)
+                choices.bind(menu, receipts, tag=menu.tag if receipts.sent and event.get_platform_name() in OFFICIAL else None)
+                hd2_log("generated", plugin="wiki_choice", detail=f"receipts={len(receipts)}; sent={receipts.sent}",
+                        platform=event.get_platform_name())
         finally:
             if menu.state == "publishing":
                 choices.discard(menu)
@@ -252,6 +257,7 @@ class Hd2WikiPlugin(Star):
                     "quote_page": "你引用的是旧一页候选，请引用最新显示的那一页，再回复对应编号。",
                 }
                 if action.kind in quote_errors:
+                    hd2_log("failed", plugin="wiki_choice", detail=f"{action.kind}: {quote_diagnostics(event)}")
                     yield text_reply(event, quote_errors[action.kind])
                     return
                 if action.kind == "cancelled":

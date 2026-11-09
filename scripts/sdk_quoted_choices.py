@@ -6,8 +6,10 @@ from unittest.mock import AsyncMock, patch
 
 async def check_quoted_choices(modules, scheduler, Event, sandbox):
     from aiocqhttp import Event as OneBotEvent
-    from botpy.message import GroupMessage, C2CMessage
-    from astrbot.core.platform.sources.qqofficial.qqofficial_platform_adapter import QQOfficialPlatformAdapter
+    from astrbot.api.message_components import Reply
+    from astrbot.core.platform.sources.qqofficial.qqofficial_platform_adapter import (
+        QQOfficialPlatformAdapter, PatchedGroupMessage, PatchedC2CMessage,
+    )
     from astrbot.core.platform.sources.qqofficial.qqofficial_message_event import QQOfficialMessageEvent
     from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_platform_adapter import AiocqhttpAdapter
     from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import AiocqhttpMessageEvent
@@ -45,7 +47,7 @@ async def check_quoted_choices(modules, scheduler, Event, sandbox):
                 def record(payload):
                     seq[0] += 1
                     outbox[str(seq[0])] = deepcopy(payload)
-                    return {"id":str(seq[0]), "message_id":seq[0]}
+                    return {"id":str(seq[0])} if platform.startswith("qq_official") else {"message_id":seq[0]}
                 async def official_send(**payload):
                     return record(payload)
                 async def http(route, json):
@@ -65,7 +67,8 @@ async def check_quoted_choices(modules, scheduler, Event, sandbox):
                 adapter = object.__new__(AiocqhttpAdapter)
                 adapter.bot = bot
 
-                async def make(text, quote=None, user="20001", group="10001", adapter_id="adapter-A"):
+                async def make(text, quote=None, user="20001", group="10001", adapter_id="adapter-A",
+                               quote_format="reference", quoted_text=None):
                     incoming[0] += 1
                     base = Event(text, platform, True, private)
                     base.platform_meta.id = adapter_id
@@ -73,11 +76,19 @@ async def check_quoted_choices(modules, scheduler, Event, sandbox):
                         raw = {"id":f"incoming-{incoming[0]}", "content":text, "group_openid":group,
                                "author":{"user_openid":user, "member_openid":user}}
                         if quote is not None:
-                            raw["message_reference"] = {"message_id":quote}
-                            # Quote body is deliberately absent: official QQ can supply only the ID.
-                        message = (C2CMessage if private else GroupMessage)(api, "fixture-event", raw)
+                            if quote_format == "reference":
+                                raw["message_reference"] = {"message_id":quote}
+                            else:
+                                # Real official QQ shape: no comparable message ID.
+                                raw.update(message_type=103, msg_elements=[{
+                                    "message_type":103, "msg_idx":"REFIDX_fixture",
+                                    "content":outbox[quote]["content"] if quoted_text is None else quoted_text,
+                                }], message_scene={"ext":["ref_msg_idx=TMP_fixture", "msg_idx=REFIDX_incoming"]})
+                        message = (PatchedC2CMessage if private else PatchedGroupMessage)(api, "fixture-event", raw)
                         abm = await QQOfficialPlatformAdapter._parse_from_qqofficial(
                             message, base.message_obj.type, force_group_mention=True)
+                        if quote_format == "raw_only":
+                            abm.message = [p for p in abm.message if not isinstance(p, Reply)]
                         cls = QQOfficialMessageEvent
                     else:
                         parts = ([{"type":"reply", "data":{"id":quote}}] if quote is not None else [])
@@ -136,5 +147,22 @@ async def check_quoted_choices(modules, scheduler, Event, sandbox):
                         await send("2", "999999", contains="无法确认")
                     assert len(choices.menus) == 1
                 await send("2", contains="选定正文")  # Original unquoted interaction remains valid.
+                if platform.startswith("qq_official"):
+                    _, mid = await send("/wiki 焦土 t")
+                    await send("2", mid, quote_format="elements", contains="选定正文")
+                    assert selected_ids[-1] == 102
+                    _, old = await send("/wiki 焦土 t")
+                    _, latest = await send("/wiki 焦土 t")  # Exactly the same candidates, different publication.
+                    await send("2", old, quote_format="elements", contains="已失效")
+                    await send("2", latest, quote_format="elements", user="20002",
+                               contains="无法确认" if private else "其他人")
+                    _, page2 = await send("下一页", latest, quote_format="elements", contains="6. 词条6")
+                    await send("6", latest, quote_format="elements", contains="旧一页")
+                    await send("6", page2, quote_format="raw_only", contains="选定正文")
+                    assert selected_ids[-1] == 106
+                    _, mid = await send("/wiki 焦土 t")
+                    await send("2", mid, quote_format="elements", quoted_text="旧菜单文字，没有标记", contains="无法确认")
+                    text = "=== 消息 1 ===\n[消息内容] " + outbox[mid]["content"]
+                    await send("2", mid, quote_format="elements", quoted_text=text, contains="选定正文")
     choices.clear()
     return count

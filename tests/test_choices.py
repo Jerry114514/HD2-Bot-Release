@@ -5,7 +5,7 @@ from unittest.mock import patch
 from test_core import ROOT  # adds plugin path
 from framework import Event, install
 install()
-from astrbot_plugin_hd2_common.choices import ChoiceStore, choices, owner, reply
+from astrbot_plugin_hd2_common.choices import ChoiceStore, choices, owner, reply, quote_diagnostics
 from astrbot_plugin_hd2_guard.main import Hd2GuardPlugin
 from astrbot_plugin_hd2_wiki import main as handler, wiki_data as wiki
 
@@ -30,6 +30,15 @@ def quoted(text="2", mid="menu-1", sender="self", **kwargs):
     plain = type("Plain", (), {"text":text})()
     e.get_messages = lambda: [part, plain]
     e.message_obj.message_id = f"{mid}-{text}-{kwargs}"
+    return e
+
+
+def official(text, tag=None, **kwargs):
+    e = quoted(text, mid="", sender="", **kwargs)
+    e.get_platform_name = lambda: "qq_official"
+    parts = e.get_messages()
+    parts[0].message_str = f"📖 焦土 〔菜单 {tag}〕\n1. 候选1\n2. 候选2" if tag else "📖 焦土"
+    e.message_obj.message_id += str(tag)
     return e
 
 
@@ -172,6 +181,59 @@ class ChoicesTests(unittest.TestCase):
                                                {"type":"text", "data":{"text":"2"}}]}
         self.assertEqual(self.store.handle(e).kind, "quote_unknown")
         self.assertEqual(menu.state, "ready")
+
+    def test_official_content_only_quote_requires_sent_unique_tag(self):
+        menu, _ = self.ready(official("/wiki 焦土"))
+        self.assertEqual(self.store.handle(official("2", menu.tag)).kind, "quote_unknown")
+        self.store.bind(menu, [], tag=menu.tag)
+        e = official("选 2", menu.tag)
+        self.assertEqual(self.store.handle(e).index, 1)
+        self.assertEqual(self.store.handle(e).kind, "duplicate")
+
+    def test_identical_new_query_old_page_and_other_owner_cannot_reuse_tag(self):
+        old, _ = self.ready(official("/wiki 焦土"))
+        old_tag = old.tag
+        self.store.bind(old, [], tag=old_tag)
+        new, _ = self.ready(official("/wiki 焦土"))
+        self.store.bind(new, [], tag=new.tag)
+        self.assertNotEqual(new.tag, old_tag)
+        self.assertEqual(self.store.handle(official("1", old_tag)).kind, "quote_expired")
+        self.assertEqual(self.store.handle(official("1", new.tag, user="other")).kind, "quote_owner")
+        self.assertEqual(self.store.handle(official("1", new.tag, group="other")).kind, "quote_unknown")
+        page1 = new.tag
+        self.assertEqual(self.store.handle(official("下一页", page1)).kind, "page")
+        self.store.activate(new); self.store.bind(new, [], tag=new.tag)
+        self.assertNotEqual(new.tag, page1)
+        self.assertEqual(self.store.handle(official("6", page1)).kind, "quote_page")
+        self.assertEqual(self.store.handle(official("6", new.tag)).index, 5)
+
+    def test_raw_official_quote_fallback_and_diagnostics_do_not_log_payload(self):
+        menu, _ = self.ready(official("/wiki 焦土"))
+        self.store.bind(menu, [], tag=menu.tag)
+        e = official("2", menu.tag)
+        content = e.get_messages()[0].message_str
+        e.message_obj.raw_message = {"message_type":103, "msg_elements":[
+            {"content":content, "msg_idx":"REFIDX_fixture"}],
+            "message_scene":{"ext":["auth_token=private-fixture"]}}
+        plain = e.get_messages()[1]
+        e.get_messages = lambda: [plain]  # SDK omitted Reply, raw content survives.
+        facts = str(quote_diagnostics(e))
+        self.assertNotIn(menu.tag, facts)
+        self.assertNotIn("private-fixture", facts)
+        self.assertNotIn("焦土", facts)
+        self.assertEqual(self.store.handle(e).index, 1)
+
+    def test_content_tag_never_uses_new_body_or_guess_between_multiple_menus(self):
+        menu, _ = self.ready(official("/wiki 焦土"))
+        self.store.bind(menu, [], tag=menu.tag)
+        e = official(f"2 〔菜单 {menu.tag}〕")
+        self.assertIsNone(reply(e))
+        e = official("2", menu.tag)
+        e.get_messages()[0].message_str += f"\n〔菜单 {menu.tag}〕"
+        self.assertEqual(self.store.handle(e).kind, "quote_unknown")
+        self.assertEqual(menu.state, "ready")
+        self.now = 121
+        self.assertEqual(self.store.handle(official("选 2", menu.tag)).kind, "quote_expired")
 
     def test_guard_rechecks_access_and_does_not_swallow_new_commands(self):
         settings={}

@@ -7,6 +7,7 @@ from collections import OrderedDict
 from copy import deepcopy
 from dataclasses import dataclass
 import re
+import secrets
 import time
 import unicodedata
 from types import SimpleNamespace
@@ -14,6 +15,17 @@ from types import SimpleNamespace
 
 PAGE_SIZE = 5
 TTL = 120
+OFFICIAL = ("qq_official", "qq_official_webhook")
+MENU_TAG = re.compile(r"〔菜单 ([A-F0-9]{12})〕")
+
+
+def _field(value, name, default=None):
+    return value.get(name, default) if isinstance(value, dict) else getattr(value, name, default)
+
+
+def quote_text(quote):
+    text = _field(quote, "message_str") or _field(quote, "text") or ""
+    return text if isinstance(text, str) else ""
 
 
 def owner(event):
@@ -27,6 +39,25 @@ def owner(event):
 
 def quoted_messages(event):
     quotes = [p for p in event.get_messages() if type(p).__name__ == "Reply"]
+    if event.get_platform_name() in OFFICIAL:
+        raw = getattr(event.message_obj, "raw_message", None)
+        data = _field(raw, "raw_data", raw)
+        elements = _field(raw, "msg_elements", _field(data, "msg_elements", []))
+        if isinstance(elements, list) and elements:
+            # QQ's quoted content can have only msg_idx/REFIDX, which is not
+            # the outbound id. Some SDK versions expose no Reply for this form.
+            element = elements[0]
+            kind = _field(element, "message_type", _field(raw, "message_type", _field(data, "message_type", "")))
+            if str(kind) == "103":
+                if len(elements) != 1:
+                    return [SimpleNamespace(id="", sender_id="", message_str="")]
+                if not quotes:
+                    quotes = [SimpleNamespace(id=_field(element, "id") or _field(element, "message_id") or "",
+                                              sender_id="", message_str=_field(element, "content", ""))]
+                elif len(quotes) == 1 and not quote_text(quotes[0]):
+                    quotes = [SimpleNamespace(id=getattr(quotes[0], "id", ""),
+                                              sender_id=getattr(quotes[0], "sender_id", ""),
+                                              message_str=_field(element, "content", ""))]
     # OneBot drops Reply when fetching the original message fails. Retain its
     # raw ID so a deleted/unavailable quote cannot turn into a plain selection.
     if not quotes and event.get_platform_name() == "aiocqhttp":
@@ -52,8 +83,7 @@ def reply(event):
         name = type(part).__name__
         if name == "At":
             target = str(getattr(part, "qq", ""))
-            official_marker = (target == "qq_official" and event.get_platform_name() in
-                               ("qq_official", "qq_official_webhook"))
+            official_marker = target == "qq_official" and event.get_platform_name() in OFFICIAL
             if target == str(event.get_self_id()) or official_marker:
                 continue
         if name == "Reply":
@@ -80,6 +110,7 @@ class Menu:
     page: int = 0
     state: str = "loading"
     publication: int = 0
+    tag: str = ""
 
 
 @dataclass
@@ -149,6 +180,7 @@ class ChoiceStore:
         menu.page = 0
         menu.state = "publishing"
         menu.publication += 1
+        menu.tag = secrets.token_hex(6).upper()
         menu.expires = self.clock() + TTL
         return True
 
@@ -160,11 +192,14 @@ class ChoiceStore:
             elif menu.expires <= self.clock():
                 self.discard(menu)
 
-    def bind(self, menu, message_ids):
+    def bind(self, menu, message_ids, *, tag=None):
         if not self.current(menu):
             return
-        for mid in message_ids:
-            key = (*menu.key[:3], str(mid))
+        identifiers = [str(mid) for mid in message_ids]
+        if tag and tag == menu.tag:
+            identifiers.append(("menu_tag", tag))
+        for identifier in identifiers:
+            key = (*menu.key[:3], identifier)
             # Keep short-lived tombstones so old/other-user menus get an error.
             self.receipts[key] = MenuReceipt(menu, menu.publication, self.clock() + TTL * 2)
             self.receipts.move_to_end(key)
@@ -182,6 +217,15 @@ class ChoiceStore:
         sender = str(getattr(quote, "sender_id", "") or "")
         if sender and sender != str(event.get_self_id()):
             return Action("quote_unrelated")
+        if event.get_platform_name() in OFFICIAL and key:
+            tags = MENU_TAG.findall(quote_text(quote))
+            if len(tags) > 1:
+                return Action("quote_unknown")
+            tagged = self.receipts.get((*key[:3], ("menu_tag", tags[0]))) if tags else None
+            if record is not None and tagged is not None and (
+                    record.menu is not tagged.menu or record.publication != tagged.publication):
+                return Action("quote_unknown")
+            record = record or tagged
         if record is None:
             return Action("quote_unknown")
         if record.menu.key != key:
@@ -229,6 +273,7 @@ class ChoiceStore:
             menu.page = target
             menu.state = "publishing"
             menu.publication += 1
+            menu.tag = secrets.token_hex(6).upper()
             return Action("page", menu)
         start = menu.page * PAGE_SIZE
         if not start < value <= min(start + PAGE_SIZE, total):
@@ -238,3 +283,13 @@ class ChoiceStore:
 
 
 choices = ChoiceStore()
+
+
+def quote_diagnostics(event):
+    """Structural facts only: never log quoted content, IDs or auth_token."""
+    quotes = quoted_messages(event)
+    return {"platform":event.get_platform_name(), "quotes":len(quotes),
+            "has_id":any(bool(getattr(q, "id", "")) for q in quotes),
+            "has_text":any(bool(quote_text(q)) for q in quotes),
+            "has_tag":any(bool(MENU_TAG.search(quote_text(q))) for q in quotes),
+            "active_menu":owner(event) in choices.menus}

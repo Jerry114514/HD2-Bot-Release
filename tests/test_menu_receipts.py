@@ -55,6 +55,7 @@ class ReceiptsTests(unittest.TestCase):
                     self.assertIs(event.bot, shared)
                     self.assertIs(other.bot, shared)
                 self.assertEqual(ids, [] if error else ["123"])
+                self.assertEqual(ids.sent, error is None)
                 self.assertNotIn("send", vars(event))
             self.assertNotIn("send_group_msg", vars(shared))
         asyncio.run(run())

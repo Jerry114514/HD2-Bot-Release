@@ -32,6 +32,16 @@ def main():
     # Windows creates a local socket pair for the event loop. Create it before
     # denying connects; subsequent imports/handlers cannot open network sockets.
     loop = asyncio.new_event_loop()
+    # 4.27.2 also creates a preferences loop during import. Reserve native local
+    # socket pairs before blocking connects; do not permit network exceptions.
+    original_socketpair = socket.socketpair
+    reserved_pairs = [socket.socketpair() for _ in range(4)] if sys.platform == "win32" else []
+    if sys.platform == "win32":
+        def local_pair(*args, **kwargs):
+            if not reserved_pairs:
+                raise RuntimeError("SDK regression exhausted reserved loop sockets")
+            return reserved_pairs.pop()
+        socket.socketpair = local_pair
     def offline(*args, **kwargs):
         raise OSError("SDK pipeline regression is offline")
     socket.socket.connect = offline
@@ -117,6 +127,7 @@ def main():
         config["platform_settings"].update(reply_with_mention=False, reply_with_quote=False)
         config["platform_settings"]["segmented_reply"]["enable"] = False
         context = SimpleNamespace(get_using_tts_provider_async=AsyncMock(return_value=None),
+                                  get_using_tts_provider=lambda *a, **kw: None,
                                   conversation_manager=None, provider_manager=None, get_config=lambda *a: config)
         ctx = PipelineContext(config, SimpleNamespace(context=context), "offline")
         scheduler = object.__new__(PipelineScheduler)
@@ -224,8 +235,14 @@ def main():
             assert not llm_attempts, f"Unexpected default LLM requests: {llm_attempts}"
         print(f"AstrBot {importlib.metadata.version('AstrBot')}: {count} pipeline cases passed; no real sends")
 
-    with asyncio.Runner(loop_factory=lambda: loop) as runner:
-        runner.run(run())
+    try:
+        with asyncio.Runner(loop_factory=lambda: loop) as runner:
+            runner.run(run())
+    finally:
+        socket.socketpair = original_socketpair
+        for pair in reserved_pairs:
+            for stream in pair:
+                stream.close()
 
 
 if __name__ == "__main__":
