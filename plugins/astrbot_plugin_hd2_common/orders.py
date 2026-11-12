@@ -11,6 +11,7 @@ CHANNEL_META = {
     "opportunity": {"cn": "战略机遇", "en": "STRATEGIC OPPORTUNITY", "icon": "◇"},
     "minor": {"cn": "次要指令", "en": "MINOR ORDER", "icon": "▸"},
 }
+SPECIAL_ORDER_RETENTION_SECONDS = 7 * 24 * 60 * 60
 
 
 def _text(value):
@@ -55,6 +56,18 @@ def _latest_assignment(rows, matcher):
         ),
         default=None,
     )
+
+
+def _special_order_expired(doc, dispatch):
+    """A channel record leaves the command board at exactly seven days."""
+    published = shared.timestamp(
+        (dispatch or {}).get("published") or (dispatch or {}).get("published_at")
+    )
+    if published is None:
+        return False
+    observed = shared.timestamp(doc.get("fetchedAt"))
+    now = observed if observed is not None else datetime.now(timezone.utc).timestamp()
+    return now - published >= SPECIAL_ORDER_RETENTION_SECONDS
 
 
 def _official_texts(doc):
@@ -269,33 +282,48 @@ def special_orders(doc):
     )
     minor_assignment = _latest_assignment(assignments, re.compile(r"^MINOR\s+ORDER|^次要指令", re.I))
     directive = resolve_dispatch(doc, re.compile(r"NEW\s+STRATEGIC\s+DIRECTIVE|STRATEGIC\s+DIRECTIVE", re.I))
+    if _special_order_expired(doc, directive):
+        directive_assignment = None
+        directive = None
 
     strategic = doc.get("strategic") or {}
     opportunity_status = resolve_dispatch(doc, preferred_id=strategic.get("dispatch_id"))
     opportunity_opening = resolve_dispatch(
         doc, re.compile(r"^NEW\s+STRATEGIC\s+OPPORTUNITY\s*$", re.I)
     )
-    opportunity_active = bool(strategic.get("active"))
+    opportunity_dispatch = opportunity_status or opportunity_opening
+    if _special_order_expired(doc, opportunity_dispatch):
+        opportunity_status = None
+        opportunity_opening = None
+        opportunity_dispatch = None
+    opportunity_active = bool(strategic.get("active")) and opportunity_dispatch is not None
     opportunity = _model(
         doc,
         "opportunity",
         assignment=major if opportunity_active else None,
-        dispatch=opportunity_status or opportunity_opening,
+        dispatch=opportunity_dispatch,
         opening_dispatch=opportunity_opening,
         tasks=_task_rows(doc, major, 1) if opportunity_active and major else [],
         active=opportunity_active,
-        status_cn=_text(strategic.get("status_cn")) or ("进行中" if opportunity_active else "已结束"),
+        status_cn=(
+            _text(strategic.get("status_cn"))
+            or ("进行中" if opportunity_active else "已结束")
+        ) if opportunity_dispatch else "",
     )
-    if strategic.get("status"):
+    if strategic.get("status") and opportunity_dispatch:
         opportunity["status_en"] = str(strategic["status"]).upper()
 
     minor_dispatch = resolve_dispatch(doc, re.compile(r"(?:NEW\s+)?MINOR\s+ORDER(?:\s|$)", re.I))
+    minor_record_expired = _special_order_expired(doc, minor_dispatch)
+    if minor_record_expired:
+        minor_assignment = None
+        minor_dispatch = None
     if minor_assignment:
         minor = _model(
             doc, "minor", assignment=minor_assignment, dispatch=minor_dispatch,
             tasks=_task_rows(doc, minor_assignment),
         )
-    elif major and len(major.get("tasks") or []) > 1:
+    elif not minor_record_expired and major and len(major.get("tasks") or []) > 1:
         fallback = dict(major)
         fallback["title"] = "重要指令附加目标"
         fallback["briefing"] = (
@@ -321,7 +349,9 @@ def special_orders(doc):
         "directive": _model(
             doc, "directive", assignment=directive_assignment, dispatch=directive,
             tasks=_task_rows(doc, directive_assignment),
-            status_cn="进行中" if _assignment_active(doc, directive_assignment) else "已结束",
+            status_cn=(
+                "进行中" if _assignment_active(doc, directive_assignment) else "已结束"
+            ) if directive_assignment or directive else "",
         ),
         "opportunity": opportunity,
         "minor": minor,

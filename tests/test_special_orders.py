@@ -88,7 +88,7 @@ def special_document():
              "message": "<i=3>STRATEGIC UPDATE</i>\n\nOrbital Laser ended."},
             {"id": 3982, "published": "2026-11-02T12:14:28Z",
              "message": "<i=3>MINOR TERMINID OUTBREAK</i>\n\nFori Prime."},
-            {"id": 3971, "published": "2026-10-28T18:57:46Z",
+            {"id": 3971, "published": "2026-11-02T18:57:46Z",
              "message": "<i=3>STRATEGIC OPPORTUNITY SEIZED</i>\n\nSeized."},
             {"id": 3970, "published": "2026-10-28T10:40:06Z",
              "message": "<i=3>NEW STRATEGIC OPPORTUNITY</i>\n\nOpening."},
@@ -187,6 +187,61 @@ class SpecialOrderTests(unittest.TestCase):
         self.assertTrue(all(models[key]["empty"] for key in ("directive", "opportunity", "minor")))
         text = orders.special_orders_text(doc, models)
         self.assertEqual(text.count("当前无"), 3)
+
+    def test_all_channels_leave_at_exactly_seven_days(self):
+        published = "2026-11-01T12:00:00Z"
+        doc = {
+            "fetchedAt": "2026-11-08T12:00:00Z",
+            "assignments_all": [
+                {"id": 1, "title": "STRATEGIC DIRECTIVE", "tasks": [{"type": 13}],
+                 "deadline": "2026-11-20T00:00:00Z"},
+                {"id": 2, "title": "MINOR ORDER", "tasks": [{"type": 13}],
+                 "deadline": "2026-11-20T00:00:00Z"},
+                {"id": 3, "title": "MAJOR ORDER", "tasks": [{"type": 13}],
+                 "deadline": "2026-11-20T00:00:00Z"},
+            ],
+            "assignments": {"id": 3, "tasks": [{"type": 13}]},
+            "strategic": {"active": True, "dispatch_id": 12},
+            "dispatches": [
+                {"id": 11, "published": published,
+                 "message": "NEW STRATEGIC DIRECTIVE\n\nDirective."},
+                {"id": 12, "published": published,
+                 "message": "NEW STRATEGIC OPPORTUNITY\n\nOpportunity."},
+                {"id": 13, "published": published,
+                 "message": "MINOR ORDER\n\nMinor."},
+            ],
+            "news": [],
+        }
+        models = orders.special_orders(doc)
+        self.assertTrue(all(models[key]["empty"] for key in ("directive", "opportunity", "minor")))
+        text = orders.special_orders_text(doc, models)
+        for label in ("战略指令", "战略机遇", "次要指令"):
+            self.assertIn("当前无" + label, text)
+        self.assertNotIn("发布满 7 天", text)
+
+    def test_channels_remain_visible_one_second_before_seven_days(self):
+        doc = {
+            "fetchedAt": "2026-11-08T11:59:59Z",
+            "assignments_all": [
+                {"id": 1, "title": "STRATEGIC DIRECTIVE", "tasks": [{"type": 13}],
+                 "deadline": "2026-11-20T00:00:00Z"},
+                {"id": 2, "title": "MINOR ORDER", "tasks": [{"type": 13}],
+                 "deadline": "2026-11-20T00:00:00Z"},
+            ],
+            "assignments": {},
+            "strategic": {"active": True, "dispatch_id": 22},
+            "dispatches": [
+                {"id": 21, "published": "2026-11-01T12:00:00Z",
+                 "message": "NEW STRATEGIC DIRECTIVE\n\nDirective."},
+                {"id": 22, "published": "2026-11-01T12:00:00Z",
+                 "message": "NEW STRATEGIC OPPORTUNITY\n\nOpportunity."},
+                {"id": 23, "published": "2026-11-01T12:00:00Z",
+                 "message": "MINOR ORDER\n\nMinor."},
+            ],
+            "news": [],
+        }
+        models = orders.special_orders(doc)
+        self.assertFalse(any(models[key]["empty"] for key in ("directive", "opportunity", "minor")))
 
     def test_special_order_card_renders_targets_and_fallback_disclaimer(self):
         doc = special_document()

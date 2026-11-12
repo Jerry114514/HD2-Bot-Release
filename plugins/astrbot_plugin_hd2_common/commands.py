@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 import unicodedata
 
-from . import data, orders
+from . import data, orders, tactical
 
 ALIASES = {
     "战报": "report", "目前战况如何": "report", "现在在打哪里": "report",
@@ -152,7 +152,6 @@ def planet_name(planet):
 FACTIONS = {"Humans": "超级地球", "Terminids": "终结族", "Terminid": "终结族",
             "Automaton": "机器人", "Automatons": "机器人", "Illuminate": "光能族",
             1: "超级地球", 2: "终结族", 3: "机器人", 4: "光能族"}
-ACTION_NAMES = {"EAGLE STORM": "飞鹰风暴", "ORBITAL BLOCKADE": "轨道封锁", "HEAVY ORDNANCE DISTRIBUTION": "重型军械分发"}
 TASK_NAMES = {2: "消灭敌人", 3: "完成任务", 9: "解放星球", 11: "解放指定星球", 13: "守住指定星球", 15: "收集资源"}
 
 
@@ -249,6 +248,15 @@ def planet_text(doc, planet):
             if not isinstance(items, list):
                 items = [items]
             lines.append(label + "：" + "；".join(clean(x.get("description") or x.get("name")) if isinstance(x, dict) else clean(x) for x in items))
+    objectives = tactical.compute_for(doc, planet.get("index"))
+    lines.append("🎯 战术目标：")
+    if not objectives:
+        lines.append("当前无战术目标。")
+    else:
+        for objective in objectives:
+            lines.append(f"• {objective['title']}：{objective['text']}")
+            for target in objective.get("target_links") or []:
+                lines.append(f"  目标星球：{target['name']}｜{target['url']}")
     return "\n".join(lines)
 
 
@@ -258,12 +266,18 @@ def dss_text(doc):
         return "🛰️ 暂无民主空间站数据。"
     planet = next((p for p in doc.get("planets", []) if p.get("index") == dss.get("planetIndex")), {})
     lines = ["🛰️ 民主空间站", "停靠：" + planet_name(planet)]
-    for action in dss.get("tacticalActions") or []:
-        status = data.dss_phase(dss, action)
-        lines.append("• " + ACTION_NAMES.get(action.get("name"), clean(action.get("name"))) + "｜" + status)
-        for cost in action.get("cost") or []:
-            lines.append(f"  捐献：{value(data.percent(cost.get('current'), cost.get('target')))}%（"
-                         f"{data.fmt_big_num(cost.get('current'))}/{data.fmt_big_num(cost.get('target'))}）")
+    models = data.dss_action_models(dss)
+    if not models:
+        lines.append("当前无进行中的战术行动。")
+    for model in models:
+        lines.append(f"• {model['name']}｜{model['phase']}")
+        lines.append(model["description"])
+        lines.append(
+            f"  捐献进度：{value(model.get('progress'))}%（"
+            f"{data.fmt_big_num(model.get('current'))}/{data.fmt_big_num(model.get('target'))}）"
+        )
+        for resource_line in model.get("resource_lines") or []:
+            lines.append("  " + resource_line)
     return "\n".join(lines)
 
 

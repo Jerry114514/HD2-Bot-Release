@@ -251,6 +251,141 @@ def dss_phase(dss, action):
     return "已激活" if active else "冷却中" if action.get("status") == 3 else "募捐中"
 
 
+DSS_RESOURCE_NAMES = {
+    3992382197: "普通样本",
+    2985106497: "稀有样本",
+    3608481516: "申购点",
+}
+DSS_HERO_IMAGES = {
+    "飞鹰风暴": "eagle_storm.webp",
+    "飞鹰毒气风暴": "eagle_storm.webp",
+    "飞鹰封锁": "eagle_storm.webp",
+    "轨道封锁": "orbital_blockade.webp",
+    "重型军械分发": "heavy_ordnance.webp",
+    "星球轰炸": "heavy_ordnance.webp",
+}
+DSS_HERO_FALLBACK = "eagle_storm.webp"
+
+
+def _dss_catalog_entries(variables=None):
+    if variables is None:
+        from .sources import table_candidates
+        for path in table_candidates("hd2_variables.json"):
+            try:
+                with open(path, encoding="utf-8") as stream:
+                    variables = json.load(stream)
+                break
+            except (OSError, ValueError, TypeError):
+                continue
+    if not isinstance(variables, dict):
+        return []
+    for category in variables.get("categories") or []:
+        if isinstance(category, dict) and category.get("key") == "tactical_action":
+            return [
+                entry for entry in category.get("entries") or []
+                if isinstance(entry, dict) and not (1238 in (entry.get("effect_ids") or []))
+            ]
+    return []
+
+
+def _dss_matching_entry(action, entries):
+    effect_ids = {
+        number(value) for value in action.get("effectIds") or []
+        if number(value) is not None
+    }
+    candidates = []
+    for entry in entries or ():
+        wanted = {
+            number(value) for value in entry.get("effect_ids") or []
+            if number(value) is not None
+        }
+        if wanted and wanted.issubset(effect_ids):
+            candidates.append(entry)
+    if candidates:
+        candidates.sort(key=lambda entry: len(entry.get("effect_ids") or []), reverse=True)
+        return candidates[0]
+    action_id = number(action.get("id32"))
+    if action_id is not None:
+        for entry in entries or ():
+            if number(entry.get("action_id32")) == action_id:
+                return entry
+    return {
+        "cn": action.get("name") or "未知战术行动",
+        "desc": "暂无本地中文说明。",
+        "effect_ids": sorted(effect_ids),
+    }
+
+
+def _dss_display_name(value):
+    text = str(value or "未知战术行动")
+    return re.sub(
+        r"^[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F\u200D\s]+",
+        "",
+        text,
+    ).strip() or text
+
+
+def _dss_resource_lines(action):
+    lines = []
+    for cost in action.get("cost") or []:
+        if not isinstance(cost, dict):
+            continue
+        resource = DSS_RESOURCE_NAMES.get(number(cost.get("itemMixId")))
+        if not resource:
+            lines.append("捐赠资源待确认")
+            continue
+        amount = number(cost.get("maxDonation"))
+        period = number(cost.get("maxDonationPeriodSec"))
+        if amount is None or amount <= 0 or period is None or period <= 0:
+            lines.append("捐赠资源：" + resource)
+            continue
+        hours = period / 3600
+        cycle = f"{hours:g} 小时" if hours.is_integer() else f"{period:g} 秒"
+        lines.append(
+            f"每人每 {cycle}最多捐赠 {fmt_big_num(amount)} {resource}"
+        )
+    return lines
+
+
+def dss_action_models(dss, variables=None):
+    """Map runtime DSS actions to the site's catalog, images and donation fields."""
+    actions = [
+        action for action in (dss or {}).get("tacticalActions") or []
+        if isinstance(action, dict) and number(action.get("status")) in (1, 2, 3)
+    ]
+    entries = _dss_catalog_entries(variables)
+    models = []
+    for action in actions:
+        entry = _dss_matching_entry(action, entries)
+        name = _dss_display_name(entry.get("cn") or action.get("name"))
+        status = int(number(action.get("status")) or 1)
+        phase = "已激活" if status == 2 else "冷却中" if status == 3 else "募捐中"
+        cost = next((row for row in action.get("cost") or [] if isinstance(row, dict)), {})
+        current = number(cost.get("current"))
+        target = number(cost.get("target"))
+        progress = percent(current, target)
+        models.append({
+            "action": action,
+            "entry": entry,
+            "id32": action.get("id32"),
+            "name": name,
+            "description": entry.get("desc") or "暂无本地中文说明。",
+            "status": status,
+            "phase": phase,
+            "is_active": status == 2,
+            "is_cooldown": status == 3,
+            "current": current,
+            "target": target,
+            "progress": progress,
+            "resource": DSS_RESOURCE_NAMES.get(number(cost.get("itemMixId"))) or "资源",
+            "resource_lines": _dss_resource_lines(action),
+            "image": DSS_HERO_IMAGES.get(name, DSS_HERO_FALLBACK),
+            "effect_ids": [number(value) for value in action.get("effectIds") or []
+                           if number(value) is not None],
+        })
+    return models
+
+
 def player_distribution(doc):
     dist = doc.get("player_distribution") or {}
     return {"total": number(dist.get("total", ((doc.get("war") or {}).get("statistics") or {}).get("playerCount"))),

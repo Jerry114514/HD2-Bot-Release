@@ -18,7 +18,7 @@ import hashlib
 import tempfile
 import threading
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from astrbot_plugin_hd2_common import api_watch, orders
+from astrbot_plugin_hd2_common import api_watch, orders, tactical
 from astrbot_plugin_hd2_common import data as shared
 from astrbot_plugin_hd2_common.commands import mo_tasks, names as _bundled_planet_names
 from astrbot_plugin_hd2_common.sources import table_candidates as _table_candidates
@@ -90,12 +90,6 @@ FACTION_CN = {"Humans": "超级地球", "Terminid": "终结族", "Terminids": "�
               "Automaton": "机器人", "Automatons": "机器人", "Illuminate": "光能者"}
 FACTION_COLOR = {"超级地球": BLUE, "终结族": (245, 197, 24),
                  "机器人": (214, 128, 109), "光能者": (207, 100, 248)}
-DSS_ACTION_SHORT = {"EAGLE STORM": "飞鹰风暴", "ORBITAL BLOCK": "轨道封锁", "ORBITAL BLOCKADE": "轨道封锁",
-                    "HEAVY ORDNANCE DISTRIBUTION": "重型军械分发", "EAGLE BLOCK": "飞鹰封锁",
-                    "PLANETARY BOMBARDMENT": "星球轰炸", "OPERATIONAL SUPPORT": "行动支持"}
-ITEM_MIX = {3992382197: "普通样本", 2985106497: "稀有样本"}
-
-
 def _static_map_json(url, cache_name, build):
     """静态表抓取：成功写盘，网络失败读磁盘副本（静态表永不失效）。"""
     cache_file = os.path.join(CACHE_DIR, cache_name)
@@ -407,7 +401,7 @@ def _draw_special_orders(dr, img, document, y):
             yy += 22
         if model.get("empty"):
             dr.text((x + 14, yy + 4), "当前无" + meta["cn"], font=F(15, True), fill=DIM)
-            dr.text((x + 14, yy + 27), "等待最高指挥部发布。", font=F(12), fill=MUTE)
+            dr.text((x + 14, yy + 27), "发布满 7 天后自动退场。", font=F(12), fill=MUTE)
         else:
             yy = _draw_rich_lines(dr, x + 12, yy, body_lines, body_font, 18, color=DIM)
             if body_lines:
@@ -751,10 +745,16 @@ def _hud_head(dr, img, title, sub_en):
     return 92 + 16
 
 
-def _render_cached(out_path, meta_path, rev, draw_fn, page_info=None):
+def _render_cached(out_path, meta_path, rev, draw_fn, page_info=None, column_height=2100):
     meta = shared._snapshot.get() or {}
     # layout-v4-wide：多页合并单图（自左向右分区）+ 战略订单墙布局；版本号变化使旧分页缓存全部失效
-    digest = hashlib.sha256((str(rev) + json.dumps(meta.get("_hd2", {}), sort_keys=True) + "layout-v4-wide" + (str(page_info) if page_info else "")).encode()).hexdigest()[:16]
+    digest = hashlib.sha256((
+        str(rev)
+        + json.dumps(meta.get("_hd2", {}), sort_keys=True)
+        + "layout-v4-wide"
+        + str(column_height)
+        + (str(page_info) if page_info else "")
+    ).encode()).hexdigest()[:16]
     stem, _ = os.path.splitext(out_path)
     out_path = stem + "_" + digest + ".png"
     meta_path = out_path + ".meta"
@@ -775,7 +775,14 @@ def _render_cached(out_path, meta_path, rev, draw_fn, page_info=None):
                 raise ValueError("内容过长，请使用文字查询或原文链接")
             img = Image.new("RGB", (W, y + 40), BG)
             y = draw_fn(ImageDraw.Draw(img), img)
-        paths = save_pages(img, y + 20, out_path, meta, page_info=page_info)
+        paths = save_pages(
+            img,
+            y + 20,
+            out_path,
+            meta,
+            page_info=page_info,
+            column_height=column_height,
+        )
         shared.atomic_json(meta_path, {"pages": paths})
         return paths[0] if len(paths) == 1 else paths
 
@@ -863,129 +870,249 @@ def render_campaigns_card(out_dir=None):
         return None
 
 
+def _dss_variables_source():
+    """Prefer the live site table, then use the bundled parity snapshot."""
+    try:
+        value = _site_get(
+            "https://jerry114514.github.io/HD2-Galatic_war-Map/tables/hd2_variables.json"
+        )
+        if isinstance(value, dict) and isinstance(value.get("categories"), list):
+            return value
+    except Exception:
+        pass
+    for path in _table_candidates("hd2_variables.json"):
+        try:
+            with open(path, encoding="utf-8") as stream:
+                value = json.load(stream)
+            if isinstance(value, dict):
+                return value
+        except (OSError, ValueError, TypeError):
+            continue
+    return {}
+
+
+def _dss_passive(variables):
+    for category in (variables or {}).get("categories") or []:
+        if category.get("key") != "tactical_action":
+            continue
+        for entry in category.get("entries") or []:
+            if 1238 in (entry.get("effect_ids") or []):
+                return entry
+    return {}
+
+
+def _dss_snapshot_label(dss):
+    timestamp = (
+        (dss or {}).get("donationUpdatedAtMs")
+        if "donationUpdatedAtMs" in (dss or {})
+        else (dss or {}).get("clientTimeMs")
+    )
+    try:
+        timestamp = float(timestamp)
+        if timestamp <= 0:
+            raise ValueError
+        label = datetime.fromtimestamp(timestamp / 1000).astimezone().strftime("%m-%d %H:%M")
+        suffix = "（上次成功快照）" if (dss or {}).get("donationSource") == "snapshot" else ""
+        return f"捐赠数据截至 {label}{suffix}"
+    except (TypeError, ValueError, OSError):
+        return "捐赠数据时间未知"
+
+
+def _dss_hero_file(model):
+    filename = os.path.basename((model or {}).get("image") or shared.DSS_HERO_FALLBACK)
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "dss-hero", filename)
+    return path if os.path.isfile(path) and os.path.getsize(path) > 0 else None
+
+
+def _draw_dss_action(img, dr, y, model, position, total):
+    """One full-width action: hero image, name, description and donation progress."""
+    x0, x1 = PAD, W - PAD
+    width = x1 - x0
+    image_h = 226
+    desc_lines = wrap(model.get("description") or "暂无本地中文说明。", 48)
+    resources_text = "；".join(model.get("resource_lines") or [])
+    resource_lines = wrap(resources_text, 78) if resources_text else []
+    resource_h = (24 + 18 * len(resource_lines)) if resource_lines else 0
+    card_h = (
+        image_h + 82 + 27 * len(desc_lines) + 50
+        + 58 + resource_h + 18
+    )
+    tone = GREEN if model.get("is_active") else (
+        BLUE if model.get("is_cooldown") else GOLD
+    )
+    dr.rectangle([x0, y, x1, y + card_h], fill=PANEL, outline=LINE2)
+    image_box = (x0 + 4, y + 4, x1 - 4, y + 4 + image_h)
+    hero = _crop_cover(
+        _dss_hero_file(model),
+        (image_box[2] - image_box[0], image_box[3] - image_box[1]),
+    )
+    if hero:
+        img.paste(hero, (image_box[0], image_box[1]))
+    else:
+        _campaign_placeholder(dr, image_box, "DSS")
+    overlay = Image.new(
+        "RGBA", (image_box[2] - image_box[0], 58), (4, 8, 13, 210)
+    )
+    img.paste(
+        overlay,
+        (image_box[0], image_box[3] - overlay.height),
+        overlay,
+    )
+    dr.text(
+        (image_box[0] + 16, image_box[3] - 43),
+        f"TACTICAL ACTION {position:02d}/{total:02d}",
+        font=F(15, True),
+        fill=TEXT,
+    )
+    phase_w = dr.textlength(model.get("phase") or "", font=F(17, True))
+    dr.rectangle(
+        [image_box[2] - phase_w - 34, image_box[3] - 48,
+         image_box[2] - 14, image_box[3] - 16],
+        fill=BG,
+        outline=tone,
+    )
+    dr.text(
+        (image_box[2] - phase_w - 24, image_box[3] - 42),
+        model.get("phase") or "",
+        font=F(17, True),
+        fill=tone,
+    )
+
+    yy = y + image_h + 20
+    dr.text((x0 + 18, yy), model.get("name") or "未知战术行动",
+            font=F(30, True), fill=TEXT)
+    yy += 44
+    for line in desc_lines:
+        dr.text((x0 + 18, yy), line, font=F(19), fill=DIM)
+        yy += 27
+    yy += 14
+
+    progress = model.get("progress")
+    progress_text = "捐献进度未知" if progress is None else f"捐献进度 {progress:.1f}%"
+    dr.text((x0 + 18, yy), progress_text, font=F(21, True), fill=tone)
+    yy += 34
+    progress_bar(
+        dr, x0 + 18, yy, width - 36, 16,
+        (progress or 0) / 100.0, fill=tone,
+    )
+    yy += 25
+    if model.get("current") is None or model.get("target") is None:
+        amount = "捐献数据未下发"
+    else:
+        amount = (
+            f"已筹集 {fmt(model['current'])} / 目标 {fmt(model['target'])} "
+            f"{model.get('resource') or '资源'}"
+        )
+    dr.text((x0 + 18, yy), amount, font=F(16), fill=TEXT)
+    yy += 24
+    if resource_lines:
+        for line in resource_lines:
+            dr.text((x0 + 18, yy), line, font=F(14), fill=MUTE)
+            yy += 18
+    return y + card_h + 16
+
+
 def render_dss_card(out_dir=None):
-    """/dss 图片卡：停靠星球 + 生效词条 + 战术行动捐献进度。失败返回 None。"""
+    """/dss 图片卡：停靠信息 + 同一视图内完整展示全部 DSS 战术行动。"""
     out_dir = out_dir or CACHE_DIR
     try:
         os.makedirs(out_dir, exist_ok=True)
         out_path = os.path.join(out_dir, "dss_card.png")
-        meta_path = out_path + ".meta"
         data = _site_get(DATA_URL)
         dss = data.get("dss") or {}
-        rev = "dss:" + str(data.get("fetchedAt") or "")
+        variables = _dss_variables_source()
+        models = shared.dss_action_models(dss, variables)
+        revision = hashlib.sha256(json.dumps(
+            {"dss": dss, "variables": variables},
+            ensure_ascii=False,
+            sort_keys=True,
+        ).encode()).hexdigest()
+        rev = "dss-three-v3:" + revision
+        meta_path = out_path + ".meta"
 
         def draw(dr, img):
-            planets = {p.get("index"): p for p in (data.get("planets") or []) if p.get("index") is not None}
-            pl = planets.get(dss.get("planetIndex")) or {}
-            planet_name = pl.get("name") or ""
-            en = planet_name.upper()
-            smcn = _starmap_cn_map()
-            cn = smcn.get(shared.planet_key(planet_name)) or planet_name or "—"
-            emap = _effect_cn_map()
-            active_ids = set(dss.get("activeEffectIds") or [])
-            cur_war = dss.get("currentWarTime") or 0
+            planets = {
+                row.get("index"): row
+                for row in data.get("planets") or []
+                if isinstance(row, dict) and row.get("index") is not None
+            }
+            planet = planets.get(dss.get("planetIndex")) or {}
+            planet_en = str(planet.get("name") or "")
+            planet_cn = (
+                _starmap_cn_map().get(shared.planet_key(planet_en))
+                or planet_en
+                or "未停靠"
+            )
             y = _hud_head(dr, img, "民主空间站", "DEMOCRACY SPACE STATION")
-
-            # 停靠星球
-            panel_h = 100
-            dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
+            station_h = 112
+            dr.rectangle([PAD, y, W - PAD, y + station_h], fill=PANEL, outline=LINE)
             dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
             section_label(dr, PAD + 18, y + 13, "当前停靠", F(25, True))
-            dr.text((PAD + 18, y + 50), cn, font=F(34, True), fill=TEXT)
-            sub = en + "  ·  " + (pl.get("sector") or "")
-            dr.text((PAD + 18 + dr.textlength(cn, font=F(34, True)) + 18, y + 60),
-                    sub, font=F(16), fill=MUTE)
-            y += panel_h + 18
+            dr.text((PAD + 18, y + 50), planet_cn, font=F(34, True), fill=TEXT)
+            location = "未停靠"
+            if dss:
+                location = " · ".join(
+                    value for value in (planet_en, planet.get("sector")) if value
+                )
+            dr.text((PAD + 18, y + 88), location or "星球坐标未下发",
+                    font=F(15), fill=MUTE)
+            snapshot = _dss_snapshot_label(dss)
+            snapshot_w = dr.textlength(snapshot, font=F(14))
+            dr.text((W - PAD - 18 - snapshot_w, y + 88), snapshot,
+                    font=F(14), fill=MUTE)
+            y += station_h + 16
 
-            # 被动增益（effect 1238 · 行动支持，口径同主站 tactical_action 分类）
-            passive = None
-            try:
-                v = _site_get("https://jerry114514.github.io/HD2-Galatic_war-Map/tables/hd2_variables.json")
-                for cat in (v.get("categories") or []):
-                    if cat.get("key") != "tactical_action":
-                        continue
-                    for e in cat.get("entries") or []:
-                        if 1238 in (e.get("effect_ids") or []):
-                            passive = e.get("cn") or e.get("name") or passive
-            except Exception:
-                pass
+            heading_h = 52
+            dr.rectangle([PAD, y, W - PAD, y + heading_h], fill=(20, 30, 43), outline=LINE2)
+            dr.text((PAD + 18, y + 13), "战术行动", font=F(24, True), fill=TEXT)
+            dr.text((PAD + 140, y + 20), "DSS TACTICAL ACTIONS",
+                    font=F(13), fill=MUTE)
+            count = f"{len(models)} 项同屏"
+            count_w = dr.textlength(count, font=F(15, True))
+            dr.text((W - PAD - 18 - count_w, y + 17), count,
+                    font=F(15, True), fill=GOLD)
+            y += heading_h + 12
 
-            # 战术行动（照主站三态：已激活 / 冷却中 / 募捐中）
-            acts = dss.get("tacticalActions") or []
-            if acts:
-                blocks = []
-                for act in acts:
-                    nm_en = act.get("name") or ""
-                    nm = DSS_ACTION_SHORT.get(nm_en, nm_en)
-                    cost = (act.get("cost") or [{}])[0]
-                    cur, tgt = cost.get("current") or 0, cost.get("target") or 0
-                    res = ITEM_MIX.get(cost.get("itemMixId"), "资源")
-                    md = cost.get("maxDonation")
-                    mps = cost.get("maxDonationPeriodSec")
-                    quota = ""
-                    if isinstance(md, (int, float)) and md > 0 and mps:
-                        quota = "每人每 " + str(int(mps // 3600)) + " 小时限捐 " + fmt(md) + " " + res
-                    ids = set(act.get("effectIds") or [])
-                    shared_phase = shared.dss_phase(dss, act)
-                    is_active = shared_phase == "已激活"
-                    is_cool = shared_phase == "冷却中"
-                    exp = act.get("expireAtWarTime") or 0
-                    remain_ms = max(0, (exp - cur_war) * 1000) if (exp and cur_war) else None
-                    if is_active:
-                        phase = "已激活"
-                        bar = min(100.0, max(0.0, remain_ms / (24 * 3600 * 1000) * 100)) if remain_ms is not None else 100.0
-                    elif is_cool:
-                        phase = "冷却中"
-                        bar = min(100.0, max(0.0, remain_ms / (24 * 3600 * 1000) * 100)) if remain_ms is not None else 100.0
-                    else:
-                        phase = "募捐中"
-                        bar = (cur / tgt * 100.0) if tgt else 0.0
-                    blocks.append((nm, phase, bar, cur, tgt, res, quota, is_active, is_cool))
-                panel_h = 54 + sum(124 for _ in blocks) + 10
-                dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
-                dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
-                section_label(dr, PAD + 18, y + 13, "战术行动", F(25, True))
-                yy = y + 54
-                for nm, phase, bar, cur, tgt, res, quota, is_active, is_cool in blocks:
-                    tone = GREEN if is_active else (BLUE if is_cool else GOLD)
-                    dr.text((PAD + 18, yy), nm, font=F(23, True), fill=TEXT)
-                    lw = dr.textlength(phase, font=F(19, True))
-                    dr.text((W - PAD - 18 - lw, yy + 2), phase, font=F(19, True), fill=tone)
-                    yy += 38
-                    progress_bar(dr, PAD + 18, yy, W - PAD * 2 - 36, 14, bar / 100.0,
-                                 fill=GREEN if is_active else (BLUE if is_cool else GOLD))
-                    yy += 24
-                    if is_active:
-                        line = "效果生效中 · 进度条为剩余时间占比"
-                    elif is_cool:
-                        line = "冷却中 · 结束后重新进入募捐"
-                    else:
-                        line = "已筹集 " + fmt(cur) + " / 目标 " + fmt(tgt) + " " + res
-                        if quota:
-                            line += "  ·  " + quota
-                    dr.text((PAD + 18, yy), line, font=F(15), fill=DIM)
-                    yy += 62
-                y += panel_h + 18
+            if models:
+                for index, model in enumerate(models, 1):
+                    y = _draw_dss_action(img, dr, y, model, index, len(models))
             else:
-                dr.rectangle([PAD, y, W - PAD, y + 80], fill=PANEL, outline=LINE)
-                dr.text((PAD + 18, y + 26), "当前无进行中的战术行动", font=F(19), fill=MUTE)
-                y += 98
+                empty_h = 92
+                dr.rectangle([PAD, y, W - PAD, y + empty_h], fill=PANEL, outline=LINE)
+                dr.text((PAD + 18, y + 18), "当前无进行中的战术行动",
+                        font=F(22, True), fill=DIM)
+                dr.text((PAD + 18, y + 53), "接口未下发可展示的募捐、激活或冷却行动。",
+                        font=F(16), fill=MUTE)
+                y += empty_h + 16
 
-            # 被动增益
+            passive = _dss_passive(variables)
             if passive:
-                dr.rectangle([PAD, y, W - PAD, y + 64], fill=PANEL, outline=LINE)
-                dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
-                dr.text((PAD + 18, y + 14), "被动增益", font=F(19, True), fill=MUTE)
-                dr.text((PAD + 18, y + 38), passive, font=F(21, True), fill=TEXT)
-                y += 82
-            # 未收录效果 id（照实显示，口径与主站一致）
-            unknown = sorted(i for i in active_ids if i not in emap and i != 1238)
-            if unknown:
-                note = "未收录效果 ID：" + "、".join("#" + str(i) for i in unknown) + "（照实显示）"
-                nw = dr.textlength(note, font=F(13))
-                dr.text((W - PAD - 18 - nw, y - 12), note, font=F(13), fill=(120, 138, 156))
-            return y + 10
-        return _render_cached(out_path, meta_path, rev, draw)
+                passive_cn = shared._dss_display_name(
+                    passive.get("cn") or passive.get("name") or "行动支持"
+                )
+                passive_desc = passive.get("desc") or (
+                    "DSS 停靠在这颗星球附近，一定程度上有助于该星球的解放战争进程。"
+                )
+                passive_lines = wrap(passive_desc, 58)[:2]
+                passive_h = 72 + 22 * len(passive_lines)
+                dr.rectangle([PAD, y, W - PAD, y + passive_h], fill=PANEL, outline=LINE)
+                dr.rectangle([PAD, y, PAD + 5, y + passive_h], fill=BLUE)
+                dr.text((PAD + 18, y + 12), "常驻被动", font=F(14, True), fill=MUTE)
+                dr.text((PAD + 100, y + 8), passive_cn, font=F(22, True), fill=TEXT)
+                yy = y + 42
+                for line in passive_lines:
+                    dr.text((PAD + 18, yy), line, font=F(15), fill=DIM)
+                    yy += 22
+                y += passive_h + 14
+            return y
+
+        return _render_cached(
+            out_path,
+            meta_path,
+            rev,
+            draw,
+            column_height=3200,
+        )
     except Exception:
         if os.environ.get("HD2_CARD_DEBUG"):
             import traceback
@@ -1317,6 +1444,69 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
             progress_bar(dr, PAD + 2, sy, W - PAD * 2 - 4, 8, lib / 100.0,
                          fill=GREEN if lib >= 99.9 else ocolor)
             y += hero_h + 18
+
+            # ══ 战术目标（星球指挥台独立全宽区；概要卡不再堆叠） ══
+            objectives = tactical.compute_for(data, pl.get("index"))
+            objective_layout = []
+            for objective in objectives:
+                desc_lines = wrap(objective.get("text") or "", 64)
+                links = objective.get("target_links") or []
+                objective_layout.append((objective, desc_lines, links))
+            body_h = 0
+            for _objective, desc_lines, links in objective_layout:
+                body_h += 54 + 23 * len(desc_lines) + 22 * len(links) + 14
+            tactical_h = 54 + (body_h if body_h else 76)
+            dr.rectangle([PAD, y, W - PAD, y + tactical_h], fill=PANEL, outline=LINE)
+            dr.rectangle([PAD, y, W - PAD, y + 3], fill=BLUE)
+            section_label(dr, PAD + 18, y + 13, "战术目标", F(23, True))
+            obj_count = (
+                f"{len(objectives)} 项可执行" if objectives else "通道待命"
+            )
+            obj_count_w = dr.textlength(obj_count, font=F(14, True))
+            dr.text((W - PAD - 18 - obj_count_w, y + 18), obj_count,
+                    font=F(14, True), fill=BLUE)
+            if objectives:
+                oy = y + 54
+                for index, (objective, desc_lines, links) in enumerate(
+                    objective_layout, 1
+                ):
+                    dr.text((PAD + 18, oy), f"{index:02d}", font=F(18, True), fill=BLUE)
+                    dr.text((PAD + 64, oy - 4), objective["title"],
+                            font=F(22, True), fill=TEXT)
+                    oy += 34
+                    for line in desc_lines:
+                        dr.text((PAD + 64, oy), line, font=F(17), fill=DIM)
+                        oy += 23
+                    target_name = "、".join(
+                        link.get("name") or ("#" + str(link.get("index")))
+                        for link in links
+                    )
+                    if target_name:
+                        dr.text(
+                            (PAD + 64, oy),
+                            "目标星球：" + target_name,
+                            font=F(16, True),
+                            fill=TEXT,
+                        )
+                        oy += 22
+                    for link in links:
+                        dr.text(
+                            (PAD + 64, oy),
+                            link.get("url") or "",
+                            font=F(14),
+                            fill=BLUE,
+                        )
+                        oy += 22
+                    oy += 14
+            else:
+                dr.text((PAD + 18, y + 71), "当前无战术目标", font=F(19, True), fill=DIM)
+                dr.text(
+                    (PAD + 18, y + 99),
+                    "该星球暂未形成可执行的包围、对弈或星域解放条件。",
+                    font=F(15),
+                    fill=MUTE,
+                )
+            y += tactical_h + 18
 
             # ══ 战略态势 ══
             panel_h = 204
@@ -1927,12 +2117,12 @@ HELP_SECTIONS = [
         ("/战报", "银河战况速报卡：MO、战略指令、战略机遇、次要指令、目标星球与兵力分布"),
         ("/重要指令", "独立 MO 通知卡：官方中文全文、三类特别指令、任务状态与定位链接"),
         ("/战线", "全银河战线列表：各战区解放/防御进度与交战双方"),
-        ("/dss", "民主空间站：停靠星球、生效行动效果、投票与捐献进度"),
+        ("/dss", "民主空间站：全部战术行动同屏，大图、说明、状态与捐献进度"),
         ("/战役", "活动战役档案墙：头图、全部阶段简报/战报、结果与奖励"),
         ("/api", "每分钟监测主仓 Issue；当前会话在内容变化时自动接收，支持手动重播"),
     ]),
     ("星球情报", "PLANET INTEL", [
-        ("/查询 星球名", "星球指挥台卡：解放环、兵力趋势、区域战况、环境词条"
+        ("/查询 星球名", "星球指挥台卡：解放环、区域战况、环境词条、战术目标与目标链接"
                        "（中英文均可；/星球 名 同效）"),
         ("/银河星图", "快捷指令直达线上中文星图（浏览器打开：星球战况与补给线）"),
     ]),
@@ -2085,7 +2275,8 @@ def render_help_card(out_dir=None):
         return None
 
 
-def save_pages(img, height, out_path, document=None, page_info=None, caption=None, max_area=None, png_level=6):
+def save_pages(img, height, out_path, document=None, page_info=None, caption=None,
+               max_area=None, png_level=6, column_height=2100):
     """超长画布合并为单张宽图：按安静行均衡切段，从左向右排列成连续分区。
 
     旧行为是竖切成多张 PNG 分多条消息发送（QQ 里刷屏且上下文割裂）；
@@ -2099,7 +2290,7 @@ def save_pages(img, height, out_path, document=None, page_info=None, caption=Non
     png_level：PNG 压缩级别（1 最快体积最大，6 默认）；大幅面渲染建议降级换速度。
     """
     import math
-    n_pages = max(1, math.ceil(height / 2100))
+    n_pages = max(1, math.ceil(height / max(1, column_height)))
     ideal = math.ceil(height / n_pages)
     spans, start = [], 0
     while start < height:
