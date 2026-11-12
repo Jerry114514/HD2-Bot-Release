@@ -9,7 +9,8 @@ desc: |
   · 黑金 HUD 图片卡（Steam 深蓝 + 亮黄），超长内容自动合并为单张宽图，分区自左向右阅读
   · 官方 API 快照 + 中文翻译管线，同一快照口径图片/文字双输出
   · 重要指令（MO）首次发现自动推送，战略指令/战略机遇/次要指令三通道展示
-  · 战役简报档案墙、星球指挥台、民主空间站、Wiki 全文长卡、七格配装抽取、BTK 武器测伤
+  · 星球指挥台战术目标（实时主站补给线）、民主空间站三项行动同屏、Wiki 全文长卡、七格配装抽取、BTK 武器测伤
+  · 战略指令/机遇/次要指令发布满 7 天自动退场，避免历史结束卡堆积
   · LLM 行动建议（/分析，可选）、进群欢迎、指令防护、命令日志埋点、API 变更监测
 
   版本要求：AstrBot ≥ 4.29.3（低于该版本 /roll 抽取行为不同，加载时会被版本闸门拦截）。
@@ -18,10 +19,10 @@ desc: |
   需复制 config.example.json 为插件目录内 config.json 并填写配置（详见仓库 README 与部署文档）。
 
   本插件及其文档由 AI（DeepSeek Agent）辅助生成并维护，人工审核后发布。
-version: 1.0.6
+version: 1.0.7
 # PEP 440 版本范围：低于 4.29.3 时 AstrBot 会阻止加载（/roll 的抽取行为依赖 4.29.3 起的框架实现）
 astrbot_version: ">=4.29.3"
-short_desc: 绝地潜兵2中文战况全家桶：HUD 战报卡、MO 推送、Wiki 长图、BTK 测伤与配装抽取。
+short_desc: 绝地潜兵2中文战况全家桶：战术目标、三行动DSS、HUD战报、Wiki长图、BTK与配装抽取。
 author: Jerry114514
 repo: https://github.com/Jerry114514/HD2-Bot-Release
 support_platforms:
