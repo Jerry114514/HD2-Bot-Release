@@ -1,6 +1,7 @@
 # 隐私与本地文件（勿提交）
 config.json
 config.json.bak*
+dev_rule.txt
 *.local.json
 *.bak_webui_*
 *.bak_napcat_*

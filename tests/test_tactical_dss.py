@@ -62,6 +62,8 @@ def dss_document():
         }],
         "dss": {
             "planetIndex": 246,
+            "currentWarTime": 83900000,
+            "electionEndWarTime": 84000000,
             "clientTimeMs": 1762909200000,
             "donationUpdatedAtMs": 1762909200000,
             "donationSource": "official",
@@ -218,7 +220,9 @@ class DssParityTest(unittest.TestCase):
             "飞鹰编队提供密集空中火力支援",
             "反舰导弹阻止敌军撤离并封锁增援",
             "超级驱逐舰获得额外重型军械支援",
-            "捐献进度", "每人每 1 小时最多捐赠 10 稀有样本",
+            "每人每 1 小时最多捐赠 10 稀有样本",
+            "空间站即将移动：27 小时 46 分 40 秒",
+            "贡献度 / CONTRIBUTION", "募捐进度 44.9%", "45%",
         ):
             self.assertIn(value, rendered)
         self.assertIn("3 项同屏", rendered)

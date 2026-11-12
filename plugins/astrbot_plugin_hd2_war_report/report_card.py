@@ -924,23 +924,66 @@ def _dss_hero_file(model):
     return path if os.path.isfile(path) and os.path.getsize(path) > 0 else None
 
 
-def _draw_dss_action(img, dr, y, model, position, total):
+def _dss_jump_label(dss):
+    end = shared.number((dss or {}).get("electionEndWarTime"))
+    current = shared.number((dss or {}).get("currentWarTime"))
+    if end is None or current is None:
+        return "空间站即将移动：等待信息更新"
+    seconds = max(0, int(end - current))
+    hours, remain = divmod(seconds, 3600)
+    minutes, seconds = divmod(remain, 60)
+    return f"空间站即将移动：{hours} 小时 {minutes} 分 {seconds} 秒"
+
+
+def _draw_dss_progress(img, dr, x, y, width, height, progress, tone):
+    """Main-site-style contribution ratio plus a striped progress strip."""
+    ratio = max(0.0, min(1.0, (progress or 0) / 100.0))
+    filled = max(0, int(width * ratio))
+    dr.rectangle([x, y, x + width, y + height], fill=(7, 9, 12), outline=LINE2)
+    if filled:
+        layer = Image.new("RGB", (width, height), tone)
+        ldr = ImageDraw.Draw(layer)
+        for offset in range(-height, width + height, 18):
+            ldr.polygon(
+                [
+                    (offset, height),
+                    (offset + height // 2, 0),
+                    (offset + height // 2 + 7, 0),
+                    (offset + 7, height),
+                ],
+                fill=(26, 14, 8),
+            )
+        mask = Image.new("L", (width, height), 0)
+        ImageDraw.Draw(mask).rectangle([0, 0, filled, height], fill=255)
+        img.paste(layer, (x, y), mask)
+    dr.rectangle([x, y, x + width, y + height], outline=LINE2)
+    label = (
+        "捐募进度未知" if progress is None
+        else f"募捐进度 {progress:.1f}%"
+    )
+    label_w = dr.textlength(label, font=F(15, True)) + 22
+    bx = x + (width - label_w) / 2
+    dr.rectangle([bx, y + 3, bx + label_w, y + height - 3], fill=(0, 0, 0))
+    dr.text((bx + 11, y + 4), label, font=F(15, True), fill=TEXT)
+
+
+def _draw_dss_action(img, dr, y, model, position, total, dss):
     """One full-width action: hero image, name, description and donation progress."""
     x0, x1 = PAD, W - PAD
     width = x1 - x0
-    image_h = 226
+    image_h = 250
     desc_lines = wrap(model.get("description") or "暂无本地中文说明。", 48)
     resources_text = "；".join(model.get("resource_lines") or [])
     resource_lines = wrap(resources_text, 78) if resources_text else []
-    resource_h = (24 + 18 * len(resource_lines)) if resource_lines else 0
+    resource_h = 24 * len(resource_lines) if resource_lines else 0
     card_h = (
-        image_h + 82 + 27 * len(desc_lines) + 50
-        + 58 + resource_h + 18
+        image_h + 18 + 56 + 29 * len(desc_lines)
+        + 12 + resource_h + 26 + 38 + 46 + 30 + 30
     )
     tone = GREEN if model.get("is_active") else (
         BLUE if model.get("is_cooldown") else GOLD
     )
-    dr.rectangle([x0, y, x1, y + card_h], fill=PANEL, outline=LINE2)
+    dr.rectangle([x0, y, x1, y + card_h], fill=(24, 29, 37), outline=LINE2)
     image_box = (x0 + 4, y + 4, x1 - 4, y + 4 + image_h)
     hero = _crop_cover(
         _dss_hero_file(model),
@@ -950,17 +993,23 @@ def _draw_dss_action(img, dr, y, model, position, total):
         img.paste(hero, (image_box[0], image_box[1]))
     else:
         _campaign_placeholder(dr, image_box, "DSS")
-    overlay = Image.new(
-        "RGBA", (image_box[2] - image_box[0], 58), (4, 8, 13, 210)
-    )
-    img.paste(
-        overlay,
-        (image_box[0], image_box[3] - overlay.height),
-        overlay,
-    )
+    jump = _dss_jump_label(dss)
+    jump_w = dr.textlength(jump, font=F(15, True)) + 24
+    jump_box = [
+        image_box[2] - jump_w - 10,
+        image_box[1] + 10,
+        image_box[2] - 10,
+        image_box[1] + 42,
+    ]
+    dr.rectangle(jump_box, fill=(246, 210, 0), outline=BRASS)
+    dr.text((jump_box[0] + 12, jump_box[1] + 6), jump,
+            font=F(15, True), fill=(15, 18, 22))
+    overlay = Image.new("RGBA", (image_box[2] - image_box[0], 46),
+                        (4, 8, 13, 205))
+    img.paste(overlay, (image_box[0], image_box[3] - overlay.height), overlay)
     dr.text(
-        (image_box[0] + 16, image_box[3] - 43),
-        f"TACTICAL ACTION {position:02d}/{total:02d}",
+        (image_box[0] + 16, image_box[3] - 34),
+        f"ACTION {position:02d}/{total:02d}",
         font=F(15, True),
         fill=TEXT,
     )
@@ -979,23 +1028,37 @@ def _draw_dss_action(img, dr, y, model, position, total):
     )
 
     yy = y + image_h + 20
+    dr.rectangle([x0 + 18, yy + 5, x0 + 23, yy + 31], fill=GOLD)
+    dr.text((x0 + 34, yy), "战术行动", font=F(14, True), fill=GOLD2)
+    yy += 32
     dr.text((x0 + 18, yy), model.get("name") or "未知战术行动",
             font=F(30, True), fill=TEXT)
-    yy += 44
+    yy += 46
     for line in desc_lines:
         dr.text((x0 + 18, yy), line, font=F(19), fill=DIM)
-        yy += 27
+        yy += 29
     yy += 14
 
     progress = model.get("progress")
-    progress_text = "捐献进度未知" if progress is None else f"捐献进度 {progress:.1f}%"
-    dr.text((x0 + 18, yy), progress_text, font=F(21, True), fill=tone)
-    yy += 34
-    progress_bar(
-        dr, x0 + 18, yy, width - 36, 16,
-        (progress or 0) / 100.0, fill=tone,
-    )
-    yy += 25
+    if resource_lines:
+        for line in resource_lines:
+            dr.text((x0 + 18, yy), line, font=F(15), fill=MUTE)
+            yy += 24
+    else:
+        dr.text((x0 + 18, yy), "捐赠资源限制未下发", font=F(15), fill=MUTE)
+        yy += 24
+    dr.line([(x0 + 18, yy), (x1 - 18, yy)], fill=LINE)
+    yy += 14
+    dr.text((x0 + 18, yy), "贡献度 / CONTRIBUTION", font=F(14, True), fill=MUTE)
+    yy += 30
+    ratio_text = "未知" if progress is None else f"{progress:.0f}%"
+    dr.rectangle([x0 + 18, yy, x1 - 18, yy + 38], fill=(7, 9, 12), outline=LINE2)
+    ratio_w = dr.textlength(ratio_text, font=F(25, True))
+    dr.text(((x0 + x1 - ratio_w) / 2, yy + 4), ratio_text,
+            font=F(25, True), fill=(246, 210, 0))
+    yy += 46
+    _draw_dss_progress(img, dr, x0 + 18, yy, width - 36, 22, progress, tone)
+    yy += 30
     if model.get("current") is None or model.get("target") is None:
         amount = "捐献数据未下发"
     else:
@@ -1004,11 +1067,6 @@ def _draw_dss_action(img, dr, y, model, position, total):
             f"{model.get('resource') or '资源'}"
         )
     dr.text((x0 + 18, yy), amount, font=F(16), fill=TEXT)
-    yy += 24
-    if resource_lines:
-        for line in resource_lines:
-            dr.text((x0 + 18, yy), line, font=F(14), fill=MUTE)
-            yy += 18
     return y + card_h + 16
 
 
@@ -1027,7 +1085,7 @@ def render_dss_card(out_dir=None):
             ensure_ascii=False,
             sort_keys=True,
         ).encode()).hexdigest()
-        rev = "dss-three-v3:" + revision
+        rev = "dss-three-v4:" + revision
         meta_path = out_path + ".meta"
 
         def draw(dr, img):
@@ -1075,7 +1133,9 @@ def render_dss_card(out_dir=None):
 
             if models:
                 for index, model in enumerate(models, 1):
-                    y = _draw_dss_action(img, dr, y, model, index, len(models))
+                    y = _draw_dss_action(
+                        img, dr, y, model, index, len(models), dss
+                    )
             else:
                 empty_h = 92
                 dr.rectangle([PAD, y, W - PAD, y + empty_h], fill=PANEL, outline=LINE)
