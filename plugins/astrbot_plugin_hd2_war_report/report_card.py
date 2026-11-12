@@ -935,6 +935,14 @@ def _dss_jump_label(dss):
     return f"空间站即将移动：{hours} 小时 {minutes} 分 {seconds} 秒"
 
 
+def _dss_action_tone(model):
+    if (model or {}).get("is_active"):
+        return GREEN
+    if (model or {}).get("is_cooldown"):
+        return RED
+    return GOLD
+
+
 def _draw_dss_progress(img, dr, x, y, width, height, progress, tone):
     """Main-site-style contribution ratio plus a striped progress strip."""
     ratio = max(0.0, min(1.0, (progress or 0) / 100.0))
@@ -974,9 +982,7 @@ def _draw_dss_action(img, dr, y, model, position, total):
     resource_lines = wrap(resources_text, 78) if resources_text else []
     resource_h = 24 * len(resource_lines) if resource_lines else 0
     card_h = image_h + 210 + 29 * len(desc_lines) + resource_h
-    tone = GREEN if model.get("is_active") else (
-        BLUE if model.get("is_cooldown") else GOLD
-    )
+    tone = _dss_action_tone(model)
     dr.rectangle([x0, y, x1, y + card_h], fill=(24, 29, 37), outline=LINE2)
     image_box = (x0 + 4, y + 4, x1 - 4, y + 4 + image_h)
     hero = _crop_cover(
@@ -1053,7 +1059,7 @@ def render_dss_card(out_dir=None):
             ensure_ascii=False,
             sort_keys=True,
         ).encode()).hexdigest()
-        rev = "dss-three-v5:" + revision
+        rev = "dss-three-v6:" + revision
         meta_path = out_path + ".meta"
 
         def draw(dr, img):

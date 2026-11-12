@@ -165,6 +165,17 @@ class TacticalObjectiveTest(unittest.TestCase):
 
 
 class DssParityTest(unittest.TestCase):
+    def test_cooldown_tone_is_red(self):
+        self.assertEqual(
+            report_card._dss_action_tone({"is_cooldown": True}),
+            report_card.RED,
+        )
+        self.assertEqual(
+            report_card._dss_action_tone({"is_active": True}),
+            report_card.GREEN,
+        )
+        self.assertEqual(report_card._dss_action_tone({}), report_card.GOLD)
+
     def test_models_use_runtime_action_fields_and_catalog_descriptions(self):
         models = data.dss_action_models(dss_document()["dss"], dss_variables())
         self.assertEqual(
