@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -114,6 +115,17 @@ def dss_document():
 
 
 class TacticalObjectiveTest(unittest.TestCase):
+    def test_effect_1219_uses_main_site_equivalent_resistance(self):
+        tables = ROOT / "tables"
+        values = json.loads((tables / "effect_values.json").read_text(encoding="utf-8"))
+        details = json.loads((tables / "galactic_effects.json").read_text(encoding="utf-8"))
+        names = json.loads((tables / "effect_id_cn.json").read_text(encoding="utf-8"))
+        count = values["effects"]["1219"]["v"][0]
+        self.assertEqual(count / 10_000, -1.0)
+        self.assertEqual(details["1219"]["name"], "Planetary regen adjustment")
+        self.assertIn("理论抵抗度 -1.00%", details["1219"]["description_cn"])
+        self.assertEqual(names["1219"], "星球抵抗度调整")
+
     def test_waypoints_prefer_live_main_site_table(self):
         with patch.object(
             data,

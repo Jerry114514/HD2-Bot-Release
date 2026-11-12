@@ -604,6 +604,15 @@
       "name_en": "COMBAT RESTRICTION",
       "entries": [
         {
+          "key": "星球抵抗度调整",
+          "name": "Planetary regen adjustment",
+          "cn": "星球抵抗度调整",
+          "desc": "星球抵抗度调整：每小时回复星球血量 -10,000；理论抵抗度 -1.00%。",
+          "effect_ids": [
+            1219
+          ]
+        },
+        {
           "key": "班机延误",
           "name": "班机延误",
           "cn": "班机延误",
