@@ -222,9 +222,12 @@ class DssParityTest(unittest.TestCase):
             "超级驱逐舰获得额外重型军械支援",
             "每人每 1 小时最多捐赠 10 稀有样本",
             "空间站即将移动：27 小时 46 分 40 秒",
-            "贡献度 / CONTRIBUTION", "募捐进度 44.9%", "45%",
+            "贡献度 / CONTRIBUTION", "44.9%",
         ):
             self.assertIn(value, rendered)
+        self.assertEqual(rendered.count("空间站即将移动："), 1)
+        self.assertNotIn("已筹集", rendered)
+        self.assertNotIn("45%", rendered)
         self.assertIn("3 项同屏", rendered)
         self.assertNotIn("查看", rendered)
 

@@ -957,17 +957,14 @@ def _draw_dss_progress(img, dr, x, y, width, height, progress, tone):
         ImageDraw.Draw(mask).rectangle([0, 0, filled, height], fill=255)
         img.paste(layer, (x, y), mask)
     dr.rectangle([x, y, x + width, y + height], outline=LINE2)
-    label = (
-        "募捐进度未知" if progress is None
-        else f"募捐进度 {progress:.1f}%"
-    )
+    label = "未知" if progress is None else f"{progress:.1f}%"
     label_w = dr.textlength(label, font=F(15, True)) + 22
     bx = x + (width - label_w) / 2
     dr.rectangle([bx, y + 3, bx + label_w, y + height - 3], fill=(0, 0, 0))
     dr.text((bx + 11, y + 4), label, font=F(15, True), fill=TEXT)
 
 
-def _draw_dss_action(img, dr, y, model, position, total, dss):
+def _draw_dss_action(img, dr, y, model, position, total):
     """One full-width action: hero image, name, description and donation progress."""
     x0, x1 = PAD, W - PAD
     width = x1 - x0
@@ -976,10 +973,7 @@ def _draw_dss_action(img, dr, y, model, position, total, dss):
     resources_text = "；".join(model.get("resource_lines") or [])
     resource_lines = wrap(resources_text, 78) if resources_text else []
     resource_h = 24 * len(resource_lines) if resource_lines else 0
-    card_h = (
-        image_h + 18 + 56 + 29 * len(desc_lines)
-        + 12 + resource_h + 26 + 38 + 46 + 30 + 30
-    )
+    card_h = image_h + 210 + 29 * len(desc_lines) + resource_h
     tone = GREEN if model.get("is_active") else (
         BLUE if model.get("is_cooldown") else GOLD
     )
@@ -993,17 +987,6 @@ def _draw_dss_action(img, dr, y, model, position, total, dss):
         img.paste(hero, (image_box[0], image_box[1]))
     else:
         _campaign_placeholder(dr, image_box, "DSS")
-    jump = _dss_jump_label(dss)
-    jump_w = dr.textlength(jump, font=F(15, True)) + 24
-    jump_box = [
-        image_box[2] - jump_w - 10,
-        image_box[1] + 10,
-        image_box[2] - 10,
-        image_box[1] + 42,
-    ]
-    dr.rectangle(jump_box, fill=(246, 210, 0), outline=BRASS)
-    dr.text((jump_box[0] + 12, jump_box[1] + 6), jump,
-            font=F(15, True), fill=(15, 18, 22))
     overlay = Image.new("RGBA", (image_box[2] - image_box[0], 46),
                         (4, 8, 13, 205))
     img.paste(overlay, (image_box[0], image_box[3] - overlay.height), overlay)
@@ -1051,22 +1034,7 @@ def _draw_dss_action(img, dr, y, model, position, total, dss):
     yy += 14
     dr.text((x0 + 18, yy), "贡献度 / CONTRIBUTION", font=F(14, True), fill=MUTE)
     yy += 30
-    ratio_text = "未知" if progress is None else f"{progress:.0f}%"
-    dr.rectangle([x0 + 18, yy, x1 - 18, yy + 38], fill=(7, 9, 12), outline=LINE2)
-    ratio_w = dr.textlength(ratio_text, font=F(25, True))
-    dr.text(((x0 + x1 - ratio_w) / 2, yy + 4), ratio_text,
-            font=F(25, True), fill=(246, 210, 0))
-    yy += 46
-    _draw_dss_progress(img, dr, x0 + 18, yy, width - 36, 22, progress, tone)
-    yy += 30
-    if model.get("current") is None or model.get("target") is None:
-        amount = "捐献数据未下发"
-    else:
-        amount = (
-            f"已筹集 {fmt(model['current'])} / 目标 {fmt(model['target'])} "
-            f"{model.get('resource') or '资源'}"
-        )
-    dr.text((x0 + 18, yy), amount, font=F(16), fill=TEXT)
+    _draw_dss_progress(img, dr, x0 + 18, yy, width - 36, 24, progress, tone)
     return y + card_h + 16
 
 
@@ -1085,7 +1053,7 @@ def render_dss_card(out_dir=None):
             ensure_ascii=False,
             sort_keys=True,
         ).encode()).hexdigest()
-        rev = "dss-three-v4:" + revision
+        rev = "dss-three-v5:" + revision
         meta_path = out_path + ".meta"
 
         def draw(dr, img):
@@ -1106,6 +1074,13 @@ def render_dss_card(out_dir=None):
             dr.rectangle([PAD, y, W - PAD, y + station_h], fill=PANEL, outline=LINE)
             dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
             section_label(dr, PAD + 18, y + 13, "当前停靠", F(25, True))
+            jump = _dss_jump_label(dss)
+            jump_w = dr.textlength(jump, font=F(15, True)) + 24
+            jump_box = [W - PAD - jump_w - 12, y + 14,
+                        W - PAD - 12, y + 46]
+            dr.rectangle(jump_box, fill=(246, 210, 0), outline=BRASS)
+            dr.text((jump_box[0] + 12, jump_box[1] + 6), jump,
+                    font=F(15, True), fill=(15, 18, 22))
             dr.text((PAD + 18, y + 50), planet_cn, font=F(34, True), fill=TEXT)
             location = "未停靠"
             if dss:
@@ -1133,9 +1108,7 @@ def render_dss_card(out_dir=None):
 
             if models:
                 for index, model in enumerate(models, 1):
-                    y = _draw_dss_action(
-                        img, dr, y, model, index, len(models), dss
-                    )
+                    y = _draw_dss_action(img, dr, y, model, index, len(models))
             else:
                 empty_h = 92
                 dr.rectangle([PAD, y, W - PAD, y + empty_h], fill=PANEL, outline=LINE)
