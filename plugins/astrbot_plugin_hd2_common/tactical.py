@@ -21,7 +21,15 @@ def _sector_map():
 
 
 def load_waypoints():
-    """Load the frozen supply-line table from the repository."""
+    """Load live main-site topology first, then use the bundled frozen table."""
+    try:
+        from .data import get_json, site_url
+
+        value = get_json(site_url("tables/waypoints.json"), ttl=300, timeout=5)
+        if isinstance(value, dict):
+            return value.get("waypoints") or value
+    except Exception:
+        pass
     for path in sources.table_candidates("waypoints.json"):
         try:
             with open(path, encoding="utf-8") as stream:

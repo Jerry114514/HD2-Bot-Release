@@ -114,6 +114,14 @@ def dss_document():
 
 
 class TacticalObjectiveTest(unittest.TestCase):
+    def test_waypoints_prefer_live_main_site_table(self):
+        with patch.object(
+            data,
+            "get_json",
+            return_value={"waypoints": {"124": [269]}},
+        ):
+            self.assertEqual(tactical.load_waypoints(), {"124": [269]})
+
     def test_compute_matches_site_topology_and_exposes_target_links(self):
         doc = {
             "planets": [

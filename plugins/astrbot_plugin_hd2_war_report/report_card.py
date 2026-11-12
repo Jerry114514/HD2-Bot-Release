@@ -1355,7 +1355,7 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
                    if shared.planet_key(x.get("name")) == en), None)
         if not pl:
             return None
-        rev = "planet:" + str(data.get("fetchedAt") or "") + ":" + en
+        rev = "planet-tactical-v2:" + str(data.get("fetchedAt") or "") + ":" + en
 
         def draw(dr, img):
             smcn = _starmap_cn_map()
