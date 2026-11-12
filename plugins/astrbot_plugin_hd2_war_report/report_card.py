@@ -958,7 +958,7 @@ def _draw_dss_progress(img, dr, x, y, width, height, progress, tone):
         img.paste(layer, (x, y), mask)
     dr.rectangle([x, y, x + width, y + height], outline=LINE2)
     label = (
-        "捐募进度未知" if progress is None
+        "募捐进度未知" if progress is None
         else f"募捐进度 {progress:.1f}%"
     )
     label_w = dr.textlength(label, font=F(15, True)) + 22
