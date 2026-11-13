@@ -263,7 +263,8 @@
   "1195": {
     "galacticEffectId": 1195,
     "name": "DSS Construction Site- Phase 1",
-    "description": "Construction has began on the Democracy Space Station.  The local populace is honored to host thousands of construction crews for this historic event."
+    "description": "Construction has began on the Democracy Space Station.  The local populace is honored to host thousands of construction crews for this historic event.",
+    "description_cn": "民主空间站（DSS）的建设工作已经开始。当地居民荣幸地接待了参与此次历史性活动的数千名建筑工人。"
   },
   "1196": {
     "galacticEffectId": 1196,
@@ -321,7 +322,8 @@
   "1206": {
     "galacticEffectId": 1206,
     "name": "TERMINID RESEARCH PRESERVE",
-    "description": "Terminids are held safely within massive compounts on this planet for study and E-710 extraction."
+    "description": "Terminids are held safely within massive compounts on this planet for study and E-710 extraction.",
+    "description_cn": "此星球上设有安全管控的大型终结族保护区，专门用于研究终结族并提取710元素。"
   },
   "1207": {
     "galacticEffectId": 1207,
@@ -339,7 +341,7 @@
     "galacticEffectId": 1210,
     "name": "ORBITAL BLOCKADE",
     "description": "<i=1>Hellpod Space Optimization</i> Booster is automatically active for all missions.",
-    "description_cn": "<i=1>#V_ONE</i>强化资源在全部任务中自动激活。"
+    "description_cn": "“地狱舱空间优化”强化资源在全部任务中自动激活。"
   },
   "1211": {
     "galacticEffectId": 1211,
@@ -363,7 +365,7 @@
     "galacticEffectId": 1214,
     "name": "BOMBARDMENT LIBERATION BOOST",
     "description": "Progress in Liberation Campaigns is accelerated by 150%.",
-    "description_cn": "在<i=1>解放战役</i>中的进展加速。"
+    "description_cn": "解放战役进度加快150%。"
   },
   "1215": {
     "galacticEffectId": 1215,
@@ -481,7 +483,8 @@
   "1240": {
     "galacticEffectId": 1240,
     "name": "VERGE OF DESTRUCTION",
-    "description": "This planet is under threat of destruction."
+    "description": "This planet is under threat of destruction.",
+    "description_cn": "此星球正面临毁灭威胁。"
   },
   "1241": {
     "galacticEffectId": 1241,
@@ -492,7 +495,8 @@
   "1242": {
     "galacticEffectId": 1242,
     "name": "MOVING PLANET",
-    "description": "This planet is moving and is estimated to impact Super Earth."
+    "description": "This planet is moving and is estimated to impact Super Earth.",
+    "description_cn": "此星球正在移动，预计将撞击超级地球。"
   },
   "1243": {
     "galacticEffectId": 1243,
@@ -504,7 +508,7 @@
     "galacticEffectId": 1244,
     "name": "Spore Burst Strain (Enemies)",
     "description": "A Gloom-enhanced strain of Terminids has been reported on this planet. They can explode into spores.",
-    "description_cn": "这颗星球上的虫子发生了变异，会释放特殊的信息素，使得其他同变种个体分泌大量肾上腺素。做好准备，以非暴力手段应对这些为彼此提速的敌人。"
+    "description_cn": "据报告，该星球上出现了一种受“阴霾”强化的终结族变种，它们会爆裂并释放孢子。"
   },
   "1245": {
     "galacticEffectId": 1245,
@@ -558,12 +562,13 @@
     "galacticEffectId": 1261,
     "name": "EXOSUIT RESERVES",
     "description": "The presence of the DSS near this planet provides a -35% cooldown reduction to the EXO-45 Patriot Exosuit stratagem.",
-    "description_cn": "DSS停靠在这颗星球附近，可使所有外骨骼装甲战略配备冷却时间缩短35%。"
+    "description_cn": "DSS停靠在这颗星球附近，可使EXO-45“爱国者”外骨骼装甲战略配备的冷却时间缩短35%。"
   },
   "1262": {
     "galacticEffectId": 1262,
     "name": "EXOSUIT RESERVES",
-    "description": "The presence of the DSS near this planet provides a -35% cooldown reduction to the EXO-49 Emancipator Exosuit stratagem."
+    "description": "The presence of the DSS near this planet provides a -35% cooldown reduction to the EXO-49 Emancipator Exosuit stratagem.",
+    "description_cn": "DSS停靠在这颗星球附近，可使EXO-49“解放者”外骨骼装甲战略配备的冷却时间缩短35%。"
   },
   "1263": {
     "galacticEffectId": 1263,
@@ -632,7 +637,8 @@
   "1283": {
     "galacticEffectId": 1283,
     "name": "FACTORY STRIDER SURGE",
-    "description": "Significantly higher Factory Strider numbers have been observed on this planet."
+    "description": "Significantly higher Factory Strider numbers have been observed on this planet.",
+    "description_cn": "此星球上观测到移动工厂数量显著增加。"
   },
   "1284": {
     "galacticEffectId": 1284,
@@ -658,7 +664,8 @@
   "1288": {
     "galacticEffectId": 1288,
     "name": "SPORE BURST SCAVENGER RAMPAGE",
-    "description": "Significantly increased levels of Spore Burst Scavengers have been reported on this planet."
+    "description": "Significantly increased levels of Spore Burst Scavengers have been reported on this planet.",
+    "description_cn": "据报告，此星球上孢裂食腐虫数量显著增加。"
   },
   "1291": {
     "galacticEffectId": 1291,
@@ -675,7 +682,8 @@
   "1293": {
     "galacticEffectId": 1293,
     "name": "CHARGER RAMPAGE",
-    "description": "Significantly increased levels of Chargers have been reported on this planet."
+    "description": "Significantly increased levels of Chargers have been reported on this planet.",
+    "description_cn": "据报告，此星球上强袭虫数量显著增加。"
   },
   "1295": {
     "galacticEffectId": 1295,
@@ -687,7 +695,7 @@
     "galacticEffectId": 1303,
     "name": "RUPTURE STRAIN (ENEMIES)",
     "description": "A deadly strain of ground-bursting Terminids is present on this planet.",
-    "description_cn": "情报显示，这颗星球上的终结族体现出极强的腐蚀性，且学会了掘地等手段免疫常规攻击，做好准备，应对这些精通于地下突袭的变种。"
+    "description_cn": "这颗星球上出现了一种从地下破土而出的致命终结族变种。请做好应对钻地敌军的准备。"
   },
   "1304": {
     "galacticEffectId": 1304,
@@ -699,31 +707,31 @@
     "galacticEffectId": 1306,
     "name": "DRAGONROACHES (Enemies)",
     "description": "Terminid Dragonroaches menace the skies of this planet.",
-    "description_cn": "该星球上的吐酸泰坦选择进化出了飞行能力，不过原始本能使得它们不会成群出现，做好夺取制空权的准备。"
+    "description_cn": "终结族的蟑龙变种威胁着这颗星球的领空。请做好应对空中敌军的准备。"
   },
   "1307": {
     "galacticEffectId": 1307,
     "name": "HIVE LORDS (Enemies)",
     "description": "Terminid Hive Lords have been detected on this planet.",
-    "description_cn": "该星球上的终结族演变出了复数个皮糙肉厚的庞然大物，做好面对虫群与广域动量攻击的准备。"
+    "description_cn": "已在这颗星球上探测到终结族的霸王虫。请做好应对巨型钻地敌军的准备。"
   },
   "1308": {
     "galacticEffectId": 1308,
     "name": "HIVE LORDS",
     "description": "Terminid Hive Lords have been detected on this planet.",
-    "description_cn": "该星球上的终结族演变出了复数个皮糙肉厚的庞然大物，做好面对虫群与广域动量攻击的准备。"
+    "description_cn": "已在这颗星球上探测到终结族的霸王虫。请做好应对巨型钻地敌军的准备。"
   },
   "1309": {
     "galacticEffectId": 1309,
     "name": "DRAGONROACHES",
     "description": "Terminid Dragonroaches menace the skies of this planet.",
-    "description_cn": "该星球上的吐酸泰坦选择进化出了飞行能力，不过原始本能使得它们不会成群出现，做好夺取制空权的准备。"
+    "description_cn": "终结族的蟑龙变种威胁着这颗星球的领空。请做好应对空中敌军的准备。"
   },
   "1310": {
     "galacticEffectId": 1310,
     "name": "RUPTURE STRAIN",
     "description": "A deadly strain of ground-bursting Terminids is present on this planet.",
-    "description_cn": "情报显示，这颗星球上的终结族体现出极强的腐蚀性，且学会了掘地等手段免疫常规攻击，做好准备，应对这些精通于地下突袭的变种。"
+    "description_cn": "这颗星球上出现了一种从地下破土而出的致命终结族变种。请做好应对钻地敌军的准备。"
   },
   "1311": {
     "galacticEffectId": 1311,
@@ -746,7 +754,8 @@
   "1342": {
     "galacticEffectId": 1342,
     "name": "CENTER FOR THE CONFINEMENT OF DISSIDENCE (CECOD)",
-    "description": "This planet-wide ultra-high-security facility provides ample space for the secure confinement of terrorist dissidents until they are fully rehabilitated and re-educated."
+    "description": "This planet-wide ultra-high-security facility provides ample space for the secure confinement of terrorist dissidents until they are fully rehabilitated and re-educated.",
+    "description_cn": "这座覆盖全星球的超高安全设施收容空间充足，信奉恐怖主义的异见分子可以在这里接受安全监禁，直到全面改造并接受再教育。"
   },
   "1344": {
     "galacticEffectId": 1344,
@@ -776,23 +785,23 @@
     "galacticEffectId": 1357,
     "name": "HULK SURGE",
     "description": "High numbers of enemy Hulks have been reported on this planet. Prepare to counter heavily armored enemies.",
-    "description_cn": "地图扫描显示，该地部署了大量的蹂躏者。"
+    "description_cn": "据报告称，该星球上出现大量敌方巨型者。请做好应对重甲敌军的准备。"
   },
   "1359": {
     "galacticEffectId": 1359,
     "name": "DEVASTATOR SURGE",
     "description": "The Automatons have deployed high numbers of Devastators to this planet.",
-    "description_cn": "机器人在该星球部署了大量歼灭者。"
+    "description_cn": "机器人已向该星球部署了大量蹂躏者。请做好应对重甲敌军的准备。"
   },
   "1360": {
     "description": "Cyborgs are deployed to the battlefield of this planet, leading their Automaton armies.",
-    "description_cn": "做好准备，面对经过精英化训练，涵盖全射程打击的生化人部队与邪恶机器组成的部队。",
+    "description_cn": "生化人已部署至该星球战场，率领机器人大军作战。请做好准备，应对经过远近战双重训练的卑劣宣传机器。",
     "galacticEffectId": 1360,
     "name": "CYBORGS (Enemies)"
   },
   "1361": {
     "description": "Cyborgs are deployed to the battlefield of this planet, leading their Automaton armies.",
-    "description_cn": "做好准备，面对经过精英化训练，涵盖全射程打击的生化人部队与邪恶机器组成的部队。",
+    "description_cn": "生化人已部署至该星球战场，率领机器人大军作战。请做好准备，应对经过远近战双重训练的卑劣宣传机器。",
     "galacticEffectId": 1361,
     "name": "CYBORGS"
   },
@@ -876,7 +885,8 @@
   "71": {
     "galacticEffectId": 71,
     "name": "COMPROMISED INTEL PACKAGES",
-    "description": "Intel Packages are compromised. Picking them up will notify the enemy of your whereabouts and cause an encounter."
+    "description": "Intel Packages are compromised. Picking them up will notify the enemy of your whereabouts and cause an encounter.",
+    "description_cn": "情报包裹已遭泄露。拾取情报包裹会向敌人暴露你的位置并引发遭遇战。"
   },
   "76": {
     "galacticEffectId": 76,
@@ -921,7 +931,8 @@
   "113": {
     "galacticEffectId": 113,
     "name": "PLENTYFUL STIMS",
-    "description": "Health Packs and Supply boxes contains #V_ONE more Stim Packs."
+    "description": "Health Packs and Supply boxes contains #V_ONE more Stim Packs.",
+    "description_cn": "医疗包和补给箱中包含#V_ONE个额外治疗剂。"
   },
   "114": {
     "galacticEffectId": 114,
@@ -932,7 +943,8 @@
   "121": {
     "galacticEffectId": 121,
     "name": "MARKET CRASH",
-    "description": "Due to the risk of Famine, the market is concerned and prices have gone up #V_ONE%."
+    "description": "Due to the risk of Famine, the market is concerned and prices have gone up #V_ONE%.",
+    "description_cn": "由于饥荒风险，市场陷入恐慌，价格上涨了#V_ONE%。"
   },
   "1144": {
     "galacticEffectId": 1144,
@@ -978,7 +990,8 @@
   },
   "1314": {
     "galacticEffectId": 1314,
-    "description_cn": "“飞鹰”的重新装填时间增加 20%。"
+    "description_cn": "“飞鹰”的重新装填时间增加 20%。",
+    "name": "PILOT SHORTAGE"
   },
   "1315": {
     "galacticEffectId": 1315,
@@ -988,11 +1001,13 @@
   },
   "1316": {
     "galacticEffectId": 1316,
-    "description_cn": "“飞鹰”的重新装填时间增加 30%。"
+    "description_cn": "“飞鹰”的重新装填时间增加 30%。",
+    "name": "PILOT SHORTAGE"
   },
   "1317": {
     "galacticEffectId": 1317,
-    "description_cn": "弹药箱与补给箱的补给数量减少 50%。"
+    "description_cn": "弹药箱与补给箱的补给数量减少 50%。",
+    "name": "SUPPLY SHORTAGE"
   },
   "1318": {
     "galacticEffectId": 1318,
@@ -1002,11 +1017,13 @@
   },
   "1319": {
     "galacticEffectId": 1319,
-    "description_cn": "弹药箱与补给箱的补给数量减少 50%。"
+    "description_cn": "弹药箱与补给箱的补给数量减少 50%。",
+    "name": "SUPPLY SHORTAGE"
   },
   "1320": {
     "galacticEffectId": 1320,
-    "description_cn": "“飞鹰”的重新装填时间增加 30%。"
+    "description_cn": "“飞鹰”的重新装填时间增加 30%。",
+    "name": "PILOT SHORTAGE"
   },
   "1331": {
     "galacticEffectId": 1331,

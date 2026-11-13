@@ -19,7 +19,7 @@ desc: |
   需复制 config.example.json 为插件目录内 config.json 并填写配置（详见仓库 README 与部署文档）。
 
   本插件及其文档由 AI（DeepSeek Agent）辅助生成并维护，人工审核后发布。
-version: 1.0.8
+version: 1.0.9
 # PEP 440 版本范围：低于 4.29.3 时 AstrBot 会阻止加载（/roll 的抽取行为依赖 4.29.3 起的框架实现）
 astrbot_version: ">=4.29.3"
 short_desc: 绝地潜兵2中文战况全家桶：战术目标、三行动DSS、HUD战报、Wiki长图、BTK与配装抽取。

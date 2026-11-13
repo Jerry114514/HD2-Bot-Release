@@ -28,7 +28,7 @@
           "key": "Rupture Strain",
           "name": "Rupture Strain",
           "cn": "爆裂虫族变种",
-          "desc": "情报显示，这颗星球上的终结族体现出极强的腐蚀性，且学会了掘地等手段免疫常规攻击，做好准备，应对这些精通于地下突袭的变种。",
+          "desc": "这颗星球上出现了一种从地下破土而出的致命终结族变种。请做好应对钻地敌军的准备。",
           "effect_ids": [
             1303,
             1310
@@ -66,7 +66,7 @@
           "key": "Dragonroach",
           "name": "Dragonroach",
           "cn": "蟑龙",
-          "desc": "该星球上的吐酸泰坦选择进化出了飞行能力，不过原始本能使得它们不会成群出现，做好夺取制空权的准备。",
+          "desc": "终结族的蟑龙变种威胁着这颗星球的领空。请做好应对空中敌军的准备。",
           "effect_ids": [
             1306,
             1309
@@ -76,7 +76,7 @@
           "key": "Hive Lord",
           "name": "Hive Lord",
           "cn": "霸王虫",
-          "desc": "该星球上的终结族演变出了复数个皮糙肉厚的庞然大物，做好面对虫群与广域动量攻击的准备。",
+          "desc": "已在这颗星球上探测到终结族的霸王虫。请做好应对巨型钻地敌军的准备。",
           "effect_ids": [
             1307,
             1308
@@ -103,7 +103,7 @@
           "key": "Cyborgs",
           "name": "Cyborgs",
           "cn": "生化人",
-          "desc": "做好准备，面对经过精英化训练，涵盖全射程打击的生化人部队与邪恶机器组成的部队。",
+          "desc": "生化人已部署至该星球战场，率领机器人大军作战。请做好准备，应对经过远近战双重训练的卑劣宣传机器。",
           "effect_ids": [
             1360,
             1361
@@ -137,7 +137,7 @@
           "key": "Devastator Surge",
           "name": "Devastator Surge",
           "cn": "蹂躏者激增",
-          "desc": "机器人在该星球部署了大量歼灭者。",
+          "desc": "机器人已向该星球部署了大量蹂躏者。请做好应对重甲敌军的准备。",
           "effect_ids": [
             1359
           ]
@@ -155,7 +155,7 @@
           "key": "Hulk Surge",
           "name": "Hulk Surge",
           "cn": "巨型者激增",
-          "desc": "地图扫描显示，该地部署了大量的蹂躏者。",
+          "desc": "据报告称，该星球上出现大量敌方巨型者。请做好应对重甲敌军的准备。",
           "effect_ids": [
             1357
           ]
@@ -201,7 +201,7 @@
         {
           "key": "SEAF Forces in Region",
           "name": "SEAF Forces in Region",
-          "cn": "区域内有SEAF部队",
+          "cn": "超级地球武装部队驻守",
           "desc": "区域内存在SEAF部队，且战场上会周期性投放多种装备的SEAF重装部队。",
           "effect_ids": [
             1400,
@@ -238,7 +238,7 @@
         {
           "key": "Voteless Variant",
           "name": "Voteless Variant",
-          "cn": "窃票者",
+          "cn": "无票者变种",
           "desc": "这是比无票者更加暴力的，被光能者奴役的选民，既然如此，我们也以暴力镇压他们。",
           "effect_ids": [
             1402,
@@ -311,7 +311,7 @@
         {
           "key": "TERMINID CONTROL SYSTEM +",
           "name": "TERMINID CONTROL SYSTEM +",
-          "cn": "终结族控制系统 +",
+          "cn": "终结族遏制体系+",
           "desc": "TCS + 是一项旨在针对“阴霾”威胁的天体包围圈工程。在建成该设施的星球上，其将会不断地向大气中喷洒对终结族极度有害的熏香味气体。该工程将会部署到复数个星球以完成对“阴霾”的包围。",
           "effect_ids": [
             1395
@@ -329,7 +329,7 @@
         {
           "key": "Gloom",
           "name": "Gloom",
-          "cn": "阴影迷雾",
+          "cn": "“阴霾”",
           "desc": "一朵阴霾云笼罩着这个世界。",
           "effect_ids": [
             1187
@@ -338,7 +338,7 @@
         {
           "key": "Dense Gloom",
           "name": "Dense Gloom",
-          "cn": "浓阴影迷雾",
+          "cn": "重度“阴霾”笼罩",
           "desc": "一片厚厚的阴霾云遮住了这个世界。",
           "effect_ids": [
             1188
@@ -356,7 +356,7 @@
         {
           "key": "Gloom Border",
           "name": "Gloom Border",
-          "cn": "阴影迷雾边界",
+          "cn": "“阴霾”边界",
           "desc": "这个世界位于阴霾星际墙的边界上。",
           "effect_ids": [
             1193
@@ -417,7 +417,7 @@
         {
           "key": "Eagle Storm [1209/1212/1216]",
           "name": "Eagle Storm [1209/1212/1216]",
-          "cn": "✈ 飞鹰风暴",
+          "cn": "“飞鹰”风暴",
           "desc": "DSS的工作人员在大型三层结构附近集结了一支“飞鹰”编队，采取24小时轮班制，为星球上的绝地潜兵提供火力压制支援。在此期间，“飞鹰风暴” 将作为行动变量周期性在任务中部署。若该星球遭到入侵，DSS将会守住防线，阻止敌方入侵进度；在地面执行任务的绝地潜兵小队队长可通过 “标记目标” 功能为 “飞鹰” 标记敌人。",
           "effect_ids": [
             1209,
@@ -428,7 +428,7 @@
         {
           "key": "Eagle Storm [1425/1212/1216]",
           "name": "Eagle Gas Storm",
-          "cn": "✈ 飞鹰毒气风暴",
+          "cn": "“飞鹰”风暴",
           "desc": "民主空间站的工作人员在大型三层结构集结湾部署了一支“飞鹰”驾驶员舰队，采取24小时轮班制，为绝地潜兵在星球上的行动提供近距离空中支援，阻滞敌人进攻。任务期间将定期部署“飞鹰”毒气打击，减缓敌人在保卫战役中的进展。",
           "action_id32": 4091660627,
           "effect_ids": [
@@ -471,7 +471,7 @@
         {
           "key": "Planetary Bombardment [1208/1211]",
           "name": "Planetary Bombardment [1208/1211]",
-          "cn": "💣🌏💣 星球轰炸",
+          "cn": "星球轰炸",
           "desc": "DSS上搭载的76门“总统级”舰炮同时开火，轰炸整个星球。在此期间，所有小队 +1 可用增援； 且DSS将会额外推进该星球的解放进程。注意了：炮弹可不会区分正义与邪恶！",
           "effect_ids": [
             1208,
@@ -481,7 +481,7 @@
         {
           "key": "Operational Support [1238]",
           "name": "Operational Support [1238]",
-          "cn": "✊ 行动支持",
+          "cn": "行动支持",
           "desc": "DSS停靠在这颗星球附近，一定程度上有助于该星球的解放战争进程。在该星球执行任务的小队所携带的所有“外骨骼机甲”战略配备冷却时间减少35%。",
           "effect_ids": [
             1238
@@ -604,7 +604,7 @@
       "name_en": "COMBAT RESTRICTION",
       "entries": [
         {
-          "key": "星球抵抗度调整",
+          "key": "Planetary regen adjustment",
           "name": "Planetary regen adjustment",
           "cn": "星球抵抗度调整",
           "desc": "星球抵抗度调整：每小时回复星球血量 -10,000；理论抵抗度 -1.00%。",
@@ -622,8 +622,8 @@
           ]
         },
         {
-          "key": "缺少飞行员",
-          "name": "缺少飞行员",
+          "key": "PILOT SHORTAGE",
+          "name": "PILOT SHORTAGE",
           "cn": "缺少飞行员",
           "desc": "“飞鹰”的重新装填时间增加 20%。",
           "effect_ids": [
@@ -640,8 +640,8 @@
           ]
         },
         {
-          "key": "缺少飞行员",
-          "name": "缺少飞行员",
+          "key": "PILOT SHORTAGE",
+          "name": "PILOT SHORTAGE",
           "cn": "缺少飞行员",
           "desc": "“飞鹰”的重新装填时间增加 30%。",
           "effect_ids": [
@@ -650,8 +650,8 @@
           ]
         },
         {
-          "key": "补给不足",
-          "name": "补给不足",
+          "key": "SUPPLY SHORTAGE",
+          "name": "SUPPLY SHORTAGE",
           "cn": "补给不足",
           "desc": "弹药箱与补给箱的补给数量减少 50%。",
           "effect_ids": [
@@ -741,7 +741,7 @@
         {
           "key": "CAMPAIGN BLOCKER",
           "name": "CAMPAIGN BLOCKER",
-          "cn": "非军事化",
+          "cn": "战役封锁",
           "desc": "无法在此星球发动战役。",
           "effect_ids": [
             1246
@@ -750,7 +750,7 @@
         {
           "key": "ARSENAL AUGMENTATION: M-102 FAST RECONNAISSANCE VEHICLE",
           "name": "ARSENAL AUGMENTATION: M-102 FAST RECONNAISSANCE VEHICLE",
-          "cn": "战备增强：M-102 快速侦察车",
+          "cn": "军械库扩充：M-102 炮手快速侦察载具",
           "desc": "最高指挥部已授权在所有绝地潜兵装载中临时增加M-102快速侦察车战略配备。",
           "effect_ids": [
             1279
