@@ -29,7 +29,7 @@ COMMAND_CANONICAL = {
     "report": "/战报", "mo": "/重要指令", "campaigns": "/战线", "dss": "/dss",
     "briefing": "/战役", "analysis": "/分析", "api": "/api", "map": "/银河星图",
     "roll": "/roll", "wiki": "/wiki", "btk": "/btk", "help": "/帮助",
-    "planet": "/查询", "variant": "/变种",
+    "planet": "/星球", "variant": "/变种",
 }
 _HINT_MAX_LEN = 20      # 超过视为普通聊天
 _HINT_CUTOFF = 0.72     # 相近指令相似度阈值

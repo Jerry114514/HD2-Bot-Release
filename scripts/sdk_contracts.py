@@ -52,7 +52,7 @@ async def audit(modules, scheduler, config, Event, sandbox, check, llm_attempts)
          patch.object(modules["wiki"], "render", side_effect=ImportError("fixture")), \
          patch.object(modules["btk"], "_run_bridge", return_value={"ok": True, "weapon": "AR-23 解放者", "enemy": "武斗虫", "part": "头部", "btk": 2, "ttk": 0.1, "path": "part", "label": "打爆致死部位", "perShotDamage": 150, "pelletsPerShot": 1, "stuck": None}) as btk_bridge, \
          patch.object(modules["variant_query"], "_scan_all_variants", new=AsyncMock(return_value=scan)):
-        for command in ("/战线", "/dss", "/战役", "/银河星图", "/查询 X45", "/X45信息", "/wiki AR23", "/btk AR-23 武斗虫 头部", "/变种 孢裂变种", "/帮助 t", "/help t", "/roll 纯随机 t"):
+        for command in ("/战线", "/dss", "/战役", "/银河星图", "/星球 X45", "/X45信息", "/wiki AR23", "/btk AR-23 武斗虫 头部", "/变种 孢裂变种", "/帮助 t", "/help t", "/roll 纯随机 t"):
             await case("command " + command,
                        lambda command=command: check(command, image_pages=1 if command.startswith("/btk ") else 0))
         async def btk_fallback():
@@ -69,7 +69,7 @@ async def audit(modules, scheduler, config, Event, sandbox, check, llm_attempts)
             await case("image " + command, image)
         async def planet_pages():
             with patch.object(commands, "render_result", return_value=[str(sandbox / "fixture.png")] * 2):
-                await check("/查询 X45", image_pages=2)
+                await check("/星球 X45", image_pages=2)
         await case("planet pages", planet_pages)
 
     # Explicit analysis uses the requested SDK signature but no real model.
@@ -84,7 +84,7 @@ async def audit(modules, scheduler, config, Event, sandbox, check, llm_attempts)
         await case("explicit analysis", lambda: check("/分析"))
 
     async def error_replies():
-        for command, module, name in (("/战报", commands, "result"), ("/查询 X45", commands, "result"),
+        for command, module, name in (("/战报", commands, "result"), ("/星球 X45", commands, "result"),
                                      ("/roll", modules["roll"], "draw"), ("/wiki failure", modules["wiki"], "wiki_lookup"),
                                      ("/变种 孢裂变种", modules["variant_query"], "_scan_all_variants"),
                                      ("/帮助", modules["lookup"], "_build_help_text")):

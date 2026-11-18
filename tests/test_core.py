@@ -16,7 +16,7 @@ from http.server import ThreadingHTTPServer
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "plugins"))
-from astrbot_plugin_hd2_common import data, commands
+from astrbot_plugin_hd2_common import commands, data, errors
 from astrbot_plugin_hd2_common.runtime import blocking
 
 
@@ -89,6 +89,14 @@ class DataTests(unittest.TestCase):
         self.assertEqual(commands.parse("/wiki roll"), ("wiki", "roll", False))
         self.assertEqual(commands.parse("@机器人 /战报t"), ("report", "", True))
         self.assertEqual(commands.parse("/查询 X-45"), ("planet", "X-45", False))
+
+    def test_planet_command_canonical_name(self):
+        """星球指令对外名称是 /星球，/查询 与 /查 是兼容别名。"""
+        self.assertEqual(commands.COMMAND_CANONICAL["planet"], "/星球")
+        self.assertTrue(errors.USAGE["planet"][1].startswith("示例：/星球"))
+        expected = ("planet", "X-45", False)
+        for text in ("/星球 X-45", "/查询 X-45", "/查 X-45"):
+            self.assertEqual(commands.parse(text), expected)
         self.assertIsNone(commands.parse("/foorollbar"))
         self.assertIsNone(commands.parse("123"))
 

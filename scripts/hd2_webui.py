@@ -1016,7 +1016,7 @@ PAGE = r"""<!DOCTYPE html>
   <div class="card">
     <h3>🧪 查询推送 / 响应测试</h3>
     <p class="desc">输入指令（查表/战报/星球等），「测试并推送」= 注入拿到机器人回复后直接推送到所选的群；「仅测试」= 只看回复不发群</p>
-    <input type="text" id="inject" value="/帮助" placeholder="/战报  /帮助  /查询 X-45  /变种 名称  /roll">
+    <input type="text" id="inject" value="/帮助" placeholder="/战报  /帮助  /星球 X-45  /变种 名称  /roll">
     <div class="btn-row">
       <button class="danger" onclick="run('inject_push', document.getElementById('inject').value, {group:targetGroup()})">📤 测试并推送</button>
       <button class="sec" onclick="run('inject', document.getElementById('inject').value, {group:targetGroup()})">🧪 仅测试</button>

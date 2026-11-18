@@ -746,7 +746,7 @@ def render_report_card(out_dir=None):
         y = (y_after_news if y_after_news else y) + 8
         dr.line([(PAD, y), (W - PAD, y)], fill=LINE)
         dr.text((PAD, y + 16), "数据来源：主站战况快照 · 源时间见页脚", font=f_tiny, fill=MUTE)
-        ft = "发送 /帮助 /dss /战役 /查询 查看更多"
+        ft = "发送 /帮助 /dss /战役 /星球 查看更多"
         fw = dr.textlength(ft, font=f_tiny)
         dr.text((W - PAD - fw, y + 16), ft, font=f_tiny, fill=MUTE)
         dr.text((PAD, y + 42), "真理部 · 管理式民主 · 本站与 Arrowhead Game Studios 无隶属关系",
@@ -869,7 +869,7 @@ def render_major_order_card(out_dir=None):
 
 
 # ═══════════════════════════════════════════════════════════════
-# 其他板块图片卡（/战线 · /dss · /查询）——数据一律从主站抓取
+# 其他板块图片卡（/战线 · /dss · /星球）——数据一律从主站抓取
 # ═══════════════════════════════════════════════════════════════
 
 def _hud_head(dr, img, title, sub_en):
@@ -2644,7 +2644,7 @@ HELP_SECTIONS = [
         ("/api", "每分钟监测主仓 Issue；当前会话在内容变化时自动接收，支持手动重播"),
     ]),
     ("星球情报", "PLANET INTEL", [
-        ("/查询 星球名", "星球指挥台卡：解放环、区域战况、环境词条、战术目标与目标链接"
+        ("/星球 星球名", "星球指挥台卡：解放环、区域战况、环境词条、战术目标与目标链接"
                        "（中英文均可；/星球 名 同效）"),
         ("/银河星图", "快捷指令直达线上中文星图（浏览器打开：星球战况与补给线）"),
     ]),

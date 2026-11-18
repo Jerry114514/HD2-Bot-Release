@@ -191,7 +191,7 @@ def main():
                         await check(text, platform, mention)
                     await check("/btk AR-23 武斗虫 头部", platform, mention, image_pages=1)
                     await check("/星球", platform, mention,
-                                reply_prefix="⚠️ 星球查询缺少星球名。", contains="/查询 X-45")
+                                reply_prefix="⚠️ 星球查询缺少星球名。", contains="/星球 X-45")
                 for text, suggestion in (("roll", "/roll"), ("api", "/api"), ("战报", "/战报"),
                                          ("/unknown", "/帮助")):
                     await check(text, platform, reply_prefix="未知指令", contains=suggestion)

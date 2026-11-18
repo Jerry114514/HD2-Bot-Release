@@ -275,7 +275,7 @@ def main():
     y = (y_after_news if news_show else y) + 8
     dr.line([(PAD, y), (W - PAD, y)], fill=LINE)
     dr.text((PAD, y + 16), "数据来源：官方战况 API · 每 5 分钟自动更新", font=f_tiny, fill=MUTE)
-    ft = "发送 /查表 /dss /战役 /查询 查看更多"
+    ft = "发送 /查表 /dss /战役 /星球 查看更多"
     fw = dr.textlength(ft, font=f_tiny)
     dr.text((W - PAD - fw, y + 16), ft, font=f_tiny, fill=MUTE)
     dr.text((PAD, y + 42), "真理部 · 管理式民主 · 本站与 Arrowhead Game Studios 无隶属关系",
