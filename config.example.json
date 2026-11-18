@@ -28,11 +28,8 @@
     "app_dir": "D:/AstrBot/backend/app",
     "webui_port": 6185,
     "ws_port": 6199,
-    "_data_dir说明": "AstrBot 数据目录（含 cmd_config.json）。控制台「群号管理」用它读取/写入群名单（写本项目的 bot.groups，并维护旧版 platform_whitelist.json）；AstrBot 4.29.3 起框架白名单只认 cmd_config.json 的 platform_settings.id_whitelist，请在 WebUI 的访问控制里维护。留空则自动探测（候选：~/.astrbot/data、config.example 同级 data/、astrbot.app_dir 的上级 data/），按 data_v4.db-wal 是否存在等特征挑选正在使用的那份。多份 AstrBot 共存时建议显式填写。",
-    "data_dir": "",
-    "_dashboard_password说明": "AstrBot Dashboard 密码（默认 astrbot）。填了才能用「零重启热重载」；仍是默认密码时 AstrBot 会拒绝登录，控制台会自动降级为重启 AstrBot。",
-    "dashboard_user": "astrbot",
-    "dashboard_password": ""
+    "_data_dir说明": "AstrBot 数据目录（含 cmd_config.json 与 data_v4.db）。控制台只用它【只读】探测旧版 platform_whitelist.json，并在「群号管理」里给一次性迁移提示；群号管理本身只写本项目 config.json 的 bot.groups。AstrBot 4.29.3 起框架入群白名单只认 cmd_config.json 的 platform_settings.id_whitelist，请在 AstrBot WebUI → 配置 → 访问控制 → 白名单 ID 列表维护。留空时控制台不做旧名单探测（不会猜测其他实例的数据目录）；scripts/check.py 要求显式填写。多份 AstrBot 共存时建议显式填写。",
+    "data_dir": ""
   },
   "chat": {
     "_说明": "LLM 普通聊天仅在 bot.allow_chat=true 时放行；Wiki 证据会自动注入游戏知识问答。模型走 AstrBot 的 Provider 配置，本文件不保存任何密钥。",

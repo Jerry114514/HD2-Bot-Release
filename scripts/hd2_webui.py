@@ -19,9 +19,6 @@ import secrets
 import tempfile
 import subprocess
 import threading
-import urllib.request
-import urllib.error
-import datetime as _dt
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 # UTF-8 统一
@@ -300,26 +297,20 @@ def action_groups() -> str:
 
 
 # ============================================================
-# 👥 群管理：AstrBot 入群白名单 + 推送群列表（增删 / 设默认 / 生效）
+# 👥 群号管理：只维护本项目 config.json 的 bot.groups（推送群 / 指令守卫范围）
 # ============================================================
-# 生效链路（本项目实测）：
-#   AstrBot 的入群白名单由 pipeline 阶段 WhitelistCheckStage 在**启动时读一次**
-#   并缓存在内存里：优先 <AstrBot data>/platform_whitelist.json（平台级），
-#   无该文件时回退 cmd_config.json 的 platform_settings.id_whitelist（全局）。
-#   => 只改 JSON 文件不生效，必须让 AstrBot 重新加载。本控制台按顺序尝试：
-#      1) Dashboard API 热重载（POST /api/config/astrbot/update，同进程 reload，零重启）
-#      2) 重启 AstrBot 桌面版（astrbot-desktop-tauri.exe，保留其启动环境）
-#      3) 都失败 -> 明确提示需手动重启，并说明文件已改好
-#   本项目 config.json 的 bot.groups 只决定"推送到哪些群"，与"能否触发"无关，故两处都要同步。
-WL_BAK_KEEP = 3          # 每个配置最多保留的备份份数
+# AstrBot 4.29.3 起：
+#   * 框架不再读取 <AstrBot data>/platform_whitelist.json，入群白名单只认
+#     cmd_config.json 的 platform_settings.id_whitelist，设置入口是
+#     AstrBot WebUI → 配置 → 访问控制 → 白名单 ID 列表。
+#   * 本控制台因此只写本项目 config.json 的 bot.groups：HD2 指令守卫每次事件
+#     实时读取（plugins/astrbot_plugin_hd2_guard/main.py），保存即生效，无需重启。
+#   * 旧 platform_whitelist.json 若仍存在，只做只读探测 + 一次性迁移提示，绝不写它。
+FRAMEWORK_WHITELIST_HINT = (
+    "框架入群白名单请在 AstrBot WebUI → 配置 → 访问控制 → 白名单 ID 列表"
+    "（platform_settings.id_whitelist）中设置；本控制台只维护本项目 config.json 的 bot.groups。"
+)
 _CFG_PATH = os.path.join(BASE, "config.json")
-
-_ASTRBOT_DATA_DIR = None         # 解析结果缓存：(dir, cmd_config mtime) / None
-_LIVE_EXE = None                 # 上一次成功启动 AstrBot 用的 exe（重启时复用）
-
-
-def _now_tag() -> str:
-    return _dt.datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
 def _mode_of(path: str):
@@ -367,94 +358,6 @@ def _backup_file(path):
     return backup
 
 
-def _local_ip() -> str:
-    """本机对 AstrBot 服务可达的地址（WebUI 可能只监听 127.0.0.1 或 0.0.0.0）"""
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
-    except Exception:
-        return "127.0.0.1"
-
-
-def _aiohttp_dashboard():
-    """返回 Dashboard 的候选 base_url 列表（去掉重复、保序）"""
-    port = int(_g("astrbot", "webui_port", d=6185) or 6185)
-    wl = str(_g("snowluma", "webui_url", d="") or "")
-    m = re.search(r"https?://([\d.]+)", wl)
-    host = m.group(1) if m else "127.0.0.1"
-    urls = []
-    for h in (host, "127.0.0.1", "localhost", _local_ip()):
-        if not h:
-            continue
-        u = f"http://{h}:{port}"
-        if u not in urls:
-            urls.append(u)
-    return urls
-
-
-def _http_json(url: str, payload=None, headers=None, timeout=15):
-    """极简 JSON HTTP 客户端：返回 (ok, status, dict|文本)"""
-    data = None
-    req_headers = {"Content-Type": "application/json", "Accept": "application/json"}
-    if headers:
-        req_headers.update(headers)
-    if payload is not None:
-        data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-    req = urllib.request.Request(url, data=data, headers=req_headers,
-                                method="POST" if payload is not None else "GET")
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            raw = resp.read().decode("utf-8", "replace")
-            try:
-                return True, resp.status, json.loads(raw)
-            except Exception:
-                return True, resp.status, raw
-    except urllib.error.HTTPError as e:
-        raw = ""
-        try:
-            raw = e.read().decode("utf-8", "replace")
-        except Exception:
-            pass
-        try:
-            return False, e.code, json.loads(raw)
-        except Exception:
-            return False, e.code, raw
-    except Exception as e:
-        return False, 0, str(e)
-
-
-def _astrbot_data_dirs() -> list:
-    """候选 AstrBot 数据目录（按配置显式指定优先，然后按标准位置）"""
-    cands = []
-    try:
-        cands.append(str(_g("astrbot", "data_dir", d="") or ""))
-    except Exception:
-        pass
-    cands += [
-        os.path.expanduser("~/.astrbot/data"),      # AstrBot 桌面版标准数据目录
-        "D:/AstrBot/backend/data",
-        os.path.join(BASE, "data"),
-    ]
-    try:
-        cands.append(str(_g("astrbot", "app_dir", d="") or ""))
-    except Exception:
-        pass
-    out = []
-    for p in cands:
-        if not p:
-            continue
-        p = os.path.abspath(p)
-        # app_dir 指向 .../backend/app，数据目录是 .../backend/data
-        if p.replace("\\", "/").endswith("/app"):
-            p = os.path.join(os.path.dirname(p), "data")
-        if p not in out and os.path.isdir(p):
-            out.append(p)
-    return out
-
-
 def _astrbot_data_dir(refresh=False):
     path = str(_g("astrbot", "data_dir", d="") or "")
     if not path:
@@ -466,16 +369,47 @@ def _astrbot_data_dir(refresh=False):
     return path, config, _mode_of(config)
 
 
-def _read_whitelist(force=False):
-    directory, _, _ = _astrbot_data_dir()
-    path = os.path.join(directory, "platform_whitelist.json")
-    plat = _read_json(path, default={})
+def _push_groups():
+    """本项目 config.json 的推送群列表（bot.groups），统一转字符串便于比较"""
+    return [str(g) for g in (_g("bot", "groups", d=[]) or [])]
+
+
+def _legacy_whitelist_path() -> str:
+    """旧版 platform_whitelist.json 的路径；未配置 astrbot.data_dir 时返回空串（不猜其他实例）"""
+    if not str(_g("astrbot", "data_dir", d="") or "").strip():
+        return ""
+    try:
+        directory, _, _ = _astrbot_data_dir()
+    except Exception:
+        return ""
+    return os.path.join(directory, "platform_whitelist.json")
+
+
+def _read_legacy_whitelist() -> dict:
+    """只读探测旧版 platform_whitelist.json（AstrBot 4.29.3 起框架已不再读取它）。
+    返回 {"path","exists","adapter","groups","platforms","pending","error"}；
+    任何情况下都不写、不删除这个文件。"""
     adapter = str(_g("bot", "platform_id", d="") or "")
-    if not adapter:
-        raise RuntimeError("请配置 bot.platform_id，群管理必须限定到一个 AstrBot 适配器")
-    if not isinstance(plat, dict):
-        raise RuntimeError("平台白名单格式错误")
-    return {"source":path,"groups":[str(g) for g in plat.get(adapter,[])],"plat":plat,"per_platform":True}
+    info = {"path": _legacy_whitelist_path(), "exists": False, "adapter": adapter,
+            "groups": [], "platforms": [], "pending": [], "error": ""}
+    if not info["path"] or not os.path.isfile(info["path"]):
+        return info
+    info["exists"] = True
+    try:
+        data = _read_json(info["path"], default={})
+        if not isinstance(data, dict):
+            raise RuntimeError("旧白名单不是 JSON 对象")
+        info["platforms"] = sorted(str(k) for k in data)
+        raw = data.get(adapter, []) if adapter else []
+        if raw is None:
+            raw = []
+        if not isinstance(raw, list):
+            raise RuntimeError("旧白名单中当前平台的段不是数组")
+        info["groups"] = sorted({str(g).strip() for g in raw if str(g).strip()})
+    except Exception as e:
+        info["error"] = str(e)
+    info["pending"] = [g for g in info["groups"] if g not in _push_groups()]
+    return info
 
 
 def _norm_gid(raw) -> str:
@@ -487,18 +421,18 @@ def _norm_gid(raw) -> str:
 
 
 def action_group_list():
-    out = {"platform":instance.platform(),"push_groups":[str(g) for g in (_g("bot","groups",d=[]) or [])],
-           "default_group":str(_g("bot","default_group",d="") or ""),"data_dir":str(_g("astrbot","data_dir",d="") or ""),
-           "config_active":_cfg.config_path(),"running_groups":[]}
+    """群列表：只报告本项目 bot.groups + 旧白名单的只读探测结果（不再读框架白名单）"""
+    legacy = _read_legacy_whitelist()
+    groups = _push_groups()
+    out = {"platform": instance.platform(), "groups": groups, "push_groups": groups,
+           "default_group": str(_g("bot", "default_group", d="") or ""),
+           "data_dir": str(_g("astrbot", "data_dir", d="") or ""),
+           "config_active": _active_cfg_path(), "config_local": _local_cfg_path(),
+           "source_kind": "本项目 config.json 的 bot.groups（推送群 / 指令守卫范围）",
+           "framework_whitelist": FRAMEWORK_WHITELIST_HINT, "legacy": legacy}
     if instance.platform() == "qq_official":
-        out["source_kind"] = "官方平台会话由 AstrBot 管理"
-    else:
-        try:
-            whitelist = _read_whitelist(force=True)
-            out.update({"running_groups":whitelist["groups"],"running_source":whitelist["source"],"source_kind":"已保存的所选平台白名单"})
-        except Exception as error:
-            out["error"] = str(error)
-    return json.dumps(out,ensure_ascii=False)
+        out["source_kind"] = "官方平台会话由 AstrBot 管理；bot.groups 仍决定本项目推送目标"
+    return json.dumps(out, ensure_ascii=False)
 
 
 def _active_cfg_path() -> str:
@@ -555,138 +489,72 @@ def _set_push_groups(groups, default_group=None):
     return updated["cfg"], ["✅ 已保存当前配置的推送群列表"]
 
 
-def _apply_whitelist(plat, per_platform, groups):
-    with _CONFIG_LOCK:
-        current = _read_whitelist(force=True)
-        target = str(_g("bot", "platform_id", d=""))
-        existing = current["plat"]
-        values = sorted(set(current["groups"]) | set(map(str,groups)))
-        existing[target] = values
-        _backup_file(current["source"])
-        _atomic_write(current["source"], json.dumps(existing,ensure_ascii=False,indent=2))
-    return ["✅ 已保存所选平台白名单；未修改其他平台及全局白名单"], True
-
-
-def _running_bot_procs():
-    return [{"ProcessId":pid} for pid in instance.verified_pids("astrbot")]
-
-
 def _restart_astrbot():
     instance.stop("astrbot")
     return [_start_astrbot()]
 
 
-def _dashboard_hot_reload(groups: list) -> list:
-    """用 AstrBot Dashboard API 热重载白名单（同进程内生效，零重启）。
-    返回失败原因列表；成功返回空列表。
-    """
-    user = str(_g("astrbot", "dashboard_user", d="astrbot") or "astrbot")
-    pwd = str(_g("astrbot", "dashboard_password", d="astrbot") or "astrbot")
-    errs = []
-    for base in _aiohttp_dashboard():
-        # 1) 登录拿 JWT
-        ok_l, code_l, body_l = _http_json(base + "/api/auth/login",
-                                         payload={"username": user, "password": pwd})
-        token = ""
-        if isinstance(body_l, dict):
-            token = str(body_l.get("token") or "")
-            if not token and isinstance(body_l.get("data"), dict):
-                token = str(body_l["data"].get("token") or "")
-        if not ok_l or not token:
-            errs.append(f"{base} 登录失败（HTTP {code_l}）：{str(body_l)[:120]}")
-            continue
-        hdr = {"Authorization": "Bearer " + token}
-        # 2) 读取当前配置 -> 并入群号 -> 写回（服务端保存时会 reload_pipeline_scheduler）
-        ok_g, code_g, body_g = _http_json(base + "/api/config/system-config", headers=hdr)
-        cfg = body_g.get("data", body_g) if isinstance(body_g, dict) else {}
-        if isinstance(cfg, dict) and "config" in cfg and isinstance(cfg["config"], dict):
-            cfg = cfg["config"]
-        if not ok_g or not isinstance(cfg, dict) or not cfg:
-            errs.append(f"{base} 读取配置失败（HTTP {code_g}）：{str(body_g)[:120]}")
-            continue
-        ps = cfg.setdefault("platform_settings", {})
-        cur = [str(x).strip() for x in (ps.get("id_whitelist") or []) if str(x).strip()]
-        ps["id_whitelist"] = [int(x) if x.isdigit() else x
-                              for x in sorted(set(cur) | set(groups), key=lambda x: (len(x), x))]
-        ok_u, code_u, body_u = _http_json(base + "/api/config/astrbot/update",
-                                          payload={"conf_id": "default", "config": cfg}, headers=hdr)
-        if ok_u and not (isinstance(body_u, dict) and body_u.get("status") == "error"):
-            return []   # 成功
-        errs.append(f"{base} 保存失败（HTTP {code_u}）：{str(body_u)[:120]}")
-    return errs
-
-
-def _reload_or_restart(groups):
-    return "ℹ️ 配置已保存。HD2指令守卫读取当前推送群范围；AstrBot自身白名单请在后台重载所选平台。文件回读不代表框架配置已生效。"
-
-
-def action_group_add(raw: str) -> str:
-    """添加群号：写白名单（AstrBot）+ 写推送群列表（config.json），然后生效"""
+def action_group_add(raw=None) -> str:
+    """添加推送群：只写本项目 config.json 的 bot.groups（不再碰 AstrBot 白名单文件）"""
     if instance.platform() != "napcat":
         return "❌ 官方平台请在 AstrBot 中管理会话与白名单"
     try:
         gid = _norm_gid(raw)
     except ValueError as e:
         return f"❌ {e}"
-    try:
-        wl = _read_whitelist(force=True)
-    except Exception as e:
-        return f"❌ 读取 AstrBot 白名单失败：{e}"
-    msgs = [f"👥 添加群 {gid}"]
-    try:
-        wl_msgs, _ = _apply_whitelist(wl["plat"], wl["per_platform"], [gid])
-        msgs += wl_msgs
-    except Exception as e:
-        return f"❌ 写入 AstrBot 白名单失败：{e}"
-    # 推送群列表
-    push = [str(g) for g in (_g("bot", "groups", d=[]) or [])]
+    push = _push_groups()
     if gid in push:
-        msgs.append(f"• 推送群列表已含 {gid}（bot.groups 无变化）")
-    else:
-        try:
-            _, pmsg = _set_push_groups(push + [gid])
-            msgs += pmsg
-        except Exception as e:
-            msgs.append(f"⚠️ 写 config.json 失败: {e}")
-    msgs.append("")
-    msgs.append(_reload_or_restart([gid]))
+        return (f"ℹ️ 群 {gid} 已在推送群列表中（bot.groups 无变化）\n\n"
+                "· " + FRAMEWORK_WHITELIST_HINT)
+    groups = push + [gid]
     try:
-        msgs.append("\n· 回读已保存白名单：" + ", ".join(_read_whitelist(force=True)["groups"]))
-    except Exception:
-        pass
-    return "\n".join(msgs)
+        _, msgs = _set_push_groups(groups)
+    except Exception as e:
+        return f"❌ 写 config.json 失败: {e}"
+    return "\n".join([
+        f"👥 已添加群 {gid}", *msgs,
+        f"· 推送群列表（{len(groups)} 个）：{', '.join(groups)}",
+        "· 已即时生效：HD2 指令守卫每次事件实时读取 bot.groups，无需重启 AstrBot",
+        "· " + FRAMEWORK_WHITELIST_HINT,
+    ])
 
 
-def action_group_remove(raw):
+def action_group_remove(raw=None) -> str:
+    """移除推送群：只改本项目 config.json 的 bot.groups（旧白名单文件保持原样）"""
     try:
         if instance.platform() != "napcat":
             raise ValueError("官方平台请在 AstrBot 中管理会话白名单")
         gid = _norm_gid(raw)
-        with _CONFIG_LOCK:
-            current = _read_whitelist(force=True)
-            target = str(_g("bot", "platform_id", d=""))
-            current["plat"][target] = [x for x in current["groups"] if x != gid]
-            _backup_file(current["source"])
-            _atomic_write(current["source"], json.dumps(current["plat"],ensure_ascii=False,indent=2))
-            groups = [str(g) for g in (_g("bot","groups",d=[]) or []) if str(g) != gid]
-            default = _default_group()
-            if str(default) == gid:
-                default = int(groups[0]) if groups else 0
-            _set_push_groups(groups,default)
-        return "✅ 已移除群 " + gid + "\n" + _reload_or_restart([])
+        push = _push_groups()
+        if gid not in push:
+            return (f"ℹ️ 群 {gid} 不在推送群列表中（bot.groups 无变化）\n\n"
+                    "· " + FRAMEWORK_WHITELIST_HINT)
+        groups = [g for g in push if g != gid]
+        old_default = _default_group()
+        default = old_default
+        if str(default) == gid:
+            default = int(groups[0]) if groups else 0
+        _, msgs = _set_push_groups(groups, default)
+        lines = [f"✅ 已移除群 {gid}", *msgs,
+                 f"· 推送群列表（{len(groups)} 个）：{', '.join(groups) or '（空）'}"]
+        if str(old_default) == gid:
+            lines.append(f"· 原默认推送群被移除，已自动改为 {default}" if groups
+                         else "· 原默认推送群被移除，且已无推送群，默认群清空")
+        lines.append("· " + FRAMEWORK_WHITELIST_HINT)
+        return "\n".join(lines)
     except Exception as error:
         return "❌ " + str(error)
 
 
-def action_group_default(raw: str) -> str:
-    """设为默认推送群（只影响推送，不影响是否响应）"""
+def action_group_default(raw=None) -> str:
+    """设为默认推送群（只影响推送目标，不影响是否响应）"""
     if instance.platform() != "napcat":
         return "❌ 官方平台请在 AstrBot 中管理会话与白名单"
     try:
         gid = _norm_gid(raw)
     except ValueError as e:
         return f"❌ {e}"
-    push = [str(g) for g in (_g("bot", "groups", d=[]) or [])]
+    push = _push_groups()
     if gid not in push:
         return f"❌ 群 {gid} 不在推送群列表里，请先「添加群」"
     try:
@@ -695,17 +563,54 @@ def action_group_default(raw: str) -> str:
         return f"❌ 写 config.json 失败: {e}"
     return ("✅ 默认推送群已设为 " + gid + "\n" + "\n".join(pmsg) +
             f"\n· 推送群列表：{', '.join(push)}\n"
-            "· 提示：默认群只决定 WebUI 里不带群号的推送目标（界面显示需重启 WebUI 才更新）")
+            "· 提示：默认群只决定控制台里不带群号的推送目标；刷新页面即更新")
+
+
+def action_group_migrate(_value=None) -> str:
+    """把旧版 platform_whitelist.json 中当前平台（bot.platform_id）的群号一次性并入
+    bot.groups。旧文件保持原样：不删除、不回写（AstrBot 4.29.3 起框架已不读取它）。"""
+    if instance.platform() != "napcat":
+        return "❌ 官方平台请在 AstrBot 中管理会话与白名单"
+    legacy = _read_legacy_whitelist()
+    if not legacy["exists"]:
+        configured = str(_g("astrbot", "data_dir", d="") or "")
+        where = legacy["path"] or (f"astrbot.data_dir={configured} 的目录不存在" if configured
+                                   else "未配置 astrbot.data_dir")
+        return f"ℹ️ 未发现旧版 platform_whitelist.json（{where}），无需迁移"
+    if legacy["error"]:
+        return f"❌ 旧白名单读取失败：{legacy['error']}"
+    if not legacy["adapter"]:
+        return "❌ 请先配置 bot.platform_id，迁移需要确认旧文件里哪一段属于当前平台"
+    valid = [g for g in legacy["groups"] if re.fullmatch(r"[1-9][0-9]{4,11}", g)]
+    skipped = [g for g in legacy["groups"] if g not in valid]
+    push = _push_groups()
+    added = [g for g in valid if g not in push]
+    merged = push + added
+    lines = [f"📥 旧名单迁移（平台 {legacy['adapter']}）：{legacy['path']}",
+             f"· 旧名单群号 {len(valid)} 个，其中 {len(added)} 个将并入本项目 bot.groups"]
+    if skipped:
+        lines.append("· 跳过非数字群号：" + ", ".join(skipped))
+    if not added:
+        lines.append("ℹ️ 旧名单中的群号都已在本项目 bot.groups 中，未修改配置")
+        lines.append("· 旧文件保持原样，可自行删除（AstrBot 4.29.3 起框架不再读取它）")
+        return "\n".join(lines)
+    try:
+        _, msgs = _set_push_groups(merged)
+    except Exception as e:
+        return "❌ 写 config.json 失败: " + str(e)
+    lines += msgs
+    lines.append(f"· 迁移后推送群列表（{len(merged)} 个）：{', '.join(merged)}")
+    lines.append("· 旧文件保持原样（未删除、未回写），确认无误后可自行归档删除")
+    lines.append("· " + FRAMEWORK_WHITELIST_HINT)
+    return "\n".join(lines)
 
 
 def action_restart_astrbot() -> str:
-    """手动重启 AstrBot（白名单改完但未生效时用）"""
+    """手动重启 AstrBot（排障用；修改 bot.groups 本身不需要重启）"""
     lines = ["🔄 重启 AstrBot："]
     lines += _restart_astrbot()
-    try:
-        lines.append("· 已保存白名单：" + ", ".join(_read_whitelist(force=True)["groups"]))
-    except Exception:
-        pass
+    lines.append("· 当前推送群列表（bot.groups）：" + (", ".join(_push_groups()) or "（空）"))
+    lines.append("· 修改 bot.groups 不需要重启 AstrBot（指令守卫每次事件实时读取配置）")
     return "\n".join(lines)
 
 
@@ -903,6 +808,7 @@ ACTIONS = {
     "group_add": action_group_add,
     "group_remove": action_group_remove,
     "group_default": action_group_default,
+    "group_migrate": action_group_migrate,
     "restart_astrbot": action_restart_astrbot,
     "logs": action_logs,
     "report": action_report,
@@ -987,6 +893,10 @@ PAGE = r"""<!DOCTYPE html>
                border-radius: 14px; padding: 20px; width: min(720px, 96vw); max-height: 88vh; overflow-y: auto; }
   .modal-box h3 { font-size: 16px; margin-bottom: 14px; }
   .grp-src { font-size: 12px; color: var(--muted); line-height: 1.8; margin-bottom: 12px; word-break: break-all; }
+  .grp-migrate { display: flex; align-items: center; gap: 10px; justify-content: space-between;
+                 background: rgba(255,190,90,.08); border: 1px solid rgba(255,190,90,.35);
+                 border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; font-size: 12px;
+                 color: #e8c98a; line-height: 1.7; }
   .grp-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 16px; }
   .grp-chip { background: #0f141d; border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px;
               font-size: 13px; display: inline-flex; align-items: center; gap: 8px; }
@@ -1094,13 +1004,13 @@ PAGE = r"""<!DOCTYPE html>
   </div>
 
   <div class="card">
-    <h3>👥 群号管理（白名单 / 推送）</h3>
-    <p class="desc">添加或移除群号：同时更新 AstrBot 入群白名单与推送群列表，并让改动生效</p>
+    <h3>👥 群号管理（推送群列表）</h3>
+    <p class="desc">维护本项目 <code>config.json</code> 的 <code>bot.groups</code>：HD2 指令守卫的响应范围与推送目标</p>
     <div class="btn-row">
       <button onclick="openGroupDialog()">👥 打开群管理</button>
-      <button class="sec" onclick="run('group_list')">🔍 查看当前生效群</button>
+      <button class="sec" onclick="run('group_list')">🔍 查看当前群列表</button>
     </div>
-    <div class="hint">入群白名单由 AstrBot 在<b>启动时读一次</b>并缓存在内存，改文件不会立刻生效：本卡片会先尝试 Dashboard 热重载（零重启），不可用时才重启 AstrBot</div>
+    <div class="hint">只写本项目 <code>config.json</code>，保存即生效（指令守卫每次事件实时读取）。<b>框架入群白名单</b>不在这里：请到 <b>AstrBot WebUI → 配置 → 访问控制 → 白名单 ID 列表</b>（<code>platform_settings.id_whitelist</code>）设置；AstrBot 4.29.3 起不再读取 <code>platform_whitelist.json</code>。</div>
   </div>
 
   <div class="card">
@@ -1145,8 +1055,12 @@ PAGE = r"""<!DOCTYPE html>
 
 <div class="modal" id="groupModal">
   <div class="modal-box">
-    <h3>👥 群号管理</h3>
+    <h3>👥 群号管理（推送群列表）</h3>
     <div class="grp-src" id="groupSrc">加载中...</div>
+    <div class="grp-migrate" id="groupMigrate" style="display:none">
+      <div id="groupMigrateText"></div>
+      <button class="sec" onclick="groupMigrate()">📥 导入旧名单</button>
+    </div>
     <div class="grp-list" id="groupChips"></div>
     <div class="grp-row">
       <input type="text" id="groupInput" placeholder="群号，如 123456789（纯数字）" style="flex:1;margin:0">
@@ -1156,11 +1070,10 @@ PAGE = r"""<!DOCTYPE html>
     </div>
     <div class="grp-row">
       <button class="sec" onclick="groupRefresh()">🔍 刷新</button>
-      <button class="sec" onclick="run('restart_astrbot')">🔄 重启 AstrBot</button>
       <button class="danger" onclick="closeGroupDialog()">✖ 关闭</button>
     </div>
     <div class="grp-status" id="groupStatus"></div>
-    <div class="hint">「添加/移除」会同时改 AstrBot 的 <code>platform_whitelist.json</code> + <code>cmd_config.json</code> 和本项目 <code>config.json</code> 的推送群列表；改前自动备份。默认推送群只影响推送目标。</div>
+    <div class="hint">「添加 / 移除 / 设为默认」只改本项目 <code>config.json</code> 的 <code>bot.groups</code>（改前自动备份），保存即生效。<br><b>框架入群白名单</b>请在 <b>AstrBot WebUI → 配置 → 访问控制 → 白名单 ID 列表</b>（<code>platform_settings.id_whitelist</code>）中设置；AstrBot 4.29.3 起不再读取 <code>platform_whitelist.json</code>，本控制台也不再写它。</div>
   </div>
 </div>
 
@@ -1303,36 +1216,63 @@ function openGroupDialog() {
 function closeGroupDialog() { document.getElementById('groupModal').classList.remove('show'); }
 async function groupRefresh() {
   const src = document.getElementById('groupSrc'), chips = document.getElementById('groupChips');
-  src.textContent = '⏳ 读取中...'; chips.innerHTML = '';
+  const mg = document.getElementById('groupMigrate'), mgText = document.getElementById('groupMigrateText');
+  src.textContent = '⏳ 读取中...'; chips.innerHTML = ''; mg.style.display = 'none';
   try {
     const d = await callApi('group_list');
     const info = JSON.parse(d.output);
-    if (info.error) {
-      src.textContent = '⚠️ ' + info.error;
-    } else {
-      src.innerHTML = 'AstrBot 数据目录：<code>' + escapeHtml(info.data_dir || '-') + '</code><br>'
-        + '白名单来源（' + escapeHtml(info.source_kind || '-') + '）：<code>' + escapeHtml(info.running_source || '-') + '</code><br>'
-        + '已保存白名单（' + (info.running_groups || []).length + ' 个）';
-    }
-    const rg = info.running_groups || [];
-    chips.innerHTML = rg.length
-      ? rg.map(g => `<span class="grp-chip"><b>${escapeHtml(g)}</b>${(info.push_groups||[]).map(String).includes(String(g))?'📤':''}<span title="移除此群" data-group="${escapeHtml(g)}" onclick="groupAct('group_remove',this.dataset.group)">✖</span></span>`).join('')
-      : '<span class="hint">暂无所选平台白名单；以 AstrBot 配置与已配置推送群范围为准</span>';
-    src.innerHTML += `<br>推送群列表（${(info.push_groups||[]).length} 个）：${escapeHtml((info.push_groups||[]).join(', ') || '-')}`
-      + `　默认推送群：<b>${escapeHtml(info.default_group||'-')}</b>`;
-    src.innerHTML += `<br>推送配置：<code>${escapeHtml(info.config_active || '-')}</code>`
+    const groups = (info.groups || info.push_groups || []).map(String);
+    src.innerHTML = '群号来源：<b>' + escapeHtml(info.source_kind || 'bot.groups') + '</b>'
+      + '<br>推送配置：<code>' + escapeHtml(info.config_active || '-') + '</code>'
       + ((info.config_local && info.config_local !== info.config_active)
-          ? `<br>同目录副本：<code>${escapeHtml(info.config_local)}</code>` : '');
+          ? '<br>同目录副本：<code>' + escapeHtml(info.config_local) + '</code>' : '')
+      + '<br>推送群列表（' + groups.length + ' 个）　默认推送群：<b>' + escapeHtml(info.default_group || '-') + '</b>'
+      + '<br><span class="hint">' + escapeHtml(info.framework_whitelist || '') + '</span>';
+    chips.innerHTML = groups.length
+      ? groups.map(g => `<span class="grp-chip"><b>${escapeHtml(g)}</b>${String(g)===String(info.default_group)?'⭐':''}<span title="移除此群" data-group="${escapeHtml(g)}" onclick="groupAct('group_remove',this.dataset.group)">✖</span></span>`).join('')
+      : '<span class="hint">推送群列表为空：HD2 指令守卫将不限制群；推送前请先添加群</span>';
+    const leg = info.legacy || {};
+    if (leg.exists) {
+      const pending = (leg.pending || []).map(String);
+      let t = '⚠️ 检测到旧版 <code>platform_whitelist.json</code>（' + escapeHtml(leg.path || '-') + '），AstrBot 4.29.3 起框架已不再读取它。';
+      if (leg.error) {
+        t += ' 读取失败：' + escapeHtml(leg.error);
+      } else if (!leg.adapter) {
+        t += ' 请先配置 <code>bot.platform_id</code>，才能按当前平台导入旧名单。';
+      } else {
+        t += ' 当前平台（' + escapeHtml(leg.adapter) + '）旧名单 ' + (leg.groups || []).length + ' 个'
+          + (pending.length ? '，其中 ' + pending.length + ' 个尚未进入本项目 <code>bot.groups</code>。' : '，已全部在本项目 <code>bot.groups</code> 中。');
+      }
+      mgText.innerHTML = t;
+      mg.querySelector('button').style.display = (leg.adapter && !leg.error && pending.length) ? '' : 'none';
+      mg.style.display = 'flex';
+    }
   } catch (e) {
     src.textContent = '❌ 读取失败: ' + e;
+  }
+}
+async function groupMigrate() {
+  if (!confirm('把旧版 platform_whitelist.json 中当前平台的群号并入本项目 bot.groups？\n（旧文件保持原样，不删除；框架已不再读取它）')) return;
+  gsSet('⏳ 正在导入旧名单...');
+  const btns = document.querySelectorAll('.modal-box button');
+  btns.forEach(b => b.disabled = true);
+  try {
+    const d = await callApi('group_migrate');
+    gsSet((d.ok ? '' : '❌ 出错\n') + (d.output || '(无输出)'));
+  } catch (e) {
+    gsSet('❌ 网络错误: ' + e);
+  } finally {
+    btns.forEach(b => b.disabled = false);
+    groupRefresh();
+    loadGroups();
   }
 }
 async function groupAct(action, preset) {
   const input = document.getElementById('groupInput');
   const gid = (preset !== undefined && preset !== null) ? String(preset) : (input.value || '').trim();
   if (!gid) { gsSet('❌ 请先填群号'); return; }
-  if (action === 'group_remove' && !confirm('确认移除群 ' + gid + '？\n（会同时移出 AstrBot 白名单和推送群列表）')) return;
-  gsSet('⏳ 执行中...（添加/移除会尝试热重载，必要时重启 AstrBot，可能需要 20~60 秒）');
+  if (action === 'group_remove' && !confirm('确认从推送群列表移除群 ' + gid + '？\n（只改本项目 config.json 的 bot.groups，不影响 AstrBot 框架白名单）')) return;
+  gsSet('⏳ 执行中...（只写本项目 config.json，通常立即完成）');
   const btns = document.querySelectorAll('.modal-box button');
   btns.forEach(b => b.disabled = true);
   try {
@@ -1433,6 +1373,8 @@ class Handler(BaseHTTPRequestHandler):
                     output = fn(group=group,mode=req.get("mode","assessment"))
                 elif action in ("planet","variant","custom","inject","inject_push"):
                     output = fn(value,group=group)
+                elif action in ("group_add","group_remove","group_default","group_migrate"):
+                    output = fn(value)
                 elif action in ("send_guide","report","roll","send_guide_to"):
                     output = fn(group=group)
                 else:
