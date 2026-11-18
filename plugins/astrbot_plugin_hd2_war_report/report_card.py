@@ -1470,6 +1470,54 @@ def _dedupe_effect_items(eids, cn_map, grp):
     return items
 
 
+def _effect_descriptions():
+    """效果 ID → {desc, group}：本地 tables/hd2_variables.json（离线可用，不联网）。"""
+    table, path = {}, next((p for p in _table_candidates("hd2_variables.json") if os.path.isfile(p)), "")
+    if not path:
+        return table
+    try:
+        with open(path, encoding="utf-8") as stream:
+            value = json.load(stream)
+    except (OSError, ValueError, TypeError):
+        return table
+    if not isinstance(value, dict):
+        return table
+    for cat in value.get("categories") or []:
+        group = cat.get("name") or cat.get("key") or ""
+        for entry in cat.get("entries") or []:
+            desc = str(entry.get("desc") or "").strip()
+            if not desc:
+                continue
+            for eid in entry.get("effect_ids") or []:
+                if isinstance(eid, int) and eid not in table:
+                    table[eid] = {"desc": desc, "group": group}
+    return table
+
+
+def _effect_items(eids, cn_map=None, grp=None, desc_map=None):
+    """activeEffects → [{label, group, desc}]；同一中文名只保留一条，缺描述时用同名项补齐。"""
+    cn_map, grp = cn_map or {}, grp or {}
+    if desc_map is None:
+        desc_map = _effect_descriptions()
+    items, index = [], {}
+    for eid in eids or ():
+        if eid is None:
+            continue
+        info = desc_map.get(eid) or {}
+        label = cn_map.get(eid) or ("#" + str(eid))
+        desc = info.get("desc") or ""
+        if label in index:
+            row = items[index[label]]
+            if not row["desc"] and desc:
+                row["desc"] = desc
+            continue
+        index[label] = len(items)
+        items.append({"label": label,
+                      "group": grp.get(eid) or info.get("group") or "",
+                      "desc": desc})
+    return items
+
+
 def _chips_lines(dr, x0, y0, texts, max_w, line_h=44):
     """chips 断行预排：返回 [(x, y, text, w)] 与结束 y。"""
     rows = []
@@ -1489,7 +1537,7 @@ def _chips_lines(dr, x0, y0, texts, max_w, line_h=44):
 # ═══════════════════════════════════════════════════════════════
 
 # A 区版式版本：参与渲染缓存键，版式改动后旧布局图片自然失效
-PLANET_CARD_LAYOUT_VERSION = 1
+PLANET_CARD_LAYOUT_VERSION = 2
 PLANET_CARD_WIDTH = 372
 _CARD_PAD = 14
 _ASSET_BASE = "https://jerry114514.github.io/HD2-Galatic_war-Map/assets/"
@@ -2142,41 +2190,40 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
                             fill=(120, 138, 156) if rate_txt == "—" else DIM)
                 y += panel_h + 18
 
-            # ══ 环境与作战词条（分组照主站：变种类 + 作战限制 保留组，其余平铺） ══
+            # ══ 环境与作战词条（行动变量：词条 chip + 中文描述，分组同 hd2_variables） ══
             eids = [i for i in (pl.get("activeEffects") or []) if i is not None]
-            items = _dedupe_effect_items(eids, cn_map, grp)
-            var_items = [x for x in items if "变种" in x[1]]
-            limit_items = [x for x in items if x[1] == "作战限制"]
-            flat_items = [x for x in items if x not in var_items and x not in limit_items]
+            items = _effect_items(eids, cn_map, grp)
             max_w = W - PAD - 18 - (PAD + 18)
-            yy = y + 54
-            groups_layout = []
-            if var_items:
-                gy = yy; yy += 26
-                rows_l, end_y = _chips_lines(dr, PAD + 18 + 64, yy, [x[0] for x in var_items], max_w - 64)
-                groups_layout.append(("var", gy, rows_l))
-                yy = end_y + 16
-            if limit_items:
-                gy = yy; yy += 26
-                rows_l, end_y = _chips_lines(dr, PAD + 18, yy, [x[0] for x in limit_items], max_w)
-                groups_layout.append(("limit", gy, rows_l))
-                yy = end_y + 16
-            if flat_items:
-                rows_l, end_y = _chips_lines(dr, PAD + 18, yy, [x[0] for x in flat_items], max_w)
-                groups_layout.append(("flat", gy if (var_items or limit_items) else yy, rows_l))
-                yy = end_y + 8
-            panel_h = max(120, (yy - y) + 6)
+            chip_font, desc_font = F(18, True), F(14)
+            layout, yy, cur_group = [], y + 54, None
+            for pos, item in enumerate(items):
+                if pos:
+                    yy += 12
+                group = item["group"]
+                if group and group != cur_group:
+                    layout.append(("group", group, yy))
+                    yy += 30
+                    cur_group = group
+                cw = dr.textlength(item["label"], font=chip_font) + 24
+                layout.append(("chip", item["label"], yy, cw))
+                yy += 34 + 6
+                if item["desc"]:
+                    for line in wrap_text(dr, item["desc"], desc_font, max_w, max_lines=2):
+                        layout.append(("desc", line, yy))
+                        yy += 21
+            panel_h = max(110, (yy - y) + 6)
             dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
             dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
             section_label(dr, PAD + 18, y + 13, "环境与作战词条", F(23, True))
-            for gk, gy, rows_l in groups_layout:
-                if gk == "var":
-                    dr.text((PAD + 18, gy), "变种", font=F(15, True), fill=BRASS)
-                if gk == "limit":
-                    dr.text((PAD + 18, gy), "作战限制", font=F(15, True), fill=BRASS)
-                for cx, cy2, c, cw in rows_l:
+            for block in layout:
+                if block[0] == "group":
+                    dr.text((PAD + 18, block[2]), block[1], font=F(15, True), fill=BRASS)
+                elif block[0] == "chip":
+                    cx, cy2, cw = PAD + 18, block[2], block[3]
                     dr.rectangle([cx, cy2, cx + cw, cy2 + 34], fill=(46, 42, 10), outline=BRASS)
-                    dr.text((cx + 11, cy2 + 4), c, font=F(18, True), fill=GOLD2)
+                    dr.text((cx + 12, cy2 + 4), block[1], font=chip_font, fill=GOLD2)
+                else:
+                    dr.text((PAD + 18, block[2]), block[1], font=desc_font, fill=DIM)
             if not items:
                 dr.text((PAD + 18, y + 54), "当前无环境词条", font=F(19), fill=MUTE)
             y += panel_h + 18
