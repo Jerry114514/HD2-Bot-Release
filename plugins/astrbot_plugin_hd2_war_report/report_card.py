@@ -2028,7 +2028,9 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
                    if shared.planet_key(x.get("name")) == en), None)
         if not pl:
             return None
-        rev = "planet-tactical-v2:" + str(data.get("fetchedAt") or "") + ":" + en
+        # A 区版式版本进缓存键：布局一改，旧布局的缓存图片自然失效
+        rev = ("planet-tactical-v2:layout%d:" % PLANET_CARD_LAYOUT_VERSION
+               + str(data.get("fetchedAt") or "") + ":" + en)
 
         def draw(dr, img):
             smcn = _starmap_cn_map()
