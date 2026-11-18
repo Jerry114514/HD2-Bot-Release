@@ -3,5 +3,5 @@ display_name: HD2 公共库
 desc: HD2 公共库 - 共享常量/HTTP 抓取/表加载/译名映射、战术目标与 DSS 行动模型（供其他 HD2 插件 import，不注册指令）
 short_desc: 12 个 HD2 插件共用的基础模块：战况与补给线抓取、战术目标拓扑、DSS 行动映射与译名解析。
 author: Jerry114514
-version: 1.2.0
+version: 1.2.1
 repo: https://github.com/Jerry114514/HD2-Bot-Release

@@ -3,5 +3,5 @@ display_name: HD2 战况速报
 desc: 绝地潜兵2 战况速报插件 - 同步 MO、活动战役、战线、星球战术目标与三行动 DSS，并每分钟监测 API 变更。
 short_desc: 战报 / 重要指令 / 战役 / 星球 / DSS：主站快照转中文 HUD 卡片，含战术目标、三行动同屏与 /api 订阅。
 author: Jerry114514
-version: 1.3.0
+version: 1.3.1
 repo: https://github.com/Jerry114514/HD2-Bot-Release
