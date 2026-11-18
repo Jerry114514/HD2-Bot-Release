@@ -12,17 +12,14 @@ plugins/astrbot_plugin_hd2_roll/runtime/**/*.json linguist-generated
 /scripts/ export-ignore
 /tests/ export-ignore
 /docs/ export-ignore
-/Agent/ export-ignore
 /.github/ export-ignore
 /.qa-artifacts/ export-ignore
 /temp/ export-ignore
 /data/ export-ignore
 /dist/ export-ignore
 /sync_plugins.py export-ignore
-/_fix_restore.py export-ignore
 /*.bat export-ignore
 /config.json.bak_* export-ignore
-/样图_*.png export-ignore
 /plugins/astrbot_plugin_hd2_roll/_convert_catalog_icons.py export-ignore
 /plugins/astrbot_plugin_hd2_roll/_convert_icons.py export-ignore
 /plugins/astrbot_plugin_hd2_war_report/_fix_api.py export-ignore
