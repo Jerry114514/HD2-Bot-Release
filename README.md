@@ -21,6 +21,8 @@
 
 ## 最近更新（2026-11）
 
+> 完整版本记录见 [CHANGELOG.md](CHANGELOG.md)。
+
 - **v1.0.9**：按官方简中工作簿修正 120 个 EffectID，并同步 235 个可用中文名与描述；效果名称映射由 197 条扩充到 235 条；`ARSENAL AUGMENTATION` 统一为“军械库扩充”，`WEAPONS EXPERIMENTATION` 统一为“武器试验”；同步阴霾、DSS、变种、战备与设施词条，并发布 EffectID 名词对照页。
 
 - **v1.0.8**：补充 EffectID `1219` “Planetary regen adjustment”的中文名称和说明；`Count=-10000` 按主站百万血量基准换算为 `-1.00%/小时` 等效抵抗度；同步主站和机器人的效果详情、作战限制词条及主站 EffectID 数据表。
@@ -82,6 +84,8 @@ Bot只提供整套七槽抽取，不提供单件替换、锁定或手动选装�
 
 ## 安装与平台
 
+> 安装 / 协议端 / 数据与日志 / 验证维护等技术细节见 [docs/技术说明.md](docs/技术说明.md)。
+
 主流程面向 Windows + AstrBot 桌面版；Linux 使用**同一个插件包**（字体解析、`start.sh` 启动链路与进程管理已跨平台化，CI 也在 Linux 上跑离线检查）。
 
 > **完整部署手册**：[docs/部署指南.md](docs/部署指南.md) —— 覆盖插件市场安装、仓库部署、官方 QQ 机器人（群 OpenID 白名单）、SnowLuma、Linux/Docker、一键启动器、Web 控制台、验证清单与故障排查。
@@ -109,7 +113,7 @@ python -m playwright install chromium
 | 进群欢迎 | 不支持成员变动通知 | 支持 OneBot group_increase |
 | 启动器 | 启动 AstrBot/控制台，跳过协议端和 WS 等待 | 启动已配置实例，自动拉起 SnowLuma 并提示扫码 |
 
-`astrbot.data_dir` 必须指向所选实例，`bot.platform_id` 填 AstrBot 中该适配器的确切 ID。控制台只管理选定平台；数字群号校验仅用于协议端通道。平台/群/用户 ID 在插件日志中保留字符串。AstrBot 4.29.3 起框架白名单改为全局 `platform_settings.id_whitelist`（WebUI → 配置 → 访问控制 → 白名单 ID 列表），不再读取 `platform_whitelist.json`；控制台的「群号管理」仍会写旧文件，只有 `bot.groups` 这部分对插件自身生效，框架层请以 WebUI 为准。
+`astrbot.data_dir` 必须指向所选实例，`bot.platform_id` 填 AstrBot 中该适配器的确切 ID。控制台只管理选定平台；数字群号校验仅用于协议端通道。平台/群/用户 ID 在插件日志中保留字符串。AstrBot 4.29.3 起框架白名单改为全局 `platform_settings.id_whitelist`（WebUI → 配置 → 访问控制 → 白名单 ID 列表），不再读取 `platform_whitelist.json`；控制台的「群号管理」只维护 `bot.groups`（推送群 / 指令守卫范围），写入后实时生效；框架入群白名单请在 AstrBot WebUI → 配置 → 访问控制 → 白名单 ID 列表（`platform_settings.id_whitelist`）设置。
 
 `bot.groups` 仅限制 `bot.platform` 对应通道的指令：协议端通道（SnowLuma/NapCat）填群号，官方 QQ 填该机器人的群 OpenID，不能相互替换。旧配置未填写 `bot.platform` 时沿用 `napcat`，其数字名单不会拦截官方 QQ 事件；如需限制官方 QQ，显式选择 `qq_official` 并填写官方 OpenID。想让官方群真正被框架放行，还要把同一批群 OpenID 加进 AstrBot 的访问控制白名单（4.29.3+ 为 `platform_settings.id_whitelist`；4.27.x 及更早才是 `platform_whitelist.json`）。空列表表示本插件不额外限制群，AstrBot 自身的访问控制仍生效。
 
