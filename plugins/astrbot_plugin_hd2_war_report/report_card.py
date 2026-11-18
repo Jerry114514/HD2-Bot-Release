@@ -1484,8 +1484,539 @@ def _chips_lines(dr, x0, y0, texts, max_w, line_h=44):
     return rows, (cy + 34 if rows else cy)
 
 
+# ═══════════════════════════════════════════════════════════════
+# 星球指挥台 A 区星球卡片（左列）与右列板块
+# ═══════════════════════════════════════════════════════════════
+
+# A 区版式版本：参与渲染缓存键，版式改动后旧布局图片自然失效
+PLANET_CARD_LAYOUT_VERSION = 1
+PLANET_CARD_WIDTH = 372
+_CARD_PAD = 14
+_ASSET_BASE = "https://jerry114514.github.io/HD2-Galatic_war-Map/assets/"
+# 主站 effect-icons 里可用的 PNG 子集（其余是 SVG，Pillow 渲染不了，直接跳过）
+_EFFECT_ICON_FILES = (
+    ("无票者", "voteless.png"),
+    ("入侵", "invasion_fleet.png"),
+    ("蜂巢", "hive_lord.png"),
+    ("科学", "center_of_science.png"),
+    ("工厂", "factory_hub.png"),
+    ("TCS", "tcs.png"),
+)
+
+
+def _faction_badge(dr, x, y, size, faction, color):
+    """阵营徽标：主站 faction-icons 只有 SVG，Pillow 侧按阵营自绘几何图形兜底。"""
+    r = size / 2.0
+    cx, cy = x + r, y + r
+    dr.ellipse([cx - r, cy - r, cx + r, cy + r], fill=color)
+    if faction == "光能者":
+        dr.ellipse([cx - r * .52, cy - r * .52, cx + r * .52, cy + r * .52], fill=BG)
+        dr.ellipse([cx - r * .26, cy - r * .26, cx + r * .26, cy + r * .26], fill=color)
+    elif faction == "终结族":
+        dr.polygon([(cx, cy - r * .58), (cx + r * .60, cy + r * .42),
+                    (cx - r * .60, cy + r * .42)], fill=BG)
+    elif faction == "机器人":
+        dr.rectangle([cx - r * .44, cy - r * .44, cx + r * .44, cy + r * .44], fill=BG)
+    else:                                    # 超级地球 / 未知阵营
+        dr.ellipse([cx - r * .34, cy - r * .34, cx + r * .34, cy + r * .34], fill=BG)
+
+
+def _effect_icon_file(label):
+    """词条小图标（主站 effect-icons 的 PNG 子集）→ 缓存路径；没有则 None。"""
+    text = str(label or "")
+    for key, fn in _EFFECT_ICON_FILES:
+        if key not in text:
+            continue
+        cache_file = os.path.join(CACHE_DIR, "effect_icons", fn)
+        if os.path.exists(cache_file) and os.path.getsize(cache_file) > 200:
+            return cache_file
+        try:
+            os.makedirs(os.path.dirname(cache_file), exist_ok=True)
+            req = urllib.request.Request(_ASSET_BASE + "effect-icons/" + fn,
+                                         headers={"User-Agent": "HD2Bot/1.0"})
+            with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT) as r:
+                data = r.read()
+            if len(data) < 200:
+                return None
+            open(cache_file, "wb").write(data)
+            return cache_file
+        except Exception:
+            return None
+    return None
+
+
+def _eta_text(hours, progress=None):
+    """预计完成文案：与主站 duration() 同粒度（天/小时/分钟，超过 30 天报不可完成）。"""
+    if hours is None:
+        return "无法完成", "nonpositive"
+    left = max(0., 100. - (progress if progress is not None else 0.))
+    if left <= 0:
+        return "已完成", "complete"
+    if hours > 720:
+        return "超过 30 天", "too_long"
+    minutes = max(1, int(round(hours * 60)))
+    if minutes >= 1440:
+        return f"{minutes // 1440} 天 {minutes % 1440 // 60} 时", "ok"
+    if minutes >= 60:
+        return f"{minutes // 60} 时 {minutes % 60} 分", "ok"
+    return f"{minutes} 分钟", "ok"
+
+
+def planet_rate_view(data, planet, state=None):
+    """速率口径（任务 C）：优先共享层 planet_rate_state（实测优先），缺失时推演兜底。"""
+    state = state or shared.campaign_state(data, planet)
+    fn = getattr(shared, "planet_rate_state", None)
+    if callable(fn):
+        try:
+            view = fn(data, planet)
+            if isinstance(view, dict):
+                return view
+        except (OSError, ValueError, TypeError):
+            pass
+    maxhp = state.get("max_health") or 0
+    net = state.get("rate")
+    resistance = state.get("resistance")
+    players = planet.get("players") or 0
+    impact = data.get("impactMultiplier") or 0
+    online = ((data.get("war") or {}).get("statistics") or {}).get("playerCount") or 0
+    share = players / online * 100 if online else None
+    measured = bool(state.get("measured"))
+    eta_hours = ((100 - (state.get("progress") or 0)) / net) if net and net > .0005 else None
+    eta_text, eta_reason = _eta_text(eta_hours, state.get("progress"))
+    return {
+        "net": net,
+        "source": "measured_campaign" if measured else "estimated",
+        "source_label": "实测 · 防守速率" if measured else "推演",
+        "measured": measured,
+        "current": (net + resistance) if net is not None and resistance is not None else None,
+        "actual": net if measured else None,
+        "res_eq": resistance * maxhp / 1_000_000 if resistance is not None and maxhp else None,
+        "eta_hours": eta_hours, "eta_text": eta_text, "eta_reason": eta_reason,
+        "threshold": None, "threshold_met": None, "threshold_state": "unknown",
+        "threshold_text": None, "threshold_note": None,
+        "player_share": share,
+        "strength_label": (None if state.get("defending") else
+                           ("低" if (resistance or 0) < 2 else
+                            "中" if (resistance or 0) < 4 else "高")),
+        "progress": state.get("progress"), "max_health": maxhp, "hours": None,
+        "online_total": online, "why": None,
+    }
+
+
+def _region_rows(planet, impact):
+    """下属区域行：A 区摘要与 E 区表格共用这一份口径（不在绘图里另算一套）。"""
+    rt_map, rzh_map = _region_tables()
+    rst = rt_map.get(str(planet.get("index"))) or {}
+    regions = rst.get("regions") or []
+    if not regions:
+        return []
+    rzh = rzh_map.get(str(planet.get("index"))) or {}
+    live_regions = planet.get("regions") or []
+
+    def _live(ridx):
+        for row in live_regions:
+            if row.get("regionIndex") == ridx:
+                return row
+        if ridx < len(live_regions) and live_regions[ridx].get("regionIndex") is None:
+            return live_regions[ridx]
+        return None
+
+    ours_pl = str(planet.get("currentOwner") or "").lower() == "humans"
+    rows = []
+    for k, rg in enumerate(regions):
+        lv = _live(k) or {}
+        flags = lv.get("flags") or 0
+        factory = str(rg.get("region_type") or "").lower() == "megafactory" or bool(flags & 1)
+        size = rg.get("size") or ""
+        if factory:
+            type_cn, stars = "超大型工厂", 4
+        else:
+            type_cn = _REGION_TYPE_ZH.get(size, size or "区域")
+            stars = _REGION_STARS.get(size, 0)
+        progress = None
+        if lv.get("maxHealth"):
+            progress = max(0.0, min(100.0, (1 - (lv.get("health") or 0) / lv["maxHealth"]) * 100))
+        if progress is None and ours_pl:
+            progress = 100.0                    # 己方星球官方不下发 regions → 按已解放（主站口径）
+        if lv.get("owner"):
+            owner_cn = FACTION_CN.get(lv["owner"], lv["owner"])
+        elif ours_pl:
+            owner_cn = "超级地球"                # 静态表 owner 是抓取当时的阵营，己方一律记超级地球
+        else:
+            owner_cn = FACTION_CN.get(rg.get("owner") or "", rg.get("owner") or "—")
+        rate_txt = "—"
+        rate = _region_rate(planet, lv, impact)
+        if rate:
+            net, _res, _measured = rate
+            if progress is not None and net is not None:
+                left = max(0.0, 100.0 - progress)
+                if net > 0.0005:
+                    h = left / net
+                    eta = ("%d 小时" % round(h)) if h <= 24 else (
+                        "%d 天 %d 时" % (int(h // 24), int(h % 24)) if h <= 720 else "超过 30 天")
+                else:
+                    eta = "不会解放"
+                rate_txt = ("+" if net >= 0 else "−") + "%.2f%%/h · %s" % (abs(net), eta)
+        en_name = rg.get("name") or ""
+        rows.append({
+            "name_cn": rzh.get(en_name) or en_name or "区域",
+            "en_name": en_name,
+            "owner_cn": owner_cn,
+            "type_cn": type_cn,
+            "stars": stars,
+            "factory": factory,
+            "players": lv.get("players"),
+            "progress": progress,
+            "rate_txt": rate_txt,
+        })
+    return rows
+
+
+def _panel_frame(dr, x, y, w, h, title, color=GOLD):
+    """右列面板骨架：底色 + 顶部色条 + 分区标题。"""
+    dr.rectangle([x, y, x + w, y + h], fill=PANEL, outline=LINE)
+    dr.rectangle([x, y, x + w, y + 3], fill=color)
+    section_label(dr, x + 18, y + 13, title, F(23, True))
+
+
+def _objectives_block(dr, objectives, width):
+    """战术目标：先按列宽折行算高度（量→画两段式），返回 (layout, height)。"""
+    text_w = width - 64 - 18
+    layout, body = [], 0
+    for objective in objectives:
+        lines = wrap_text(dr, objective.get("text") or "", F(17), text_w)
+        links = objective.get("target_links") or []
+        layout.append((objective, lines, links))
+        body += 34 + 23 * len(lines) + (22 if links else 0) + 22 * len(links) + 14
+    return layout, 54 + (body if body else 76)
+
+
+def _tactical_panel(dr, x, y, w, layout, height):
+    """战术目标面板（B 区）：内容与旧版一致，只是宽度收到右列。"""
+    _panel_frame(dr, x, y, w, height, "战术目标", color=BLUE)
+    count_text = f"{len(layout)} 项可执行" if layout else "通道待命"
+    cw = dr.textlength(count_text, font=F(14, True))
+    dr.text((x + w - 18 - cw, y + 18), count_text, font=F(14, True), fill=BLUE)
+    if not layout:
+        dr.text((x + 18, y + 54), "当前无战术目标", font=F(19, True), fill=DIM)
+        dr.text((x + 18, y + 82), "该星球暂未形成可执行的包围、对弈或星域解放条件。",
+                font=F(15), fill=MUTE)
+        return
+    text_w = w - 64 - 18
+    oy = y + 54
+    for index, (objective, lines, links) in enumerate(layout, 1):
+        dr.text((x + 18, oy), f"{index:02d}", font=F(18, True), fill=BLUE)
+        dr.text((x + 64, oy - 4), ellipsize(dr, objective.get("title") or "", F(22, True), text_w),
+                font=F(22, True), fill=TEXT)
+        oy += 34
+        for line in lines:
+            dr.text((x + 64, oy), line, font=F(17), fill=DIM)
+            oy += 23
+        target_name = "、".join(
+            link.get("name") or ("#" + str(link.get("index"))) for link in links
+        )
+        if target_name:
+            dr.text((x + 64, oy),
+                    ellipsize(dr, "目标星球：" + target_name, F(16, True), text_w),
+                    font=F(16, True), fill=TEXT)
+            oy += 22
+        for link in links:
+            # 窄列放不下完整 URL：去掉协议头再截断，保留可辨认的路径
+            url_txt = str(link.get("url") or "")
+            if url_txt.startswith("https://"):
+                url_txt = url_txt[len("https://"):]
+            dr.text((x + 64, oy), ellipsize(dr, url_txt, F(14), text_w),
+                    font=F(14), fill=BLUE)
+            oy += 22
+        oy += 14
+
+
+HEALTH_PANEL_HEIGHT = 50 + 34 * 3 + 10
+
+
+def _health_panel(dr, x, y, w, rows):
+    """血量与在线（C 区）：只放卡片没有的字段，双列三行。
+
+    rows 每项是 (标签, 数值) 或 (标签, 数值, 副标签)；副标签放不下时由
+    label_value_row 自动省略，不会和标签/数值重叠。
+    """
+    _panel_frame(dr, x, y, w, HEALTH_PANEL_HEIGHT, "血量与在线", color=GOLD)
+    colw = (w - 36) // 2
+    for i, row in enumerate(rows):
+        label, value = row[0], row[1]
+        note = row[2] if len(row) > 2 else None
+        kx = x + 18 + (i % 2) * (colw + 18)
+        ky = y + 50 + (i // 2) * 34
+        label_value_row(dr, kx, ky, colw - 18, label, value, F(13), F(15, True),
+                        note=note, note_font=F(12), gap=8, label_reserve_ratio=0.32,
+                        note_fill=(120, 138, 156))
+
+
+def _stats_block(dr, data, planet, state, width):
+    """星球统计（D 区）：返回 (rows, present, height)。行 = (标签, 数值, 副标签)。"""
+    stats = None
+    for row in ((data.get("war_stats") or {}).get("planets_stats")) or []:
+        if isinstance(row, dict) and row.get("planetIndex") == planet.get("index"):
+            stats = row
+            break
+    if not stats:
+        return [], False, 114
+    won, lost = stats.get("missionsWon") or 0, stats.get("missionsLost") or 0
+    total = won + lost
+    rate = (won / total * 100) if total else 0
+    shots, hits = stats.get("bulletsFired") or 0, stats.get("bulletsHit") or 0
+    kills = [("终结族", stats.get("bugKills") or 0), ("机器人", stats.get("automatonKills") or 0),
+             ("光能者", stats.get("illuminateKills") or 0)]
+    owner_key = str(planet.get("currentOwner") or "").lower()
+    key_map = {"terminids": "终结族", "automaton": "机器人", "illuminate": "光能者"}
+    main_kill = next((k for k in kills if key_map.get(owner_key) == k[0]), None) \
+        or max(kills, key=lambda k: k[1])
+    others = [k for k in kills if k is not main_kill and k[1] > 0]
+    rows = [
+        ("任务完成", fmt(won), f"成功率 {rate:.1f}%" if total else "—"),
+        ("任务失败", fmt(lost), f"占 {100 - rate:.1f}%" if total else "—"),
+        ("开火", fmt(shots), "累计发数"),
+        ("命中", fmt(hits), (f"命中/开火 {hits / shots * 100:.1f}%" if shots else "—")),
+        (main_kill[0] + "击杀", fmt(main_kill[1]),
+         "当前控制方" if owner_key else "历史主要交战阵营"),
+        ("阵亡绝地潜兵", fmt(stats.get("deaths") or 0),
+         "其他历史 " + " · ".join(k[0] + " " + fmt(k[1]) for k in others) if others else ""),
+    ]
+    row_h = 46 if width < 430 else 40          # 窄列时副标签另起一行，行高加一档
+    return rows, True, 50 + row_h * 3 + 10
+
+
+def _stats_panel(dr, x, y, w, rows, present, height):
+    """星球统计面板：窄列时副标签下沉一行，避免与数值抢位置。"""
+    _panel_frame(dr, x, y, w, height, "星球统计（本场战争累计）", color=GOLD)
+    if not present:
+        for i, line in enumerate(wrap_text(dr, "该星球暂无累计统计（官方 war_stats 里没有这一条；通常是从未被打过的星球）。",
+                                           F(15), w - 36)):
+            dr.text((x + 18, y + 54 + i * 22), line, font=F(15), fill=DIM)
+        return
+    colw = (w - 36) // 2
+    row_h = 46 if w < 430 else 40
+    for i, (label, value, note) in enumerate(rows):
+        kx = x + 18 + (i % 2) * (colw + 18)
+        ky = y + 50 + (i // 2) * row_h
+        narrow_note = bool(note) and w < 430
+        label_value_row(dr, kx, ky, colw - 18, label, value, F(15), F(21, True),
+                        note=None if narrow_note else note, note_font=F(13), gap=12,
+                        note_fill=(120, 138, 156),
+                        value_fill=GOLD if "击杀" in label else TEXT)
+        if narrow_note:
+            dr.text((kx, ky + 24), ellipsize(dr, note, F(11), colw - 18),
+                    font=F(11), fill=(120, 138, 156))
+
+
+def draw_planet_card(planet, width, data=None, state=None, rate=None,
+                     min_height=0, title_cn=None):
+    """A 区星球卡片：返回 PIL.Image（宽 width，高 = 内容高度或 min_height）。
+
+    字段照主站 planet.html 的目标星球卡；数据全部来自共享层
+    （campaign_state / planet_rate_state / 区域静态表），本函数只负责排版。
+    """
+    width = max(260, int(width))
+    if data is None:
+        data = _site_get(DATA_URL)
+    state = state or shared.campaign_state(data, planet)
+    rate = rate if rate is not None else planet_rate_view(data, planet, state)
+    pad = _CARD_PAD
+    inner = width - pad * 2
+    smcn = _starmap_cn_map()
+    owner_en = planet.get("currentOwner") or ""
+    owner = FACTION_CN.get(owner_en, owner_en or "未知阵营")
+    ocolor = FACTION_COLOR.get(owner, GOLD)
+    defending = bool(state.get("defending"))
+    progress = state.get("progress") or 0.0
+    resistance = state.get("resistance")
+    max_health = state.get("max_health") or 0
+
+    canvas_h = 760
+    img = Image.new("RGB", (width, canvas_h), PANEL)
+    dr = ImageDraw.Draw(img)
+    y = pad
+
+    # ① 阵营条：左徽标 + 名称，右在线玩家（字段与旧图一致，不重算）
+    _faction_badge(dr, pad, y + 2, 22, owner, ocolor)
+    dr.text((pad + 30, y + 1), ellipsize(dr, owner, F(16, True), inner - 120),
+            font=F(16, True), fill=ocolor)
+    players_txt = fmt(planet.get("players") or 0)
+    pw = dr.textlength(players_txt, font=F(19, True))
+    dr.text((width - pad - pw, y - 2), players_txt, font=F(19, True), fill=TEXT)
+    hint = "在线"
+    hw = dr.textlength(hint, font=F(11))
+    dr.text((width - pad - pw - 8 - hw, y + 4), hint, font=F(11), fill=MUTE)
+    y += 30
+
+    # ② 星球主图 + 左下角词条图标
+    photo_h = 152
+    bimg = _biome_landscape(_planet_biome_name(planet))
+    if bimg:
+        try:
+            from PIL import ImageOps
+            img.paste(ImageOps.fit(Image.open(bimg).convert("RGB"), (inner, photo_h)),
+                      (pad, y))
+        except Exception:
+            bimg = None
+    if not bimg:
+        dr.rectangle([pad, y, width - pad, y + photo_h], fill=PANEL2)
+        icon = _planet_icon_file(planet.get("name"))
+        if icon:
+            try:
+                emblem = ImageOps_thumbnail(icon, 84)
+                img.paste(emblem, (pad + (inner - emblem.width) // 2,
+                                   y + (photo_h - emblem.height) // 2), emblem
+                          if emblem.mode == "RGBA" else None)
+            except Exception:
+                pass
+        else:
+            dr.text((pad + inner // 2, y + photo_h // 2 - 16), "◇", font=F(52), fill=LINE2)
+    cn_map, grp = _planet_intel()
+    items = _dedupe_effect_items(
+        [i for i in (planet.get("activeEffects") or []) if i is not None], cn_map, grp)
+    chip_y = y + photo_h - 34
+    for i, (label, _group) in enumerate(items[:3]):
+        chip_x = pad + 8 + i * 34
+        dr.rectangle([chip_x, chip_y, chip_x + 28, chip_y + 28], fill=(8, 12, 18), outline=LINE2)
+        icon_file = _effect_icon_file(label)
+        if icon_file:
+            try:
+                small = ImageOps_thumbnail(icon_file, 22)
+                img.paste(small, (chip_x + (28 - small.width) // 2,
+                                  chip_y + (28 - small.height) // 2),
+                          small if small.mode == "RGBA" else None)
+                continue
+            except Exception:
+                pass
+        # 没有对应 PNG 时退化成首字方块（居中，不越框）
+        glyph = (label or "?")[:1]
+        gw = dr.textlength(glyph, font=F(13, True))
+        dr.text((chip_x + (28 - gw) / 2, chip_y + 6), glyph, font=F(13, True), fill=GOLD2)
+    y += photo_h + 10
+
+    # ③ 类型标签 + 金色星球名 + 英文名/星区
+    kind = "防御战" if defending else "解放战役"
+    kw = dr.textlength(kind, font=F(12, True)) + 14
+    dr.rectangle([pad, y, pad + kw, y + 20], fill=(8, 12, 18), outline=ocolor)
+    dr.text((pad + 7, y + 2), kind, font=F(12, True), fill=ocolor)
+    y += 25
+    cn_name = _planet_display_name(planet.get("name"), title_cn, smcn, planet.get("name"))
+    dr.text((pad, y), ellipsize(dr, cn_name, F(27, True), inner), font=F(27, True), fill=GOLD)
+    y += 36
+    secmaps = _sector_maps()
+    sec_cn = ((secmaps.get("pl_sec") or {}).get((planet.get("name") or "").upper())
+              or (secmaps.get("sec_cn") or {}).get((planet.get("sector") or "").upper())
+              or (planet.get("sector") or "") or "未知星区")
+    subtitle = f"{str(planet.get('name') or '').upper()} · {sec_cn}"
+    if not subtitle.endswith("星区"):
+        subtitle += "星区"
+    dr.text((pad, y), ellipsize(dr, subtitle, F(11), inner), font=F(11), fill=MUTE)
+    y += 18
+
+    # ④ 描述：按宽度换行，最多 3 行
+    desc = ("这颗星球遇袭。绝地潜兵必须保卫星球，抵御暴政军队。" if defending else
+            "这颗星球被列为敌占领地。绝地潜兵必须从残暴入侵者手中夺回控制权。")
+    for line in wrap_text(dr, desc, F(12), inner, max_lines=3):
+        dr.text((pad, y), line, font=F(12), fill=DIM)
+        y += 18
+    y += 4
+
+    # ⑤ 进度条：已完成填阵营色，未完成用 45° 斜纹
+    bar_y, bar_h = y, 9
+    bar_left, bar_right = pad, width - pad
+    dr.rectangle([bar_left, bar_y, bar_right, bar_y + bar_h], fill=(20, 30, 43), outline=LINE)
+    fill_w = int((bar_right - bar_left - 2) * max(0.0, min(1.0, progress / 100.0)))
+    if fill_w > 0:
+        dr.rectangle([bar_left + 1, bar_y + 1, bar_left + 1 + fill_w, bar_y + bar_h - 1],
+                     fill=GREEN if progress >= 99.9 else ocolor)
+    for sx in range(bar_left + 2 + fill_w, bar_right - 1, 11):
+        dr.line([(sx, bar_y + bar_h - 1), (min(sx + bar_h - 1, bar_right - 1), bar_y + 1)],
+                fill=LINE2)
+    y += bar_h + 6
+    lib_txt = f"已解放 {progress:.2f}%"
+    dr.text((pad, y), lib_txt, font=F(12, True), fill=ocolor)
+    strength = rate.get("strength_label") or "—"
+    res_txt = (f"抵抗强度 {strength}（{resistance:.2f} %/h）" if resistance is not None
+               else "抵抗强度 未知")
+    rw = dr.textlength(res_txt, font=F(12))
+    dr.text((width - pad - rw, y), res_txt, font=F(12), fill=DIM)
+    y += 18
+
+    # ⑥ 数据来源徽标（实测 / 推演）
+    source_label = rate.get("source_label") or "未知"
+    sw = dr.textlength(source_label, font=F(11, True))
+    source_color = GREEN if rate.get("measured") else BRASS
+    dr.text((width - pad - sw, y), source_label, font=F(11, True), fill=source_color)
+    dr.text((pad, y), "速率口径", font=F(11), fill=MUTE)
+    y += 16
+
+    # ⑦ 速率四行：等效抵抗度 / 当前推进 / 实际推进 / 预计完成
+    dr.line([(pad, y + 2), (width - pad, y + 2)], fill=LINE)
+    y += 10
+    res_eq = rate.get("res_eq")
+    current = rate.get("current")
+    actual = rate.get("actual")
+    eta_text = rate.get("eta_text") or "—"
+    eta_reason = rate.get("eta_reason") or "unknown"
+
+    def _signed(value):
+        return "—" if value is None else ("+" if value >= 0 else "−") + f"{abs(value):.2f} %/h"
+
+    rate_rows = [
+        ("等效抵抗度", "—" if res_eq is None else f"{res_eq:.2f} %/h", MUTE),
+        ("当前推进速率", _signed(current), DIM),
+        ("实际推进速率", _signed(actual), RED if (actual is not None and actual < 0) else DIM),
+        ("预计完成", eta_text, RED if eta_reason in ("nonpositive", "too_long") else TEXT),
+    ]
+    for label, value, color in rate_rows:
+        dr.text((pad, y), label, font=F(12), fill=MUTE)
+        vw = dr.textlength(value, font=F(13, True))
+        dr.text((width - pad - vw, y - 1), value, font=F(13, True), fill=color)
+        y += 22
+    y += 2
+
+    # ⑧ 持续推进门槛（文案由共享层给，避免「已达门槛」与「无法完成」自相矛盾）
+    threshold_text = rate.get("threshold_text")
+    if threshold_text:
+        state_cn = rate.get("threshold_state")
+        color = GREEN if state_cn == "met" else (RED if state_cn == "impossible" else BRASS)
+        for line in wrap_text(dr, threshold_text, F(11), inner, max_lines=2):
+            dr.text((pad, y), line, font=F(11), fill=color)
+            y += 15
+    y += 6
+
+    # ⑨ 区域摘要（明细在 E 区）
+    rows_r = _region_rows(planet, data.get("impactMultiplier") or 0)
+    if rows_r:
+        opened = sum(1 for row in rows_r if (row.get("progress") or 0) > 0)
+        top = max(rows_r, key=lambda row: row.get("progress") or 0)
+        summary = f"区域 {len(rows_r)} · 城市 / 超大型工厂 · 已开放 {opened}/{len(rows_r)}"
+        for line in wrap_text(dr, summary, F(11), inner, max_lines=2):
+            dr.text((pad, y), line, font=F(11), fill=DIM)
+            y += 15
+        detail = f"{top['name_cn']} {(top.get('progress') or 0):.2f}%"
+        dr.text((pad, y), ellipsize(dr, detail, F(11, True), inner), font=F(11, True), fill=TEXT)
+        y += 17
+
+    height = max(y + pad, int(min_height))
+    height = min(height, canvas_h)
+    img = img.crop((0, 0, width, height))
+    dr = ImageDraw.Draw(img)
+    dr.rectangle([0, 0, width - 1, height - 1], outline=ocolor, width=1)
+    dr.rectangle([0, 0, width - 1, 3], fill=ocolor)
+    return img
+
+
+def ImageOps_thumbnail(path, size):
+    """读图并等比缩放到 size 以内（返回 RGBA 小图）；失败抛异常由调用方兜底。"""
+    from PIL import ImageOps
+    pic = ImageOps.contain(Image.open(path).convert("RGBA"), (size, size))
+    return pic
+
+
 def render_planet_card(slug, title_cn=None, out_dir=None):
-    """星球指挥台图片卡（照主站 planet.html：Hero 环 + Quick Intel + 态势 + 统计 + 词条分组）"""
+    """星球指挥台图片卡（左列星球卡 + 右列战术目标/血量在线/星球统计 + 通栏区域与词条）"""
     out_dir = out_dir or CACHE_DIR
     try:
         os.makedirs(out_dir, exist_ok=True)
@@ -1529,325 +2060,85 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
             y = _hud_head(dr, img, "星球指挥台", "PLANET COMMAND")
 
             cn = _planet_display_name(slug, title_cn, smcn, pl.get("name"))
-            # 星区中文名：starmap system 优先，API sector 仅兜底（主站 secCn 口径）
-            secmaps = _sector_maps()
-            sec_cn = ((secmaps.get("pl_sec") or {}).get((pl.get("name") or en).upper())
-                      or (secmaps.get("sec_cn") or {}).get((pl.get("sector") or "").upper())
-                      or (pl.get("sector") or "") or "未知星区")
-            # ══ Hero：环境图背景 + 遮罩 + 身份 + 解放环 + Quick Intel ══
-            hero_h = 330
-            bimg = _biome_landscape(_planet_biome_name(pl))
-            if bimg:
-                try:
-                    from PIL import ImageOps
-                    img.paste(ImageOps.fit(Image.open(bimg).convert("RGB"), (W - PAD * 2, hero_h)), (PAD, y))
-                except Exception:
-                    bimg = None
-            # 主站式暗化渐变遮罩（.hero-media::after：顶部 .62 → 55% .78 → 底部 .92）
-            overlay = Image.new("RGBA", (W - PAD * 2, hero_h), (0, 0, 0, 0))
-            odr = ImageDraw.Draw(overlay, "RGBA")
-
-            def _ga(t):
-                if t <= 0.55:
-                    return int(158 + (199 - 158) * (t / 0.55))
-                return int(199 + (235 - 199) * ((t - 0.55) / 0.45))
-
-            for yy in range(hero_h):
-                odr.line([(0, yy), (W - PAD * 2, yy)], fill=(6, 6, 6, _ga(yy / max(1, hero_h - 1))))
-            odr.rectangle([0, 0, 3, hero_h], fill=GOLD + (255,))
-            img.paste(overlay, (PAD, y), overlay)
-            dr.rectangle([PAD, y, W - PAD, y + hero_h], outline=LINE2)
-            ix = y + 14
-            picon = _planet_icon_file(pl.get("name"))
-            if not bimg and picon:
-                # 主站 .no-bio 回退：星球图标作居中大水印（50% 不透明度）
-                try:
-                    ic = Image.open(picon).convert("RGBA")
-                    ih = int(hero_h * 0.72)
-                    iw = int(ic.width * ih / max(1, ic.height))
-                    if iw > W - PAD * 2 - 40:
-                        iw = W - PAD * 2 - 40
-                        ih = int(ic.height * iw / max(1, ic.width))
-                    ic = ic.resize((max(1, iw), max(1, ih)))
-                    ic.putalpha(ic.getchannel("A").point(lambda v: v * 50 // 100))
-                    img.paste(ic, (PAD + (W - PAD * 2 - ic.width) // 2, y + (hero_h - ic.height) // 2), ic)
-                except Exception:
-                    pass
-            if picon:
-                try:
-                    paste_contain(img, Image.open(picon).convert("RGBA"), (PAD + 18, ix, 56, 56))
-                except Exception:
-                    pass
-            dr.text((PAD + 86, ix + 2), "Planet Command · 星球指挥台", font=F(14), fill=GOLD)
-            dr.text((PAD + 86, ix + 24), cn, font=F(42, True), fill=TEXT)
-            dr.text((PAD + 88, ix + 78), (pl.get("name") or en) + " · " + sec_cn + "星区",
-                    font=F(15), fill=DIM)
-            cx, cyy = PAD + 18, ix + 116
-            for txt, col in ((status_cn, ocolor), ("◆ " + owner, ocolor)):
-                cw = dr.textlength(txt, font=F(15, True)) + 20
-                dr.rectangle([cx, cyy, cx + cw, cyy + 30], fill=(16, 18, 22, 220), outline=col)
-                dr.text((cx + 10, cyy + 5), txt, font=F(15, True), fill=TEXT)
-                cx += cw + 10
-            # 解放进度环（主站 168px 口径缩放为 150）
-            import math
-            ring_x, ring_y, RR, SZ = PAD + 500, y + 36, 60, 150
-            sw_c = 11
-            dr.arc([ring_x, ring_y, ring_x + SZ, ring_y + SZ], 0, 360, fill=(28, 28, 28), width=sw_c)
-            ring_col = GREEN if lib >= 99.9 else ocolor
-            if lib > 0.05:
-                dr.arc([ring_x, ring_y, ring_x + SZ, ring_y + SZ], -90,
-                       -90 + 360 * min(100, lib) / 100, fill=ring_col, width=sw_c)
-            ltxt = f"{lib:.1f}%" if state["progress"] is not None else "未知"
-            lw = dr.textlength(ltxt, font=F(28, True))
-            dr.text((ring_x + (SZ - lw) / 2, ring_y + SZ / 2 - 26), ltxt, font=F(28, True), fill=TEXT)
-            lbl = progress_label
-            lbw = dr.textlength(lbl, font=F(13))
-            dr.text((ring_x + (SZ - lbw) / 2, ring_y + SZ / 2 + 10), lbl, font=F(13), fill=DIM)
-            hpv = f"{fmt(state['health'] or 0)} / {fmt(maxh)} · ×{hp_ratio:.2f}"
-            hw = dr.textlength(hpv, font=F(12))
-            dr.text((ring_x + (SZ - hw) / 2, ring_y + SZ + 4), hpv, font=F(12), fill=MUTE)
-            # Quick Intel（右列 6 行）
-            qx = PAD + 700
-            qy = y + 14
-            qis = [("在线玩家", f"{fmt(players)}（占全服 {share:.2f}%）"),
-                   (progress_label, f"{lib:.2f}%" if state["progress"] is not None else "未知"),
-                   ("血量倍数", f"×{hp_ratio:.2f}（100 万血基准）"),
-                   ("净速率", rate_txt + "（" + rate_source + "）"),
-                   ("当前生态", _planet_biome_name(pl) or "—"),
-                   ("防御截止" if attacking else "预计解放", str(state["deadline"] or "未知")[:16] if attacking else eta_txt)]
-            for k, v in qis:
-                # 先量后画：标签左对齐 / 数值右对齐，中间保证最小间距（不再叠字）
-                label_value_row(dr, qx, qy - 2, W - PAD - 18 - qx, k, v,
-                                F(13), F(15, True), gap=12,
-                                label_reserve_ratio=0.32)
-                qy += 32
-            # 细粒度进度条
-            sy = y + hero_h - 14
-            progress_bar(dr, PAD + 2, sy, W - PAD * 2 - 4, 8, lib / 100.0,
-                         fill=GREEN if lib >= 99.9 else ocolor)
-            y += hero_h + 18
-
-            # ══ 战术目标（星球指挥台独立全宽区；概要卡不再堆叠） ══
+            # ── 右列 B/C/D 先量高度，A 区卡片据此留白对齐 ──
+            right_x = PAD + PLANET_CARD_WIDTH + 18
+            right_w = W - PAD - right_x
+            rate_view = planet_rate_view(data, pl, state)
             objectives = tactical.compute_for(data, pl.get("index"))
-            objective_layout = []
-            objective_text_w = W - PAD * 2 - 64 - 18
-            for objective in objectives:
-                desc_lines = wrap_text(dr, objective.get("text") or "", F(17),
-                                       objective_text_w)
-                links = objective.get("target_links") or []
-                objective_layout.append((objective, desc_lines, links))
-            body_h = 0
-            for _objective, desc_lines, links in objective_layout:
-                body_h += 54 + 23 * len(desc_lines) + 22 * len(links) + 14
-            tactical_h = 54 + (body_h if body_h else 76)
-            dr.rectangle([PAD, y, W - PAD, y + tactical_h], fill=PANEL, outline=LINE)
-            dr.rectangle([PAD, y, W - PAD, y + 3], fill=BLUE)
-            section_label(dr, PAD + 18, y + 13, "战术目标", F(23, True))
-            obj_count = (
-                f"{len(objectives)} 项可执行" if objectives else "通道待命"
-            )
-            obj_count_w = dr.textlength(obj_count, font=F(14, True))
-            dr.text((W - PAD - 18 - obj_count_w, y + 18), obj_count,
-                    font=F(14, True), fill=BLUE)
-            if objectives:
-                oy = y + 54
-                for index, (objective, desc_lines, links) in enumerate(
-                    objective_layout, 1
-                ):
-                    dr.text((PAD + 18, oy), f"{index:02d}", font=F(18, True), fill=BLUE)
-                    dr.text((PAD + 64, oy - 4), objective["title"],
-                            font=F(22, True), fill=TEXT)
-                    oy += 34
-                    for line in desc_lines:
-                        dr.text((PAD + 64, oy), line, font=F(17), fill=DIM)
-                        oy += 23
-                    target_name = "、".join(
-                        link.get("name") or ("#" + str(link.get("index")))
-                        for link in links
-                    )
-                    if target_name:
-                        dr.text(
-                            (PAD + 64, oy),
-                            "目标星球：" + target_name,
-                            font=F(16, True),
-                            fill=TEXT,
-                        )
-                        oy += 22
-                    for link in links:
-                        dr.text(
-                            (PAD + 64, oy),
-                            ellipsize(dr, link.get("url") or "", F(14),
-                                      objective_text_w),
-                            font=F(14),
-                            fill=BLUE,
-                        )
-                        oy += 22
-                    oy += 14
-            else:
-                dr.text((PAD + 18, y + 71), "当前无战术目标", font=F(19, True), fill=DIM)
-                dr.text(
-                    (PAD + 18, y + 99),
-                    "该星球暂未形成可执行的包围、对弈或星域解放条件。",
-                    font=F(15),
-                    fill=MUTE,
-                )
-            y += tactical_h + 18
+            obj_layout, obj_h = _objectives_block(dr, objectives, right_w)
+            stats_rows, stats_present, stats_h = _stats_block(dr, data, pl, state, right_w)
+            right_h = obj_h + 18 + HEALTH_PANEL_HEIGHT + 18 + stats_h
 
-            # ══ 战略态势 ══
-            panel_h = 204
-            dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
-            dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
-            section_label(dr, PAD + 18, y + 13, "战略态势", F(23, True))
-            situation = [(progress_label, f"{lib:.2f}%" if state["progress"] is not None else "未知", f"血量 {fmt(state['health'] or 0)} / {fmt(maxh)}"),
-                         ("净速率", rate_txt, rate_source),
-                         ("每小时回血", f"{heal_h:,.0f} HP/h", "抵抗度% × 血量"),
-                         ("等效推进（基准球）", ("+" if eq_rate >= 0 else "") + f"{eq_rate:.2f} %/h", f"血量为基准球的 {hp_ratio:.2f} 倍"),
-                         ("预计防御完成" if attacking else "预计解放", eta_txt, "推演时间，不代表能在防御截止前完成" if attacking else "净速率 ≤ 0 时无法推演"),
-                         ("敌方抵抗", f"{res:.2f} %/h" if state["resistance"] is not None else "未知", "解放战的回血能力；防御使用事件数据")]
-            colw = (W - PAD * 2 - 36) // 2
-            for i, (k, v, note) in enumerate(situation):
-                kx = PAD + 18 + (i % 2) * (colw + 18)
-                ky = y + 46 + (i // 2) * 46
-                dr.text((kx, ky), k, font=F(15), fill=MUTE)
-                vw = dr.textlength(v, font=F(18, True))
-                dr.text((kx + colw - 40 - vw, ky - 3), v, font=F(18, True), fill=TEXT)
-                nw = dr.textlength(note, font=F(13))
-                dr.text((kx + colw - 40 - nw, ky + 20), note, font=F(13), fill=(90, 90, 90))
-            y += panel_h + 18
+            # ── A 区星球卡片（边框用当前阵营色，高度补齐右列） ──
+            card = draw_planet_card(pl, PLANET_CARD_WIDTH, data=data, state=state,
+                                    rate=rate_view, min_height=right_h, title_cn=cn)
+            img.paste(card, (PAD, y))
+            # 卡片内容高于右列时，把星球统计面板补到同高，两列底边对齐
+            extra = max(0, card.height - right_h)
+            if extra:
+                stats_h += extra
+                right_h += extra
 
-            # ══ 星球统计（war_stats.planets_stats） ══
-            stats = None
-            for row in ((data.get("war_stats") or {}).get("planets_stats")) or []:
-                if isinstance(row, dict) and row.get("planetIndex") == pl.get("index"):
-                    stats = row
-                    break
-            panel_h = 216
-            dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
-            dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
-            section_label(dr, PAD + 18, y + 13, "星球统计（本场战争累计）", F(23, True))
-            if stats:
-                won, lost = stats.get("missionsWon") or 0, stats.get("missionsLost") or 0
-                tot = won + lost
-                rate = (won / tot * 100) if tot else 0
-                shots, hits = stats.get("bulletsFired") or 0, stats.get("bulletsHit") or 0
-                kills = [("终结族", stats.get("bugKills") or 0), ("机器人", stats.get("automatonKills") or 0),
-                         ("光能者", stats.get("illuminateKills") or 0)]
-                owner_key = str(owner_en or "").lower()
-                key_map = {"terminids": "终结族", "automaton": "机器人", "illuminate": "光能者"}
-                main_kill = next((k for k in kills if key_map.get(owner_key) == k[0]), None) \
-                    or max(kills, key=lambda k: k[1])
-                others = [k for k in kills if k is not main_kill and k[1] > 0]
-                rows = [("任务完成", fmt(won), f"成功率 {rate:.1f}%" if tot else "—"),
-                        ("任务失败", fmt(lost), f"占 {100 - rate:.1f}%" if tot else "—"),
-                        ("开火", fmt(shots), "累计发数"),
-                        ("命中", fmt(hits), (f"命中/开火 {hits / shots * 100:.1f}%" if shots else "—")),
-                        (main_kill[0] + "击杀", fmt(main_kill[1]),
-                         "当前控制方" if owner_key else "历史主要交战阵营"),
-                        ("阵亡绝地潜兵", fmt(stats.get("deaths") or 0),
-                         "其他历史 " + " · ".join(k[0] + " " + fmt(k[1]) for k in others) if others else "")]
-                for i, (k, v, s2) in enumerate(rows):
-                    kx = PAD + 18 + (i % 2) * (colw + 18)
-                    ky = y + 48 + (i // 2) * 40
-                    hero_v = "击杀" in k
-                    # 标签 / 副标签 / 数值三者先量后画：放不下优先缩副标签、其次省略
-                    label_value_row(dr, kx, ky, colw - 40, k, v, F(15), F(21, True),
-                                    note=s2, note_font=F(13), gap=14,
-                                    value_fill=GOLD if hero_v else TEXT)
-            else:
-                dr.text((PAD + 18, y + 52),
-                        "该星球暂无累计统计（官方 war_stats 里没有这一条；通常是从未被打过的星球）。",
-                        font=F(17), fill=DIM)
-            y += panel_h + 18
+            # ── B 战术目标 / C 血量与在线 / D 星球统计 ──
+            _tactical_panel(dr, right_x, y, right_w, obj_layout, obj_h)
+            ry = y + obj_h + 18
+            rv_net = rate_view.get("net")
+            eq_rate = None if rv_net is None else rv_net * hp_ratio
+            pshare = rate_view.get("player_share")
+            if pshare is None:
+                pshare = share
+            health_rows = [
+                ("当前血量", f"{fmt(state['health'] or 0)} / {fmt(state['max_health'] or 0)}"),
+                ("血量倍数", f"×{hp_ratio:.2f}（100 万血基准）"),
+                ("每小时回血", f"{heal_h:,.0f} HP/h"),
+                ("等效推进（基准球）",
+                 "—" if eq_rate is None else
+                 ("+" if eq_rate >= 0 else "−") + f"{abs(eq_rate):.2f} %/h"),
+                ("在线占全服", "—" if pshare is None else f"{pshare:.2f}%"),
+                ("当前生态", _planet_biome_name(pl) or "—"),
+            ]
+            _health_panel(dr, right_x, ry, right_w, health_rows)
+            ry += HEALTH_PANEL_HEIGHT + 18
+            _stats_panel(dr, right_x, ry, right_w, stats_rows, stats_present, stats_h)
+            y += max(right_h, card.height) + 18
 
-            # ══ 下属区域（城市 / 超大型工厂；数据与口径照主站 sec-regions） ══
-            rt_map, rzh_map = _region_tables()
-            rst = rt_map.get(str(pl.get("index"))) or {}
-            rst_regions = rst.get("regions") or []
-            if rst_regions:
-                rzh = rzh_map.get(str(pl.get("index"))) or {}
-                live_regions = pl.get("regions") or []
-
-                def _live(ridx):
-                    for r in live_regions:
-                        if r.get("regionIndex") == ridx:
-                            return r
-                    if ridx < len(live_regions) and live_regions[ridx].get("regionIndex") is None:
-                        return live_regions[ridx]
-                    return None
-
-                ours_pl = str(pl.get("currentOwner") or "").lower() == "humans"
-                rows_r = []
-                for k, rg in enumerate(rst_regions):
-                    lv = _live(k) or {}
-                    flags = lv.get("flags") or 0
-                    factory = str(rg.get("region_type") or "").lower() == "megafactory" or (flags & 1)
-                    size = rg.get("size") or ""
-                    if factory:
-                        type_cn, stars = "超大型工厂", 4
-                    else:
-                        type_cn = _REGION_TYPE_ZH.get(size, size or "区域")
-                        stars = _REGION_STARS.get(size, 0)
-                    p = None
-                    if lv.get("maxHealth"):
-                        p = max(0.0, min(100.0, (1 - (lv.get("health") or 0) / lv["maxHealth"]) * 100))
-                    if p is None and ours_pl:
-                        p = 100.0                      # 己方星球官方不下发 regions → 按已解放（主站口径）
-                    if lv.get("owner"):
-                        owner_cn = FACTION_CN.get(lv["owner"], lv["owner"])
-                    elif ours_pl:
-                        owner_cn = "超级地球"          # 静态表 owner 是抓取当时的阵营，己方一律记超级地球
-                    else:
-                        owner_cn = FACTION_CN.get(rg.get("owner") or "", rg.get("owner") or "—")
-                    rate = _region_rate(pl, lv, impact)
-                    if rate:
-                        net, _res, _measured = rate
-                        if p is None or net is None:
-                            rate_txt, eta_r = "—", "—"
-                        else:
-                            left = max(0.0, 100.0 - p)
-                            if net > 0.0005:
-                                h = left / net
-                                eta_r = ("%d 小时" % round(h)) if h <= 24 else (
-                                    "%d 天 %d 时" % (int(h // 24), int(h % 24)) if h <= 720 else "超过 30 天")
-                            else:
-                                eta_r = "不会解放"
-                            rate_txt = ("+" if net >= 0 else "−") + "%.2f%%/h · %s" % (abs(net), eta_r)
-                    else:
-                        rate_txt = "—"
-                    en_name = rg.get("name") or ""
-                    zh = rzh.get(en_name) or ""
-                    rows_r.append((zh or en_name or "区域", en_name, owner_cn, type_cn, stars,
-                                   lv.get("players"), p, rate_txt))
-                if rows_r:
-                    panel_h = 50 + 24 + 34 * len(rows_r) + 10
-                    dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
-                    dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
-                    section_label(dr, PAD + 18, y + 13, "下属区域（城市 / 超大型工厂）", F(23, True))
-                    hy = y + 50
-                    c_owner, c_plr, c_lib, c_rate = PAD + 330, PAD + 700, PAD + 830, W - PAD - 14
-                    for lbl, rx, ralign in (("区域", PAD + 14, 0), ("归属 · 类型", c_owner, 0),
-                                            ("玩家", c_plr, 1), ("已解放", c_lib, 1), ("推进 · 预计", c_rate, 1)):
-                        lw = dr.textlength(lbl, font=F(13))
-                        dr.text(((rx - lw) if ralign else rx, hy), lbl, font=F(13), fill=MUTE)
-                    for i, (nm, en_nm, owner_cn, type_cn, stars, players, p, rate_txt) in enumerate(rows_r):
-                        ry = hy + 24 + i * 34
-                        dr.line([(PAD + 10, ry), (W - PAD - 10, ry)], fill=LINE)
-                        dr.text((PAD + 14, ry + 7), nm, font=F(17, True), fill=TEXT)
-                        if en_nm and en_nm != nm:
-                            dr.text((PAD + 14 + dr.textlength(nm, font=F(17, True)) + 10, ry + 11),
-                                    en_nm, font=F(11), fill=(120, 138, 156))
-                        dr.text((c_owner, ry + 9), owner_cn + " · " + type_cn + "★" * stars,
-                                font=F(14), fill=DIM)
-                        pw = dr.textlength(fmt(players) if players else "—", font=F(16, True))
-                        dr.text((c_plr - pw, ry + 8), fmt(players) if players else "—", font=F(16, True), fill=TEXT)
-                        lib_s = "—" if p is None else "%.2f%%" % p
-                        lw2 = dr.textlength(lib_s, font=F(16, True))
-                        dr.text((c_lib - lw2, ry + 8), lib_s, font=F(16, True),
-                                fill=GREEN if p == 100 else TEXT)
-                        rw = dr.textlength(rate_txt, font=F(15))
-                        dr.text((c_rate - rw, ry + 9), rate_txt, font=F(15),
-                                fill=(120, 138, 156) if rate_txt == "—" else DIM)
-                    y += panel_h + 18
+            # ── 下属区域（城市 / 超大型工厂；行数据与 A 区摘要同源） ──
+            rows_r = _region_rows(pl, data.get("impactMultiplier") or 0)
+            if rows_r:
+                panel_h = 50 + 24 + 34 * len(rows_r) + 10
+                dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
+                dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
+                section_label(dr, PAD + 18, y + 13, "下属区域（城市 / 超大型工厂）", F(23, True))
+                hy = y + 50
+                c_owner, c_plr, c_lib, c_rate = PAD + 330, PAD + 700, PAD + 830, W - PAD - 14
+                for lbl, rx, ralign in (("区域", PAD + 14, 0), ("归属 · 类型", c_owner, 0),
+                                        ("玩家", c_plr, 1), ("已解放", c_lib, 1),
+                                        ("推进 · 预计", c_rate, 1)):
+                    lw = dr.textlength(lbl, font=F(13))
+                    dr.text(((rx - lw) if ralign else rx, hy), lbl, font=F(13), fill=MUTE)
+                for i, row in enumerate(rows_r):
+                    ry2 = hy + 24 + i * 34
+                    dr.line([(PAD + 10, ry2), (W - PAD - 10, ry2)], fill=LINE)
+                    dr.text((PAD + 14, ry2 + 7), row["name_cn"], font=F(17, True), fill=TEXT)
+                    if row["en_name"] and row["en_name"] != row["name_cn"]:
+                        dr.text((PAD + 14 + dr.textlength(row["name_cn"], font=F(17, True)) + 10,
+                                 ry2 + 11), row["en_name"], font=F(11), fill=(120, 138, 156))
+                    dr.text((c_owner, ry2 + 9),
+                            row["owner_cn"] + " · " + row["type_cn"] + "★" * row["stars"],
+                            font=F(14), fill=DIM)
+                    rplayers = row["players"]
+                    pw2 = dr.textlength(fmt(rplayers) if rplayers else "—", font=F(16, True))
+                    dr.text((c_plr - pw2, ry2 + 8), fmt(rplayers) if rplayers else "—",
+                            font=F(16, True), fill=TEXT)
+                    lib_s = "—" if row["progress"] is None else "%.2f%%" % row["progress"]
+                    lw2 = dr.textlength(lib_s, font=F(16, True))
+                    dr.text((c_lib - lw2, ry2 + 8), lib_s, font=F(16, True),
+                            fill=GREEN if row["progress"] == 100 else TEXT)
+                    rate_txt = row["rate_txt"]
+                    rw = dr.textlength(rate_txt, font=F(15))
+                    dr.text((c_rate - rw, ry2 + 9), rate_txt, font=F(15),
+                            fill=(120, 138, 156) if rate_txt == "—" else DIM)
+                y += panel_h + 18
 
             # ══ 环境与作战词条（分组照主站：变种类 + 作战限制 保留组，其余平铺） ══
             eids = [i for i in (pl.get("activeEffects") or []) if i is not None]
