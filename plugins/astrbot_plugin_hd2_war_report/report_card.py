@@ -257,6 +257,148 @@ def wrap(text, width_chars):
             out.append(line)
     return out
 
+
+def _text_w(draw, text, font):
+    """``textlength`` 统一入口（空串安全，返回值恒为 float）。"""
+    return float(draw.textlength(str(text or ""), font=font))
+
+
+def ellipsize(draw, text, font, max_width, ellipsis="…"):
+    """单行省略：文本超宽时二分截断并补省略号；切断拉丁词时回退到词首。"""
+    text = str(text or "")
+    if max_width <= 0:
+        return ""
+    if _text_w(draw, text, font) <= max_width:
+        return text
+    ell_w = _text_w(draw, ellipsis, font)
+    if ell_w >= max_width:
+        return ""
+    lo, hi = 0, len(text)
+    while lo < hi:
+        mid = (lo + hi + 1) // 2
+        if _text_w(draw, text[:mid], font) + ell_w <= max_width:
+            lo = mid
+        else:
+            hi = mid - 1
+    head = text[:lo].rstrip()
+    if 0 < lo < len(text) and _is_word_char(text[lo - 1]) and _is_word_char(text[lo]):
+        cut = len(head)
+        while cut > 0 and _is_word_char(head[cut - 1]):
+            cut -= 1
+        if cut > 0:
+            head = head[:cut].rstrip()
+    return head + ellipsis
+
+
+def wrap_text(draw, text, font, max_width, max_lines=None):
+    """按像素宽度折行（中文逐字、拉丁词按词、``\\n`` 硬断）。
+
+    与 :func:`wrap` 的差别：这里量的是真实像素宽度，可直接喂给固定宽度的面板，
+    不会因为字号或中英混排而溢出右边界。``max_lines`` 限制行数时末行用省略号收尾。
+    """
+    if max_width <= 0:
+        return []
+    lines = []
+    for para in str(text or "").replace("\r\n", "\n").replace("\r", "\n").split("\n"):
+        para = para.strip()
+        if not para:
+            continue
+        i, n = 0, len(para)
+        while i < n:
+            lo, hi = i + 1, n
+            while lo < hi:                       # 二分求能放下的最长前缀
+                mid = (lo + hi + 1) // 2
+                if _text_w(draw, para[i:mid], font) <= max_width:
+                    lo = mid
+                else:
+                    hi = mid - 1
+            j = lo
+            if j < n and _is_word_char(para[j - 1]) and _is_word_char(para[j]):
+                k = j
+                while k > i and _is_word_char(para[k - 1]):
+                    k -= 1
+                if k > i:
+                    j = k
+            segment = para[i:j].strip()
+            if not segment:                      # 单字就超宽：硬切一个字符，避免死循环
+                segment, j = para[i:i + 1], i + 1
+            lines.append(segment)
+            i = j
+            while i < n and para[i] == " ":
+                i += 1
+    if max_lines is not None and len(lines) > max_lines:
+        lines = lines[:max(0, max_lines)]
+        if lines:
+            last = lines[-1]
+            while last and _text_w(draw, last + "…", font) > max_width:
+                last = last[:-1]
+            lines[-1] = (last.rstrip() or "") + "…"
+    return lines
+
+
+def label_value_row(draw, x, y, width, label, value, label_font=None, value_font=None,
+                    note=None, note_font=None, gap=16, label_reserve_ratio=0.45,
+                    label_min=48, label_fill=MUTE, value_fill=TEXT,
+                    note_fill=(90, 90, 90)):
+    """「标签 ＋（副标签）… 数值（右对齐）」单行，先量后画，永不重叠/越界。
+
+    降级顺序：副标签换小号 → 截断标签给副标签让位 → 丢弃副标签 → 截断数值。
+    返回 ``(行高, boxes)``；``boxes`` 是 label/note/value 的真实包围盒，供离线溢出检查断言。
+    """
+    label, value = str(label or ""), str(value or "")
+    label_font = label_font or F(15)
+    value_font = value_font or F(18, True)
+    note_font = note_font or F(13)
+    right = x + width
+    label_w = _text_w(draw, label, label_font)
+    max_value = width - gap - max(12.0, min(label_w, width * label_reserve_ratio))
+    if _text_w(draw, value, value_font) > max_value:
+        value = ellipsize(draw, value, value_font, max_value)
+    value_w = _text_w(draw, value, value_font)
+    avail = width - value_w - gap
+
+    note_txt = str(note or "")
+    note_w = _text_w(draw, note_txt, note_font) if note_txt else 0.0
+    if note_txt and label_w + 10 + note_w > avail:
+        for _ in range(2):                       # 副标签优先缩号，最多两档
+            smaller = F(max(9, int(getattr(note_font, "size", 13)) - 4))
+            if _text_w(draw, note_txt, smaller) >= note_w:
+                break
+            note_font, note_w = smaller, _text_w(draw, note_txt, smaller)
+            if label_w + 10 + note_w <= avail:
+                break
+    if note_txt and label_w + 10 + note_w > avail:
+        room = avail - note_w - 10
+        if room >= label_min:                    # 截断标签给副标签让位（保住副标签信息）
+            label = ellipsize(draw, label, label_font, room)
+            label_w = _text_w(draw, label, label_font)
+        else:
+            note_txt, note_w = "", 0.0
+    avail_label = avail - ((note_w + 10.0) if note_txt else 0.0)
+    if avail_label < 12:                         # 数值过宽：让出 12px 给标签再截数值
+        value = ellipsize(draw, value, value_font, max(12.0, width - gap - 12))
+        value_w = _text_w(draw, value, value_font)
+        avail_label = max(12.0, width - value_w - gap)
+        if note_txt:
+            note_txt, note_w = "", 0.0
+    label = ellipsize(draw, label, label_font, avail_label)
+    label_w = _text_w(draw, label, label_font)
+
+    boxes = {"label": None, "note": None, "value": None}
+    if label:
+        draw.text((x, y), label, font=label_font, fill=label_fill)
+        boxes["label"] = draw.textbbox((x, y), label, font=label_font)
+    if note_txt:
+        nx = x + label_w + 10
+        draw.text((nx, y + 4), note_txt, font=note_font, fill=note_fill)
+        boxes["note"] = draw.textbbox((nx, y + 4), note_txt, font=note_font)
+    if value:
+        vx = right - value_w
+        draw.text((vx, y), value, font=value_font, fill=value_fill)
+        boxes["value"] = draw.textbbox((vx, y), value, font=value_font)
+    heights = [b[3] - b[1] for b in boxes.values() if b]
+    return (max(heights) + 10 if heights else 8), boxes
+
 def stripe_band(img, y0, h, alpha=22):
     dr = ImageDraw.Draw(img, "RGBA")
     x = -h
@@ -1474,9 +1616,10 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
                    ("当前生态", _planet_biome_name(pl) or "—"),
                    ("防御截止" if attacking else "预计解放", str(state["deadline"] or "未知")[:16] if attacking else eta_txt)]
             for k, v in qis:
-                dr.text((qx, qy), k, font=F(14), fill=MUTE)
-                vw = dr.textlength(v, font=F(17, True))
-                dr.text((W - PAD - 18 - vw, qy - 2), v, font=F(17, True), fill=TEXT)
+                # 先量后画：标签左对齐 / 数值右对齐，中间保证最小间距（不再叠字）
+                label_value_row(dr, qx, qy - 2, W - PAD - 18 - qx, k, v,
+                                F(13), F(15, True), gap=12,
+                                label_reserve_ratio=0.32)
                 qy += 32
             # 细粒度进度条
             sy = y + hero_h - 14
@@ -1487,8 +1630,10 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
             # ══ 战术目标（星球指挥台独立全宽区；概要卡不再堆叠） ══
             objectives = tactical.compute_for(data, pl.get("index"))
             objective_layout = []
+            objective_text_w = W - PAD * 2 - 64 - 18
             for objective in objectives:
-                desc_lines = wrap(objective.get("text") or "", 64)
+                desc_lines = wrap_text(dr, objective.get("text") or "", F(17),
+                                       objective_text_w)
                 links = objective.get("target_links") or []
                 objective_layout.append((objective, desc_lines, links))
             body_h = 0
@@ -1531,7 +1676,8 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
                     for link in links:
                         dr.text(
                             (PAD + 64, oy),
-                            link.get("url") or "",
+                            ellipsize(dr, link.get("url") or "", F(14),
+                                      objective_text_w),
                             font=F(14),
                             fill=BLUE,
                         )
@@ -1603,14 +1749,10 @@ def render_planet_card(slug, title_cn=None, out_dir=None):
                     kx = PAD + 18 + (i % 2) * (colw + 18)
                     ky = y + 48 + (i // 2) * 40
                     hero_v = "击杀" in k
-                    dr.text((kx, ky), k, font=F(15), fill=MUTE)
-                    vw = dr.textlength(v, font=F(21, True))
-                    dr.text((kx + colw - 40 - vw, ky - 3), v, font=F(21, True),
-                            fill=GOLD if hero_v else TEXT)
-                    if s2:
-                        sw2 = dr.textlength(s2, font=F(13))
-                        dr.text((kx + colw - 44 - vw - sw2, ky + 1), s2, font=F(13),
-                                fill=(90, 90, 90))
+                    # 标签 / 副标签 / 数值三者先量后画：放不下优先缩副标签、其次省略
+                    label_value_row(dr, kx, ky, colw - 40, k, v, F(15), F(21, True),
+                                    note=s2, note_font=F(13), gap=14,
+                                    value_fill=GOLD if hero_v else TEXT)
             else:
                 dr.text((PAD + 18, y + 52),
                         "该星球暂无累计统计（官方 war_stats 里没有这一条；通常是从未被打过的星球）。",
