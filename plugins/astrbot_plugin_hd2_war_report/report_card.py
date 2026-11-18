@@ -1830,7 +1830,7 @@ def _stats_block(dr, data, planet, state, width):
         ("阵亡绝地潜兵", fmt(stats.get("deaths") or 0),
          "其他历史 " + " · ".join(k[0] + " " + fmt(k[1]) for k in others) if others else ""),
     ]
-    row_h = 46 if width < 430 else 40          # 窄列时副标签另起一行，行高加一档
+    row_h = 46 if (width - 36) // 2 < 320 else 40   # 单列太窄时副标签另起一行，行高加一档
     return rows, True, 50 + row_h * 3 + 10
 
 
@@ -1843,11 +1843,12 @@ def _stats_panel(dr, x, y, w, rows, present, height):
             dr.text((x + 18, y + 54 + i * 22), line, font=F(15), fill=DIM)
         return
     colw = (w - 36) // 2
-    row_h = 46 if w < 430 else 40
+    narrow = colw < 320                          # 单列放不下「标签＋副标签＋长数值」时副标签下沉
+    row_h = 46 if narrow else 40
     for i, (label, value, note) in enumerate(rows):
         kx = x + 18 + (i % 2) * (colw + 18)
         ky = y + 50 + (i // 2) * row_h
-        narrow_note = bool(note) and w < 430
+        narrow_note = bool(note) and narrow
         label_value_row(dr, kx, ky, colw - 18, label, value, F(15), F(21, True),
                         note=None if narrow_note else note, note_font=F(13), gap=12,
                         note_fill=(120, 138, 156),
