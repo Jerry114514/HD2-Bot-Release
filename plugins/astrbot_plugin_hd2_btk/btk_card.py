@@ -206,6 +206,131 @@ def _draw_compute(dr, img, view):
     return y
 
 
+def _clip(dr, text, font, max_w):
+    text = str(text or "")
+    if dr.textlength(text, font=font) <= max_w:
+        return text
+    while text and dr.textlength(text + "…", font=font) > max_w:
+        text = text[:-1]
+    return text + "…"
+
+
+def _stuck_text(result):
+    stuck = result.get("stuck")
+    if not stuck:
+        return "未卡阈值"
+    if stuck.get("kind") == "one":
+        ratio = stuck.get("ratio")
+        return f"1 发覆盖 {100 / ratio:.1f}%" if ratio else "1 发覆盖 —"
+    return f"差 {_fmt(stuck.get('missing'))} 伤害"
+
+
+def _draw_compare_state(dr, entry, index, accent, y):
+    enemy = entry["enemy"]
+    name = str(enemy.get("enemy") or "")
+    label = "护甲完好" if name.endswith("·完好") else "护甲全破"
+    _panel(dr, PAD, y, W - PAD * 2, 64, accent)
+    dr.text((PAD + 18, y + 9), f"状态 {index}", font=F(13, True), fill=MUTE)
+    dr.text((PAD + 18, y + 28), label, font=F(24, True), fill=TEXT)
+    name_w = dr.textlength(name, font=F(15))
+    dr.text((W - PAD - 18 - name_w, y + 34), name, font=F(15), fill=DIM)
+    y += 78
+
+    result = entry.get("result") or {}
+    if entry.get("error"):
+        _panel(dr, PAD, y, W - PAD * 2, 74, LINE2)
+        dr.text((PAD + 18, y + 12), "该状态没有这个部位", font=F(20), fill=DIM)
+        available = "、".join(str(part.get("part")) for part in (enemy.get("parts") or [])[:5])
+        dr.text((PAD + 18, y + 44), _clip(dr, "可用：" + available, F(14), W - PAD * 2 - 36),
+                font=F(14), fill=MUTE)
+        return y + 92
+    if not result.get("ok"):
+        message = str(result.get("message") or result.get("reason") or "无法计算")
+        lines = _help_wrap(message, F(19), W - PAD * 2 - 36, dr)[:2]
+        panel_h = 40 + 26 * len(lines)
+        _panel(dr, PAD, y, W - PAD * 2, panel_h, LINE2)
+        yy = y + 12
+        for line in lines:
+            dr.text((PAD + 18, yy), line, font=F(19), fill=DIM)
+            yy += 26
+        return y + panel_h + 14
+    if result.get("type") == "dot":
+        _panel(dr, PAD, y, W - PAD * 2, 74, LINE2)
+        dr.text((PAD + 18, y + 12), "持续伤害目标 · 主体", font=F(15, True), fill=MUTE)
+        dr.text((PAD + 18, y + 40),
+                f"每跳 {_fmt(result.get('perTrigger'))} · {result.get('triggers')} 跳 · "
+                f"共 {_fmt(result.get('seconds'), 1)} 秒",
+                font=F(22, True), fill=TEXT)
+        return y + 92
+
+    gap = 14
+    kw = (W - PAD * 2 - gap * 2) / 3
+    part = entry.get("part")
+    beam = result.get("beamSeconds") is not None
+    btk_value = f"{_fmt(result.get('beamSeconds'), 1)} s" if beam else f"{result.get('btk')} 发"
+    btk_label = "累计照射" if beam else "BTK · 击杀击发"
+    ttk_value = "光束" if beam else (
+        f"{_fmt(result.get('ttk'))} s" if result.get("ttk") is not None else "—")
+    _kpi(dr, PAD, y, kw, 118, btk_label, btk_value,
+         f"{part['part'] if part else '主体'}", accent)
+    _kpi(dr, PAD + kw + gap, y, kw, 118, "TTK · 理论耗时", ttk_value,
+         "不含反应与瞄准", BLUE)
+    _kpi(dr, PAD + (kw + gap) * 2, y, kw, 118, "单次命中伤害",
+         _fmt(result.get("perShotDamage")),
+         f"每发 {result.get('pelletsPerShot') or 1} 弹丸", RED)
+    y += 134
+
+    half = (W - PAD * 2 - gap) / 2
+    path = result.get("label") or result.get("path") or "—"
+    _panel(dr, PAD, y, half, 66, LINE2)
+    dr.text((PAD + 16, y + 10), "击杀路径", font=F(14, True), fill=MUTE)
+    dr.text((PAD + 16, y + 33), _clip(dr, path, F(19), half - 32), font=F(19, True), fill=TEXT)
+    stuck = bool(result.get("stuck"))
+    _panel(dr, PAD + half + gap, y, half, 66, GOLD if stuck else LINE2)
+    dr.text((PAD + half + gap + 16, y + 10), "卡阈值", font=F(14, True),
+            fill=GOLD if stuck else MUTE)
+    dr.text((PAD + half + gap + 16, y + 33), _clip(dr, _stuck_text(result), F(19), half - 32),
+            font=F(19, True), fill=GOLD2 if stuck else TEXT)
+    return y + 82
+
+
+def _draw_compare(dr, img, view):
+    weapon = view["weapon"]
+    options = view["options"]
+    entries = view["entries"]
+    y = _hud_head(dr, img, "双状态对比", "BTK · DUAL STATE")
+
+    name = weapon.get("name") or weapon.get("id")
+    dr.text((PAD, y + 8), name, font=F(36, True), fill=GOLD2)
+    tw = dr.textlength(name, font=F(36, True))
+    dr.text((PAD + tw + 16, y + 21), weapon.get("id", ""), font=F(17, True), fill=BRASS)
+    meta = " · ".join(str(x) for x in (weapon.get("cat"), weapon.get("type")) if x)
+    if meta:
+        mw = dr.textlength(meta, font=F(14))
+        dr.text((W - PAD - mw, y + 22), meta, font=F(14), fill=MUTE)
+    y += 62
+
+    base = str(entries[0]["enemy"].get("enemy") or "").split("·", 1)[0]
+    part = entries[0].get("part")
+    target = f"{base} · {part['part'] if part else '—'}"
+    _panel(dr, PAD, y, W - PAD * 2, 96, BLUE)
+    dr.text((PAD + 20, y + 13), "对比目标（同一部位，两种护甲状态）", font=F(14, True), fill=MUTE)
+    dr.text((PAD + 20, y + 42), _clip(dr, target, F(28, True), W - PAD * 2 - 40),
+            font=F(28, True), fill=TEXT)
+    condition = (f"{_fmt(options['distance'])} m · "
+                 f"{ANGLE_NAMES[int(options['angle'])]} · 破片 {options['shrapnelHits']}")
+    cw = dr.textlength(condition, font=F(15))
+    dr.text((W - PAD - 20 - cw, y + 60), condition, font=F(15), fill=DIM)
+    y += 112
+
+    for index, entry in enumerate(entries):
+        accent = GREEN if index == 0 else RED
+        y = _draw_compare_state(dr, entry, index + 1, accent, y)
+    dr.text((PAD, y), "需要单独结果时，在敌人名后加 ·完好 或 ·护甲已破坏（也可写 ·破损）。",
+            font=F(13), fill=MUTE)
+    return y + 30
+
+
 def _draw_scan(dr, img, view):
     weapon = view["weapon"]
     rows = view["rows"]
@@ -256,17 +381,20 @@ def _draw_scan(dr, img, view):
 
 
 def render_btk_card(view, out_dir=None):
-    if view.get("kind") not in ("compute", "scan"):
+    if view.get("kind") not in ("compute", "compare", "scan"):
         return None
     out_dir = out_dir or CACHE_DIR
     os.makedirs(out_dir, exist_ok=True)
     digest = hashlib.sha256(
-        (json.dumps(view, ensure_ascii=False, sort_keys=True) + "btk-layout-v1").encode("utf-8")
+        (json.dumps(view, ensure_ascii=False, sort_keys=True) + "btk-layout-v2").encode("utf-8")
     ).hexdigest()
     out = os.path.join(out_dir, f"btk_{view['kind']}.png")
 
     def draw(dr, img):
-        return _draw_compute(dr, img, view) if view["kind"] == "compute" else _draw_scan(dr, img, view)
+        kind = view["kind"]
+        if kind == "compare":
+            return _draw_compare(dr, img, view)
+        return _draw_compute(dr, img, view) if kind == "compute" else _draw_scan(dr, img, view)
 
     path = _render_cached(out, out + ".meta.json", digest, draw)
     return path[0] if isinstance(path, list) and len(path) == 1 else path

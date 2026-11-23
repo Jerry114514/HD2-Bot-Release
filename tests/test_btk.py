@@ -65,6 +65,39 @@ class BtkTests(unittest.TestCase):
         scan = btk.handle_command("卡阈值 DOT-FIRE")
         self.assertIn("不参与普通 BTK 卡阈值", scan)
 
+    def test_mobile_factory_dual_state(self):
+        both = btk.build_view("E/AT-12 移动工厂 主体")
+        self.assertEqual(both["kind"], "compare")
+        self.assertEqual([entry["enemy"]["enemy"] for entry in both["entries"]],
+                         ["移动工厂·完好", "移动工厂·护甲已破坏"])
+        for entry in both["entries"]:
+            self.assertTrue(entry["result"]["ok"])
+        for marker in ("双状态对比", "护甲完好", "护甲全破", "状态 1", "状态 2"):
+            self.assertIn(marker, both["text"])
+        self.assertNotIn("None", both["text"])
+        single = btk.build_view("E/AT-12 移动工厂·完好 主体")
+        self.assertEqual(single["kind"], "compute")
+        self.assertEqual(single["enemy"]["enemy"], "移动工厂·完好")
+        alias = btk.build_view("E/AT-12 移动工厂破损 主体")
+        self.assertEqual(alias["kind"], "compute")
+        self.assertEqual(alias["enemy"]["enemy"], "移动工厂·护甲已破坏")
+        partial = btk.build_view("E/AT-12 移动工厂 头部 护甲")
+        self.assertEqual(partial["kind"], "compare")
+        self.assertTrue(partial["entries"][0]["result"]["ok"])
+        self.assertIsNone(partial["entries"][1]["part"])
+        self.assertIn("该状态没有这个部位", partial["text"])
+        with self.assertRaises(ValueError) as ctx:
+            btk.build_view("E/AT-12 移动工厂")
+        self.assertIn("请指定部位", str(ctx.exception))
+        self.assertIn("多状态敌人", btk.handle_command("敌人 移动工厂"))
+        with tempfile.TemporaryDirectory() as temp:
+            path = btk_card.render_btk_card(both, temp)
+            self.assertIsInstance(path, str)
+            with Image.open(path) as image:
+                self.assertEqual(image.format, "PNG")
+                self.assertGreater(image.height, 700)
+                self.assertLessEqual(image.width, 1080)
+
     def test_compute_and_scan_render_as_single_cards(self):
         compute = btk.build_view("AR-23 武斗虫 头部")
         scan = btk.build_view("卡阈值 P/40-K")

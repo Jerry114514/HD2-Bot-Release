@@ -54,6 +54,13 @@ HELP_TEXT = """🎯 BTK 武器伤害测试
 /btk 敌人 终结族
 /btk 敌人 武斗虫
 
+多状态敌人：
+/btk <武器> 移动工厂 <部位>
+  同时对比「护甲完好」与「护甲全破」两种状态。
+/btk <武器> 移动工厂·完好 <部位>
+/btk <武器> 移动工厂·护甲已破坏 <部位>
+  只计算指定状态。
+
 伤害对比、DoT 与卡阈值结果输出战术 HUD 图片卡；资料菜单保持文字。
 裸敌人名默认低难；高难请写「（高难）」。默认距离 0m、正面命中。
 名称不确定时，可先用 /wiki <关键词> 查询中文 Wiki 的标准名称和资料。
@@ -89,6 +96,10 @@ def _weapon_aliases(row):
 def _enemy_aliases(row):
     name = str(row.get("enemy") or "")
     aliases = {name}
+    # 数据里写「·护甲已破坏」，玩家更常说「破损」；两种写法都指向同一状态。
+    if name.endswith("·护甲已破坏"):
+        base = name[: -len("护甲已破坏")]
+        aliases.update({base + "破损", base + "破坏"})
     # Some enemy records use separate low/high-difficulty variants.
     # A bare name preserves the old command and selects the low-difficulty one.
     if name.endswith("（低难）"):
@@ -242,21 +253,129 @@ def _extract_options(text):
     return " ".join(text.split()), options
 
 
+_STATE_SUFFIXES = ("完好", "护甲已破坏", "破损", "破坏", "护甲破坏")
+
+
+def _state_label(name):
+    """Human label for an enemy status suffix (完好 / 护甲已破坏)."""
+    text = str(name or "")
+    suffix = text.split("·", 1)[1].strip() if "·" in text else ""
+    return "护甲完好" if suffix == "完好" else "护甲全破"
+
+
+def _enemy_groups():
+    """Group rows that are status variants of the same machine (``名字·状态``)."""
+    _, enemies = _data()
+    groups = {}
+    for row in enemies:
+        name = str(row.get("enemy") or "")
+        if "·" not in name:
+            continue
+        base, suffix = name.split("·", 1)
+        base, suffix = base.strip(), suffix.strip()
+        if not base or suffix not in _STATE_SUFFIXES:
+            continue
+        groups.setdefault(base, []).append((suffix, row))
+    return {base: variants for base, variants in groups.items() if len(variants) > 1}
+
+
+def _split_prefix(text, key):
+    """Return raw text after the normalized prefix ``key``, or None."""
+    if not key:
+        return None
+    normalized = ""
+    for index, char in enumerate(str(text or "")):
+        normalized += _norm(char)
+        if normalized == key:
+            return str(text)[index + 1:].strip()
+        if not key.startswith(normalized):
+            return None
+    return None
+
+
+def _enemy_group(text):
+    """Match a bare multi-state base name (移动工厂) and return its states."""
+    groups = _enemy_groups()
+    wanted = _norm(text)
+    best = None
+    for base, variants in groups.items():
+        key = _norm(base)
+        if key and wanted.startswith(key) and (best is None or len(key) > len(best[0])):
+            best = (key, [row for _suffix, row in variants])
+    if best is None:
+        return None, str(text or "").strip()
+    rest = _split_prefix(text, best[0])
+    if rest is None:
+        return None, str(text or "").strip()
+    return best[1], rest
+
+
+def _target_entry(enemy, part, error=None):
+    return {"enemy": enemy, "part": part, "error": error}
+
+
+def _group_entries(rows, part_text):
+    part_text = str(part_text or "").strip()
+    if not part_text:
+        names = "、".join(str(row.get("enemy")) for row in rows)
+        base = str(rows[0].get("enemy") or "").split("·", 1)[0]
+        raise ValueError(
+            f"「{base}」有两种状态：{names}。请指定部位，"
+            f"例如 /btk <武器> {base} 主体；"
+            f"也可只查单一状态：/btk <武器> {base}·完好 <部位>。"
+        )
+    entries = []
+    for row in rows:
+        try:
+            part = _resolve_part(row, part_text)
+        except ValueError as error:
+            entries.append(_target_entry(row, None, str(error)))
+            continue
+        entries.append(_target_entry(row, part))
+    return entries
+
+
+def _blast_parts(enemy, options, strict=True):
+    names = []
+    raw = options.get("blastParts")
+    if not raw:
+        return names
+    for value in re.split(r"[,，、]", str(raw)):
+        if not value.strip():
+            continue
+        if strict:
+            names.append(_resolve_part(enemy, value.strip())["part"])
+            continue
+        try:
+            names.append(_resolve_part(enemy, value.strip())["part"])
+        except ValueError:
+            continue
+    return names
+
+
 def _target(text):
+    """Resolve a weapon and one or more enemy/part targets.
+
+    Returns ``(weapon, targets)``; each target is
+    ``{"enemy": row, "part": part_row | None, "error": message | None}``.
+    More than one target means a multi-state enemy was requested without a
+    status suffix (e.g. ``移动工厂``) and every state must be computed.
+    """
     weapons, enemies = _data()
     if "|" in text:
         fields = [field.strip() for field in text.split("|")]
         if len(fields) not in (2, 3) or not all(fields):
             raise ValueError("管道格式应为：武器 | 敌人 [| 部位]")
         weapon = _resolve_weapon(fields[0])
-        enemy = _resolve_enemy(fields[1])
         if weapon.get("type") == "dot":
-            part = None
-        elif len(fields) != 3:
+            return weapon, [_target_entry(_resolve_enemy(fields[1]), None)]
+        if len(fields) != 3:
             raise ValueError("普通武器需要指定部位：武器 | 敌人 | 部位")
-        else:
-            part = _resolve_part(enemy, fields[2])
-        return weapon, enemy, part
+        group, rest = _enemy_group(fields[1])
+        if group:
+            return weapon, _group_entries(group, rest or fields[2])
+        enemy = _resolve_enemy(fields[1])
+        return weapon, [_target_entry(enemy, _resolve_part(enemy, fields[2]))]
     weapon, rest = _match_prefix(weapons, text, _weapon_aliases)
     if weapon is None:
         first = text.split(None, 1)[0] if text.split() else text
@@ -282,6 +401,9 @@ def _target(text):
     enemy_text = rest
     enemy, rest = _match_prefix(enemies, rest, _enemy_aliases)
     if enemy is None:
+        group, group_rest = _enemy_group(rest)
+        if group:
+            return weapon, _group_entries(group, group_rest)
         enemy_hint = enemy_text.strip()
         if len(enemy_hint.split()) > 1:
             enemy_hint = enemy_hint.rsplit(None, 1)[0]
@@ -290,9 +412,8 @@ def _target(text):
             f"\n建议查询：/wiki {enemy_hint}"
         )
     if weapon.get("type") == "dot":
-        return weapon, enemy, None
-    part = _resolve_part(enemy, rest)
-    return weapon, enemy, part
+        return weapon, [_target_entry(enemy, None)]
+    return weapon, [_target_entry(enemy, _resolve_part(enemy, rest))]
 
 
 def _fmt(value, digits=2):
@@ -384,6 +505,59 @@ def _format_scan(rows, weapon, fatal_only):
     return "\n".join(lines)
 
 
+def _compare_entry_lines(entry, options):
+    enemy = entry["enemy"]
+    if entry.get("error"):
+        available = "、".join(str(part.get("part")) for part in (enemy.get("parts") or [])[:6])
+        line = "该状态没有这个部位，已跳过。"
+        return [line + (f"该状态可用部位：{available}" if available else "")]
+    result = entry.get("result") or {}
+    part = entry.get("part")
+    if not result.get("ok"):
+        message = result.get("message") or result.get("reason") or "无法计算"
+        return [f"无法计算：{message}"]
+    if result.get("type") == "dot":
+        return [
+            "目标：主体",
+            f"每跳伤害：{_fmt(result.get('perTrigger'))}",
+            f"触发次数：{result.get('triggers')}",
+            f"总持续时间：{_fmt(result.get('seconds'), 1)} 秒",
+            f"元素倍率：×{_fmt(result.get('mult'))}",
+        ]
+    lines = [f"目标部位：{part['part'] if part else '主体'}"]
+    if result.get("beamSeconds") is not None:
+        lines.append(f"累计照射：{_fmt(result['beamSeconds'], 1)} 秒")
+    else:
+        lines.append(f"BTK：{result.get('btk')} 发")
+        if result.get("ttk") is not None:
+            lines.append(f"TTK：{_fmt(result['ttk'])} 秒")
+    lines.append(f"击杀路径：{result.get('label') or result.get('path') or '—'}")
+    lines.append(f"单次命中：{_fmt(result.get('perShotDamage'))}")
+    lines.append("卡阈值：" + (_format_stuck(result.get("stuck")) or "未卡阈值"))
+    return lines
+
+
+def _format_compare(weapon, entries, options):
+    base = str(entries[0]["enemy"].get("enemy") or "").split("·", 1)[0]
+    lines = [
+        f"🎯 BTK 双状态对比 · {base}",
+        f"武器：{weapon['name']}（{weapon['id']}）",
+        (f"条件：距离 {_fmt(options['distance'])} m · "
+         f"{ANGLE_NAMES[int(options['angle'])]} · 破片 {options['shrapnelHits']}"),
+    ]
+    for index, entry in enumerate(entries, 1):
+        enemy = entry["enemy"]
+        lines.append("")
+        lines.append(
+            f"━━ 状态 {index}｜{_state_label(enemy.get('enemy'))}"
+            f"（{enemy.get('enemy')}）━━"
+        )
+        lines.extend(_compare_entry_lines(entry, options))
+    lines.append("")
+    lines.append("提示：只算单一状态时，在敌人名后加 ·完好 或 ·护甲已破坏（也可写 ·破损）。")
+    return "\n".join(lines)
+
+
 def _weapon_menu(query):
     weapons, _ = _data()
     categories = {}
@@ -428,6 +602,18 @@ def _enemy_menu(query):
             )
         lines.append("用法：/btk <武器> " + enemy["enemy"] + " <部位>")
         return "\n".join(lines)
+    group, _rest = _enemy_group(query)
+    if group:
+        base = str(group[0].get("enemy") or "").split("·", 1)[0]
+        lines = [f"👾 {base}｜{group[0].get('faction')}｜多状态敌人（{len(group)} 种）"]
+        for row in group:
+            parts = row.get("parts") or []
+            preview = "、".join(str(part.get("part")) for part in parts[:6])
+            more = "……" if len(parts) > 6 else ""
+            lines.append(f"• {row.get('enemy')}（{len(parts)} 个部位）：{preview}{more}")
+        lines.append(f"用法：/btk <武器> {base} <部位>（同时对比全部状态）")
+        lines.append(f"      或 /btk <武器> {base}·完好 <部位>（只算指定状态）")
+        return "\n".join(lines)
     faction = next(
         (name for name in {str(row.get("faction") or "") for row in enemies}
          if _norm(name) == _norm(query)),
@@ -469,13 +655,32 @@ def build_view(args):
         return {"kind": "info", "text": _weapon_menu(clean[len("武器"):].strip())}
     if clean == "敌人" or clean.startswith("敌人 "):
         return {"kind": "info", "text": _enemy_menu(clean[len("敌人"):].strip())}
-    weapon, enemy, part = _target(clean)
-    blast_names = []
-    raw_blast = options.get("blastParts")
-    if raw_blast:
-        for value in re.split(r"[,，、]", str(raw_blast)):
-            if value.strip():
-                blast_names.append(_resolve_part(enemy, value.strip())["part"])
+    weapon, targets = _target(clean)
+    if len(targets) > 1:
+        entries = []
+        for target in targets:
+            enemy, part = target["enemy"], target["part"]
+            entry = {"enemy": enemy, "part": part, "error": target.get("error")}
+            if part is not None and not entry["error"]:
+                entry["blastParts"] = _blast_parts(enemy, options, strict=False)
+                payload = {
+                    "weapon": weapon["id"],
+                    "enemy": enemy["enemy"],
+                    "part": part["part"],
+                    "distance": options["distance"],
+                    "angle": options["angle"],
+                    "shrapnelHits": options["shrapnelHits"],
+                    "blastParts": entry["blastParts"],
+                }
+                entry["result"] = _run_bridge("compute", payload)
+            entries.append(entry)
+        options["blastParts"] = (entries[0].get("blastParts") or []) if entries else []
+        return {
+            "kind": "compare", "weapon": weapon, "entries": entries,
+            "options": options, "text": _format_compare(weapon, entries, options),
+        }
+    enemy, part = targets[0]["enemy"], targets[0]["part"]
+    blast_names = _blast_parts(enemy, options)
     payload = {
         "weapon": weapon["id"],
         "enemy": enemy["enemy"],
@@ -522,7 +727,7 @@ class Hd2BtkPlugin(Star):
                     group=getattr(event.message_obj, "group_id", ""), user=event.get_sender_id())
             view = await blocking(build_view, args)
             image = None
-            if view.get("kind") in ("compute", "scan"):
+            if view.get("kind") in ("compute", "compare", "scan"):
                 try:
                     image = await blocking(render, view)
                 except Exception as render_error:
