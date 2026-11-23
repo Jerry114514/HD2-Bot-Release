@@ -220,18 +220,73 @@ def campaigns_text(doc):
     return "\n".join(lines) if len(lines) > 1 else "🌌 当前没有进行中的战线。"
 
 
-def find_planet(doc, query):
+def _planet_exact(doc, query):
     query = data.planet_key(query)
     name_map = names()
     matches = {}
     for planet in doc.get("planets") or []:
         if query in (str(planet.get("index")), data.planet_key(planet.get("name")), data.planet_key(name_map.get(str(planet.get("name")).upper()))):
             matches[str(planet.get("index"))] = planet
+    return matches
+
+
+def _planet_fuzzy(doc, query):
+    """按字段打分（精确失败后才调用）：返回 (tier, distance, 英文名, 显示名, planet) 由好到差。"""
+    from .search import match_name
+    name_map = names()
+    rows = []
+    for planet in doc.get("planets") or []:
+        english = str(planet.get("name") or "")
+        chinese = name_map.get(english.upper(), "")
+        best = None
+        for candidate in (english, chinese):
+            if not candidate:
+                continue
+            score = match_name(query, candidate)
+            if score is None:
+                continue
+            if best is None or score[:2] < best[:2]:
+                best = score
+        if best is not None:
+            rows.append((best[0], best[1], english, chinese or english, planet))
+    rows.sort(key=lambda row: (row[0], row[1], len(row[3]), row[3]))
+    return rows
+
+
+def resolve_planet(doc, query):
+    """解析星球名：精确（含型号归一、中英文名、ID）优先，其次近似匹配。
+
+    返回 (planet, note)；note 非空表示走了近似匹配，调用方应在正文里告知用户。
+    精确匹配出现多个候选时仍按原有口径报歧义，避免近似匹配掩盖真实冲突。
+    """
+    matches = _planet_exact(doc, query)
     if len(matches) == 1:
-        return next(iter(matches.values()))
+        return next(iter(matches.values())), ""
     if matches:
         raise ValueError("星球名称有歧义，请使用星球 ID：" + "、".join(matches))
-    raise ValueError("未找到该星球，请使用完整中文名、英文名或星球 ID")
+    ranked = _planet_fuzzy(doc, query)
+    if not ranked:
+        raise ValueError(f"未找到星球「{query}」，请使用完整中文名、英文名或星球 ID（/查表 星区 可浏览星区列表）")
+    tier, distance = ranked[0][0], ranked[0][1]
+    best = [row for row in ranked if (row[0], row[1]) == (tier, distance)]
+    if len(best) == 1:
+        _, _, english, label, planet = best[0]
+        note = f"🔎 已按近似匹配：{label}"
+        if english and english != label:
+            note += f"（{english}）"
+        return planet, note
+    labels = []
+    for row in best:
+        if row[3] and row[3] not in labels:
+            labels.append(row[3])
+        if len(labels) >= 5:
+            break
+    raise ValueError("未找到精确匹配，可能是：" + "、".join(labels) + "。请使用完整名称或星球 ID。")
+
+
+def find_planet(doc, query):
+    """兼容旧入口：返回解析到的星球（含近似匹配）。"""
+    return resolve_planet(doc, query)[0]
 
 
 def planet_text(doc, planet):
@@ -356,10 +411,14 @@ def result(kind, query="", doc=None):
         data.enrich_official_texts(doc)
     title_cn = ""
     if kind == "planet":
-        planet = find_planet(doc, query)
+        planet, note = resolve_planet(doc, query)
         query = planet["name"]
         title_cn = planet_name(planet)
         body = planet_text(doc, planet)
+        if note:
+            body = note + "\n\n" + body
+            doc = dict(doc)
+            doc["_hd2"] = {**(doc.get("_hd2") or {}), "planet_match": note}
     elif kind == "report":
         dist = data.player_distribution(doc)
         summary = "在线总数：" + data.fmt_big_num(dist["total"]) + "\n" + "｜".join(label+" "+data.fmt_big_num(dist[key]) for key,label in (("humans","超级地球"),("terminids","终结族"),("automatons","机器人"),("illuminate","光能族")))

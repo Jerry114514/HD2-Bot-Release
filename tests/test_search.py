@@ -78,6 +78,42 @@ class SearchTests(unittest.TestCase):
         doc=snapshot();doc["planets"].append({"index":99,"name":"X45"})
         with self.assertRaisesRegex(ValueError,"歧义"): commands.find_planet(doc,"x45")
 
+    def test_planet_fuzzy_matching(self):
+        doc=snapshot();doc["planets"]=[
+            {"index":1,"name":"OMICRON"},
+            {"index":2,"name":"MALEVELON CREEK"},
+            {"index":3,"name":"CERBERUS IIIc"}]
+        planet,note=commands.resolve_planet(doc,"奥密克戎")
+        self.assertEqual((planet["name"],note),("OMICRON",""))
+        planet,note=commands.resolve_planet(doc,"奥密克戒")
+        self.assertEqual(planet["name"],"OMICRON")
+        self.assertIn("近似匹配",note)
+        self.assertIn("奥密克戎",note)
+        planet,note=commands.resolve_planet(doc,"麦拉芬")
+        self.assertEqual(planet["name"],"MALEVELON CREEK")
+        self.assertIn("近似匹配",note)
+        planet,note=commands.resolve_planet(doc,"刻耳柏洛")
+        self.assertEqual(planet["name"],"CERBERUS IIIc")
+        self.assertEqual(commands.find_planet(doc,"奥密克戒")["name"],"OMICRON")
+        with self.assertRaisesRegex(ValueError,"未找到星球"):
+            commands.resolve_planet(doc,"不存在的星球")
+
+    def test_planet_fuzzy_ambiguity_lists_candidates(self):
+        doc=snapshot();doc["planets"]=[
+            {"index":1,"name":"MALEVELON CREEK"},
+            {"index":2,"name":"MALEVELON RIVER"}]
+        with self.assertRaisesRegex(ValueError,"可能是") as caught:
+            commands.resolve_planet(doc,"malevelon")
+        self.assertIn("麦拉芬蒙河",str(caught.exception))
+        self.assertIn("MALEVELON RIVER",str(caught.exception))
+
+    def test_planet_result_notes_fuzzy_match(self):
+        doc=snapshot();doc["planets"].append({"index":46,"name":"OMICRON"})
+        view=commands.result("planet","奥密克戒",doc)
+        self.assertTrue(view.text.startswith("🔎 已按近似匹配：奥密克戎（OMICRON）"))
+        self.assertEqual(view.title_cn,"奥密克戎")
+        self.assertEqual(view.query,"OMICRON")
+
     def test_planet_names_snapshot_matches_latest_starmap(self):
         starmap = json.loads((Path(__file__).resolve().parents[1] / "tables/starmap.json").read_text(encoding="utf-8"))
         expected = {
