@@ -721,13 +721,14 @@ class Hd2BtkPlugin(Star):
         if not parsed or parsed[0] != "btk":
             return
         _, args, _plain = parsed
+        plain = bool(_plain)
         started = time.monotonic()
         try:
             hd2_log("matched", plugin="btk", text=getattr(event, "message_str", ""),
                     group=getattr(event.message_obj, "group_id", ""), user=event.get_sender_id())
             view = await blocking(build_view, args)
             image = None
-            if view.get("kind") in ("compute", "compare", "scan"):
+            if not plain and view.get("kind") in ("compute", "compare", "scan"):
                 try:
                     image = await blocking(render, view)
                 except Exception as render_error:

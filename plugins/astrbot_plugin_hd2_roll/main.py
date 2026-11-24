@@ -8,6 +8,7 @@ from astrbot.api.star import Star
 from astrbot_plugin_hd2_common.commands import parse_event
 from astrbot_plugin_hd2_common import errors
 from astrbot_plugin_hd2_common.runtime import blocking, text_reply, request_scope
+from astrbot_plugin_hd2_common.delivery import prepare
 from astrbot_plugin_hd2_common.diagnostics import hd2_log
 from astrbot_plugin_hd2_roll.loadout import draw,format_result
 
@@ -32,16 +33,13 @@ class Hd2RollPlugin(Star):
         try:
             result=await blocking(draw,"pure" if args else "assessment")
             text=format_result(result)
-            image=None
-            if not plain:
-                try:
-                    image=await blocking(render,result)
-                except Exception as error:
-                    logger.warning(f"[HD2] 配装图片不可用：{type(error).__name__}")
-            yield event.image_result(image) if image else text_reply(event, text)
+            items,mode=await prepare(event,plugin="roll",view={},text=text,plain=plain,
+                                     render_fn=lambda _view: render(result))
+            for item in items:
+                yield item
             hd2_log("generated",plugin="roll",group=getattr(event.message_obj,"group_id",""),
                     user=event.get_sender_id(),platform=getattr(event,"unified_msg_origin",""),
-                    output_mode="image" if image else "text")
+                    output_mode=mode)
         except Exception as error:
             hd2_log("failed",plugin="roll",detail=type(error).__name__)
             yield text_reply(event, errors.friendly("roll", error))

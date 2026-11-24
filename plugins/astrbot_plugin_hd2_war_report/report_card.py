@@ -38,22 +38,25 @@ from astrbot_plugin_hd2_common.fonts import resolve_font_pair
 
 # ── Steam 风 tokens：深蓝底 + 亮黄主强调（favicon #f8e800）+ 冷白文字 ──
 # 阵营色独立于本表（FACTION_COLOR 与玩家分布行），不随模板变化
-BG = (14, 22, 33)      # Steam 深蓝 #0e1621
-PANEL = (27, 40, 56)   # Steam 面板蓝 #1b2838
-PANEL2 = (34, 49, 66)  # 斑马纹偶数行
-LINE = (44, 61, 79)    # #2c3d4f
-LINE2 = (56, 76, 97)   # #384c61
-TEXT = (240, 245, 250) # 冷白
-DIM = (176, 192, 208)  # 蓝灰次级文字
-MUTE = (128, 148, 168) # 蓝灰辅助标签
-GOLD = (248, 232, 0)   # favicon 亮黄 #f8e800
-GOLD2 = (255, 243, 118)# 高亮黄
-RICH_YELLOW = (245, 197, 24)  # 主站 --mo-yellow #F5C518（dispatch <i=1>）
-BRASS = (199, 176, 31) # 暗黄（次级强调）
-BLUE = (91, 163, 208)  # 主站 --mo-place #5BA3D0（dispatch <i=3> / 超级地球）
+# 视觉 Token 统一到 common.ui（黑曜石琥珀金）：旧名保留为兼容别名
+from astrbot_plugin_hd2_common.ui import tokens as _ui
+
+BG = _ui.BG
+PANEL = _ui.CARD
+PANEL2 = _ui.CARD2
+LINE = _ui.LINE
+LINE2 = _ui.LINE2
+TEXT = _ui.TEXT
+DIM = _ui.DIM
+MUTE = _ui.MUTE
+GOLD = _ui.AMBER
+GOLD2 = (255, 226, 120)
+RICH_YELLOW = _ui.AMBER  # 主站 --mo-yellow（dispatch <i=1>）
+BRASS = _ui.BRASS
+BLUE = (91, 163, 208)  # 主站 --mo-place #5BA3D0（dispatch <i=3> 语义色，保持官方同源）
 RICH_COLORS = {"yellow": RICH_YELLOW, "blue": BLUE}
-GREEN = (31, 168, 74)
-RED = (255, 77, 46)
+GREEN = _ui.GREEN
+RED = _ui.RED
 W = 1080
 PAD = 36
 TALL = 2600
@@ -887,7 +890,8 @@ def _hud_head(dr, img, title, sub_en):
     return 92 + 16
 
 
-def _render_cached(out_path, meta_path, rev, draw_fn, page_info=None, column_height=2100):
+def _render_cached(out_path, meta_path, rev, draw_fn, page_info=None, column_height=2100,
+                   caption=None):
     meta = shared._snapshot.get() or {}
     # layout-v4-wide：多页合并单图（自左向右分区）+ 战略订单墙布局；版本号变化使旧分页缓存全部失效
     digest = hashlib.sha256((
@@ -896,6 +900,7 @@ def _render_cached(out_path, meta_path, rev, draw_fn, page_info=None, column_hei
         + "layout-v4-wide"
         + str(column_height)
         + (str(page_info) if page_info else "")
+        + (str(caption) if caption else "")
     ).encode()).hexdigest()[:16]
     stem, _ = os.path.splitext(out_path)
     out_path = stem + "_" + digest + ".png"
@@ -905,7 +910,8 @@ def _render_cached(out_path, meta_path, rev, draw_fn, page_info=None, column_hei
         lock = _render_locks.setdefault(out_path, threading.Lock())
     with lock:
         try:
-            paths = json.load(open(meta_path, encoding="utf-8"))["pages"]
+            with open(meta_path, encoding="utf-8") as fh:
+                paths = json.load(fh)["pages"]
             if paths and all(os.path.isfile(p) for p in paths):
                 return paths[0] if len(paths) == 1 else paths
         except (OSError, ValueError, KeyError):
@@ -923,6 +929,7 @@ def _render_cached(out_path, meta_path, rev, draw_fn, page_info=None, column_hei
             out_path,
             meta,
             page_info=page_info,
+            caption=caption,
             column_height=column_height,
         )
         shared.atomic_json(meta_path, {"pages": paths})
@@ -2789,7 +2796,8 @@ def render_help_card(out_dir=None):
         return _render_cached(
             os.path.join(out_dir, "help_card.png"),
             os.path.join(out_dir, "help_card.meta.json"),
-            "help-v10", _draw_help)
+            "help-v11", _draw_help,
+            caption="作战手册 · 指令全集 · 加 t 或 文字 可直接输出纯文本")
     except Exception:
         if os.environ.get("HD2_CARD_DEBUG"):
             import traceback
