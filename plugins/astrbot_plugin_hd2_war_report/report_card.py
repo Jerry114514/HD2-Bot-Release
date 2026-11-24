@@ -40,6 +40,7 @@ from astrbot_plugin_hd2_common.fonts import resolve_font_pair
 # 阵营色独立于本表（FACTION_COLOR 与玩家分布行），不随模板变化
 # 视觉 Token 统一到 common.ui（黑曜石琥珀金）：旧名保留为兼容别名
 from astrbot_plugin_hd2_common.ui import tokens as _ui
+from astrbot_plugin_hd2_common.ui.layout import Canvas
 
 BG = _ui.BG
 PANEL = _ui.CARD
@@ -574,6 +575,103 @@ def _draw_special_orders(dr, img, document, y):
                 note_y += 15
     return y + card_h + 18
 
+def _draw_report_hero(dr, img, data, distribution, dist_hist):
+    """战报 v2：KPI 横条 + 重要指令行级排布 + 战区分布横条 + 要闻，去框套框。"""
+    c = Canvas(width=W, pad=PAD)
+    c.header("银河战争速报", "GALACTIC WAR REPORT")
+    a = data.get("assignments") or {}
+    tasks = mo_tasks(data)
+    content = shared.major_order_content(data)
+    campaigns = data.get("campaigns") or []
+    online = distribution["total"]
+    kpis = [("在线指挥官", fmt(online) if online is not None else "未知", "全服同时在线"),
+            ("进行中战役", str(len(campaigns)) if campaigns else "—", "活动战役")]
+    if tasks:
+        done = sum(1 for t in tasks if shared.percent(t.get("progress"), t.get("goal")) == 100)
+        kpis += [("指令任务", f"{len(tasks)} 项", "当期主要指令"),
+                 ("已完成任务", f"{done} 项", "按目标判定")]
+    else:
+        kpis += [("指令", "当前无", "当期无主要指令"), ("状态", "待命中", "等待指挥部下发")]
+    c.kpi(kpis, cols=4, h=88, accents=[_ui.CYAN, GOLD, GOLD, GREEN])
+    if tasks:
+        deadline_txt = ""
+        dl = a.get("deadline") or ""
+        if dl:
+            try:
+                dd = datetime.fromisoformat(dl.replace("Z", "+00:00"))
+                hrs = (dd - datetime.now(timezone.utc)).total_seconds() / 3600
+                deadline_txt = (f"距截止 {int(hrs // 24)} 天 {int(hrs % 24)} 小时"
+                                if hrs > 0 else "已到期")
+            except Exception:
+                deadline_txt = ""
+        c.section("重要指令", "MAJOR ORDER", hint=deadline_txt)
+        rich = content.get("rich_text") or shared.rich_text_runs(content.get("text") or "")
+        runs = [(str(t), RICH_COLORS.get(tone, DIM)) for t, tone in rich]
+        if runs:
+            c.paragraph(runs, font=F(18), color=DIM, line_gap=7)
+            c.gap(4)
+        for i, t in enumerate(tasks):
+            name = t.get("name") or t.get("action") or ""
+            label = f"任务 {i + 1} · {name}" if name else f"任务 {i + 1}"
+            pct = shared.percent(t.get("progress"), t.get("goal"))
+            done = pct == 100
+            value = "已完成" if done else ("未知" if pct is None else f"{pct:.1f}%")
+            sub = (f"{shared.fmt_big_num(t.get('progress'))} / "
+                   f"{shared.fmt_big_num(t.get('goal'))}")
+            req = t.get("requirement") or {}
+            if req.get("type") == "equipment" and (req.get("name") or req.get("en")):
+                sub = "限定：" + str(req.get("name") or req.get("en")) + " · " + sub
+            c.progress(label, (pct or 0) / 100, value, color=GREEN if done else GOLD, sub=sub)
+            c.gap(6)
+    c.y = _draw_special_orders(c.dr, c.img, data, c.y + 4)
+    if dist_hist:
+        latest = dist_hist[-1]
+        total = latest.get("totalPlayers") or 0
+        fac = latest.get("factions") or {}
+        sample = (latest.get("timestamp") or "")[:16].replace("T", " ")
+        c.section("战区玩家分布", "PLAYER DISTRIBUTION", hint=sample)
+        rows = [("超级地球", fac.get("Humans"), BLUE),
+                ("终结族", fac.get("Terminids"), GOLD),
+                ("机器人", fac.get("Automatons"), (214, 128, 109)),
+                ("光能者", fac.get("Illuminate"), (207, 100, 248))]
+        for name, cnt, color in rows:
+            pct = shared.percent(cnt, total)
+            c.dr.text((c.pad, c.y + 2), name, font=F(16), fill=TEXT)
+            bar_x = c.pad + 96
+            bar_w = c.width - c.pad * 2 - 96 - 210
+            c.dr.rounded_rectangle([bar_x, c.y + 8, bar_x + bar_w, c.y + 18], radius=5, fill=(40, 48, 64))
+            if pct:
+                c.dr.rounded_rectangle([bar_x, c.y + 8, bar_x + max(4, int(bar_w * pct / 100)), c.y + 18],
+                                       radius=5, fill=color)
+            vt = f"{fmt(cnt)}（{pct:.1f}%）" if pct is not None else "未知"
+            c.dr.text((c.width - c.pad - c.text_w(vt, F(15)), c.y + 2), vt, font=F(15), fill=TEXT)
+            c.y += 30
+        total_t = f"总计在线：{fmt(total)} 名指挥官" + (f" · 采样 {sample}" if sample else "")
+        c.paragraph(total_t, font=F(12), color=MUTE)
+        c.gap(8)
+    news = orders.filtered_news(data)
+    news_show = [n for n in news if (n.get("translated") or n.get("original") or n.get("message"))][:3]
+    if news_show:
+        c.section("最新要闻", "FIELD DISPATCHES")
+        for n in news_show:
+            value = n.get("translated") or n.get("original") or n.get("message") or ""
+            runs = [(str(t), RICH_COLORS.get(tone, DIM))
+                    for t, tone in (shared.rich_text_runs(value))]
+            c.dr.rectangle([c.pad, c.y + 7, c.pad + 6, c.y + 17], fill=BRASS)
+            pad0 = c.pad
+            c.pad = pad0 + 20
+            c.paragraph(runs, font=F(17), color=DIM, line_gap=6)
+            c.pad = pad0
+            c.gap(10)
+    c.paragraph("数据来源：主站战况快照 · 源时间见页脚　发送 /帮助 /dss /战役 /星球 查看更多",
+                font=F(12), color=MUTE)
+    img.paste(c.img.crop((0, 0, c.width, min(c.y + 6, c.img.height))), (0, 0))
+    return c.y + 6
+
+REPORT_REV = "report-v3:"
+REPORT_CAPTION = "数据快照来自主站战况接口；与 Arrowhead Game Studios 无隶属关系。"
+
+
 def render_report_card(out_dir=None):
     out_dir = out_dir or CACHE_DIR
     data = _site_get(DATA_URL)
@@ -582,180 +680,76 @@ def render_report_card(out_dir=None):
                   "factions":dict(zip(("Humans","Terminids","Automatons","Illuminate"),
                                       (distribution[k] for k in ("humans","terminids","automatons","illuminate"))))}] if distribution["total"] is not None else []
     def draw(dr, img):
-        now = datetime.now(timezone.utc).astimezone()
-        a = data.get("assignments") or {}
-        mo = data.get("major_order") or {}
-        mtask = mo.get("tasks") or {}
-        tasks = mo_tasks(data)
-        content = shared.major_order_content(data)
-        brief = content.get("text") or ""
-        brief_runs = content.get("rich_text") or []
-        war = data.get("war") or {}
-        online = distribution["total"]
-        campaigns = data.get("campaigns") or []
-        news = orders.filtered_news(data)
+        return _draw_report_hero(dr, img, data, distribution, dist_hist)
 
-        f_title = F(42, True); f_h2 = F(25, True); f_h3 = F(21, True)
-        f_body = F(20); f_small = F(17); f_tiny = F(14)
-        f_kpi = F(32, True); f_kpi_l = F(15)
+    return _render_cached(os.path.join(out_dir, OUT_NAME), "", REPORT_REV + str(data.get("fetchedAt")), draw, caption=REPORT_CAPTION)
 
 
-        # ══ HUD 头 ══
-        stripe_band(img, 0, 92, alpha=22)
-        dr.rectangle([0, 0, 5, 92], fill=GOLD)
-        dr.text((PAD, 14), "银河战争速报", font=f_title, fill=GOLD)
-        dr.text((PAD + 266, 36), "GALACTIC WAR REPORT", font=F(15), fill=MUTE)
-        ts = str(data.get("fetchedAt") or "未知")[:16].replace("T", " ")
-        tw = dr.textlength(ts, font=f_small)
-        dr.text((W - PAD - tw, 16), ts, font=f_small, fill=DIM)
-        sw = dr.textlength("真理部 · MOT", font=f_small)
-        dr.text((W - PAD - sw, 44), "真理部 · MOT", font=f_small, fill=BRASS)
-        y = 92 + 16
+def _rich_runs(order):
+    """把 major_order 的 (text, tone) 富文本转成 Canvas.paragraph 需要的 (text, color)。"""
+    return [(str(t or ""), RICH_COLORS.get(tone, DIM))
+            for t, tone in (order.get("rich_text") or ())]
 
-        # ══ KPI 行 ══
-        KPI_H = 86
-        kpis = [("在线指挥官", fmt(online) if online is not None else "未知"),
-                ("进行中战役", str(len(campaigns)) if campaigns else "—")]
-        if tasks:
-            kpis.append(("指令任务", f"{len(tasks)} 项"))
-            kpis.append(("已完成任务", str(sum(1 for t in tasks if shared.percent(t.get("progress"), t.get("goal")) == 100)) + " 项"))
-        else:
-            kpis.append(("指令", "当前无"))
-            kpis.append(("状态", "待命中"))
-        kw = (W - PAD * 2 - 12 * 3) // 4
-        for i, (lab, val) in enumerate(kpis):
-            kx = PAD + i * (kw + 12)
-            dr.rectangle([kx, y, kx + kw, y + KPI_H], fill=PANEL, outline=LINE)
-            dr.rectangle([kx, y, kx + 4, y + KPI_H], fill=BRASS)
-            dr.text((kx + 16, y + 10), lab, font=f_kpi_l, fill=MUTE)
-            dr.text((kx + 16, y + 32), val, font=f_kpi, fill=TEXT)
-        y += KPI_H + 18
 
-        # ══ 重要指令面板 ══
-        if tasks:
-            brief_lines = _wrap_rich_runs(brief_runs, W - PAD * 2 - 36, f_body, dr)
-            head_h = 52
-            # brief 区：16 顶距 + 30/行 + 10 底距 + 分隔线 8
-            brief_h = (16 + 30 * len(brief_lines) + 18) if brief_lines else 0
-            task_h = sum(126 for _ in tasks)   # 每任务：任务名 38 + 进度条 24 + 数值行 64
-            panel_h = head_h + brief_h + task_h + 16
-            dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
-            dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
-            section_label(dr, PAD + 18, y + 14, "重要指令", f_h2)
-            dl = a.get("deadline") or ""
-            if dl:
-                try:
-                    dd = datetime.fromisoformat(dl.replace("Z", "+00:00"))
-                    hrs = (dd - datetime.now(timezone.utc)).total_seconds() / 3600
-                    remain = f"距截止 {int(hrs // 24)} 天 {int(hrs % 24)} 小时" if hrs > 0 else "已到期"
-                    rw = dr.textlength(remain, font=f_h3)
-                    dr.text((W - PAD - 18 - rw, y + 15), remain, font=f_h3, fill=GOLD2)
-                except Exception:
-                    pass
-            yy = y + head_h
-            if brief_lines:
-                yy = _draw_rich_lines(dr, PAD + 18, yy, brief_lines, f_body, 30, color=DIM)
-                yy += 10
-                dr.line([(PAD + 18, yy), (W - PAD - 18, yy)], fill=LINE)
-                yy += 8
-            for i, t in enumerate(tasks):
-                name = f"任务 {i + 1}：{t.get('name') or t.get('action') or ''}"
-                dr.text((PAD + 18, yy), name, font=f_h3, fill=TEXT)
-                req = t.get("requirement") or {}
-                if req.get("type") == "equipment" and (req.get("name") or req.get("en")):
-                    equip = "限定：" + (req.get("name") or req.get("en"))
-                    ew = dr.textlength(equip, font=f_small)
-                    dr.rectangle([W - PAD - 18 - ew - 20, yy - 3, W - PAD - 18, yy + 29],
-                                 fill=(46, 42, 10), outline=BRASS)
-                    dr.text((W - PAD - 18 - ew - 10, yy + 1), equip, font=f_small, fill=GOLD2)
-                yy += 38
-                goal, prog = t.get("goal"), t.get("progress")
-                percentage = shared.percent(prog, goal)
-                r = (percentage or 0) / 100.0
-                done = percentage == 100
-                progress_bar(dr, PAD + 18, yy, W - PAD * 2 - 36, 16, r, fill=GREEN if done else GOLD)
-                yy += 26
-                pt = ("未知" if percentage is None else "已完成" if done else f"{r * 100:.1f}%")
-                dr.text((PAD + 18, yy), pt, font=f_h3, fill=GREEN if done else GOLD)
-                sub = f"进度 {shared.fmt_big_num(prog)} / 目标 {shared.fmt_big_num(goal)}"
-                sw2 = dr.textlength(sub, font=f_small)
-                dr.text((W - PAD - 18 - sw2, yy + 6), sub, font=f_small, fill=MUTE)
-                yy += 62
-            y += panel_h + 20
+def _draw_major_order_hero(dr, img, document, order, assignment, tasks):
+    """重要指令 v3：头图 Hero（标题叠在图上）+ 流式正文 + 任务进度条，不再框套框。"""
+    from PIL import ImageOps
+    c = Canvas(width=W, pad=PAD)
+    c.header("重要指令", "MAJOR ORDER")
+    bw, bh = c.width - c.pad * 2, 300
+    banner_file = next((path for source in order.get("banner_sources") or ()
+                        if (path := _banner_file(source))), None)
+    if banner_file:
+        try:
+            c.img.paste(ImageOps.fit(Image.open(banner_file).convert("RGB"), (bw, bh)), (c.pad, c.y))
+        except Exception:
+            banner_file = None
+    if not banner_file:
+        for row in range(bh):
+            shade = 20 + int(20 * row / max(1, bh - 1))
+            c.dr.line([(c.pad, c.y + row), (c.pad + bw, c.y + row)], fill=(shade, shade + 2, shade + 5))
+        for off in range(-bh, bw, 38):
+            c.dr.line([(c.pad + off, c.y + bh), (c.pad + off + 150, c.y)], fill=(49, 42, 24), width=2)
+    overlay = Image.new("RGBA", (bw, bh), (0, 0, 0, 0))
+    od = ImageDraw.Draw(overlay, "RGBA")
+    for i in range(96):
+        od.rectangle([0, bh - 96 + i, bw, bh - 95 + i], fill=(0, 0, 0, 6 + int(i * 2.2)))
+    od.rectangle([0, 0, 8, bh], fill=(*GOLD, 235))
+    c.img.paste(overlay, (c.pad, c.y), overlay)
+    deadline = str(assignment.get("deadline") or "")[:16].replace("T", " ")
+    meta = " · ".join(x for x in (str(order.get("revision") or ""), ("截止 " + deadline) if deadline else "") if x)
+    c.dr.text((c.pad + 24, c.y + bh - 88), "INCOMING MESSAGE FROM SUPER EARTH", font=F(12, True), fill=GOLD2)
+    head = str(order.get("title") or "")
+    if not head or head == "重要指令":
+        head = "当期主要指令"
+    c.dr.text((c.pad + 24, c.y + bh - 66), head, font=F(29, True), fill=TEXT)
+    if meta:
+        c.dr.text((c.pad + 24, c.y + bh - 28), meta, font=F(13), fill=DIM)
+    c.y += bh + 18
+    runs = _rich_runs(order)
+    if runs:
+        c.paragraph(runs, font=F(19), color=(176, 184, 198), line_gap=9)
+    elif order.get("text"):
+        c.paragraph(str(order.get("text")), font=F(19), color=DIM, line_gap=9)
+    if tasks:
+        c.section("任务进度", "TASKS")
+        for index, task in enumerate(tasks):
+            name = task.get("name") or task.get("action") or f"任务 {index + 1}"
+            pct = shared.percent(task.get("progress"), task.get("goal"))
+            done = pct == 100
+            value = "已完成" if done else ("未知" if pct is None else f"{pct:.1f}%")
+            sub = (f"{shared.fmt_big_num(task.get('progress'))} / "
+                   f"{shared.fmt_big_num(task.get('goal'))}")
+            c.progress(f"任务 {index + 1} · {name}", (pct or 0) / 100, value,
+                       color=GREEN if done else GOLD, sub=sub)
+            c.gap(8)
+    if orders.special_orders(document):
+        c.y = _draw_special_orders(c.dr, c.img, document, c.y + 6)
+    img.paste(c.img.crop((0, 0, c.width, min(c.y + 6, c.img.height))), (0, 0))
+    return c.y + 6
 
-        y = _draw_special_orders(dr, img, data, y)
 
-        # ══ 战区玩家分布 ══
-        if dist_hist:
-            latest = dist_hist[-1]
-            total = latest.get("totalPlayers") or 0
-            fac = latest.get("factions") or {}
-            rows = [("超级地球", fac.get("Humans"), BLUE),
-                    ("终结族", fac.get("Terminids"), (245, 197, 24)),
-                    ("机器人", fac.get("Automatons"), (214, 128, 109)),
-                    ("光能者", fac.get("Illuminate"), (207, 100, 248))]
-            panel_h = 60 + 58 * len(rows) + 44
-            dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
-            dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
-            section_label(dr, PAD + 18, y + 14, "战区玩家分布", f_h2)
-            u = (latest.get("timestamp") or "")[:16].replace("T", " ")
-            if u:
-                uw = dr.textlength(u, font=f_small)
-                dr.text((W - PAD - 18 - uw, y + 16), u, font=f_small, fill=MUTE)
-            yy = y + 58
-            for name, cnt, color in rows:
-                measured_pct = shared.percent(cnt,total)
-                r = measured_pct or 0
-                dr.text((PAD + 18, yy), name, font=f_body, fill=TEXT)
-                progress_bar(dr, PAD + 140, yy + 3, W - PAD * 2 - 330, 16, r / 100.0, fill=color)
-                vt = (f"{fmt(cnt)}（{r:.1f}%）" if measured_pct is not None else "未知")
-                vw = dr.textlength(vt, font=f_body)
-                dr.text((W - PAD - 18 - vw, yy), vt, font=f_body, fill=TEXT)
-                yy += 58
-            total_t = f"总计在线：{fmt(total)} 名指挥官" + (f" · 采样 {u}" if u else "")
-            tw2 = dr.textlength(total_t, font=f_small)
-            dr.text((W - PAD - 18 - tw2, yy + 2), total_t, font=f_small, fill=DIM)
-            y += panel_h + 18
-
-        # ══ 最新要闻 ══
-        news_show = [n for n in news if (n.get("translated") or n.get("original") or n.get("message"))][:3]
-        y_after_news = None
-        if news_show:
-            blocks = []
-            for n in news_show:
-                value = n.get("translated") or n.get("original") or n.get("message") or ""
-                blocks.append(_wrap_rich_runs(
-                    shared.rich_text_runs(value), W - PAD * 2 - 52, f_body, dr
-                ))
-            panel_h = 56 + sum(18 + 28 * len(ls) + 16 for ls in blocks) + 4
-            dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
-            dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
-            section_label(dr, PAD + 18, y + 14, "最新要闻", f_h2)
-            yy = y + 56
-            for lines in blocks:
-                first = True
-                for ln in lines:
-                    if first:
-                        dr.rectangle([PAD + 18, yy + 11, PAD + 24, yy + 29], fill=BRASS)
-                        _draw_rich_line(dr, PAD + 34, yy, ln, f_body, color=TEXT)
-                        first = False
-                    else:
-                        _draw_rich_line(dr, PAD + 34, yy, ln, f_body, color=DIM)
-                    yy += 28
-                yy += 16
-            y_after_news = y + panel_h + 20
-
-        # ══ 页脚 ══
-        y = (y_after_news if y_after_news else y) + 8
-        dr.line([(PAD, y), (W - PAD, y)], fill=LINE)
-        dr.text((PAD, y + 16), "数据来源：主站战况快照 · 源时间见页脚", font=f_tiny, fill=MUTE)
-        ft = "发送 /帮助 /dss /战役 /星球 查看更多"
-        fw = dr.textlength(ft, font=f_tiny)
-        dr.text((W - PAD - fw, y + 16), ft, font=f_tiny, fill=MUTE)
-        dr.text((PAD, y + 42), "真理部 · 管理式民主 · 本站与 Arrowhead Game Studios 无隶属关系",
-                font=f_tiny, fill=(120, 138, 156))
-        return y + 88
-    return _render_cached(os.path.join(out_dir, OUT_NAME), "", str(data.get("fetchedAt")), draw)
+MO_CAPTION = "正文来源：当期 NEW MAJOR ORDER 官方中文公告；HTML 已净化。"
 
 
 def render_major_order_card(out_dir=None):
@@ -771,7 +765,7 @@ def render_major_order_card(out_dir=None):
             return None
         out_path = os.path.join(out_dir, "major_order_card.png")
         special_models = orders.special_orders(document)
-        revision = "mo-card-v2:" + hashlib.sha256(json.dumps({
+        revision = "mo-card-v4:" + hashlib.sha256(json.dumps({
             "revision": order.get("revision"),
             "text": order.get("text"),
             "tasks": tasks,
@@ -780,90 +774,9 @@ def render_major_order_card(out_dir=None):
         }, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
 
         def draw(dr, img):
-            from PIL import ImageOps
-            y = _hud_head(dr, img, "重要指令", "MAJOR ORDER")
-            banner_w = W - PAD * 2
-            banner_h = 286
-            banner_file = next(
-                (path for source in order.get("banner_sources") or ()
-                 if (path := _banner_file(source))),
-                None,
-            )
-            if banner_file:
-                try:
-                    source = Image.open(banner_file).convert("RGB")
-                    img.paste(ImageOps.fit(source, (banner_w, banner_h)), (PAD, y))
-                except Exception:
-                    banner_file = None
-            if not banner_file:
-                for row in range(banner_h):
-                    shade = 20 + int(20 * row / max(1, banner_h - 1))
-                    dr.line([(PAD, y + row), (W - PAD, y + row)],
-                            fill=(shade, shade + 2, shade + 5))
-                for offset in range(-banner_h, banner_w, 38):
-                    dr.line([(PAD + offset, y + banner_h), (PAD + offset + 150, y)],
-                            fill=(49, 42, 24), width=2)
-            overlay = Image.new("RGBA", (banner_w, banner_h), (0, 0, 0, 0))
-            odr = ImageDraw.Draw(overlay, "RGBA")
-            odr.rectangle([0, banner_h - 76, banner_w, banner_h], fill=(0, 0, 0, 188))
-            odr.rectangle([0, 0, 9, banner_h], fill=(*GOLD, 235))
-            img.paste(overlay, (PAD, y), overlay)
-            dr.text((PAD + 26, y + banner_h - 62), "INCOMING MESSAGE FROM SUPER EARTH",
-                    font=F(14), fill=GOLD2)
-            dr.text((PAD + 26, y + banner_h - 40),
-                    "重要指令 · " + str(order.get("revision") or "CURRENT"),
-                    font=F(18, True), fill=TEXT)
-            y += banner_h + 18
+            return _draw_major_order_hero(dr, img, document, order, assignment, tasks)
 
-            body_font, body_w = F(21), W - PAD * 2 - 40
-            rich_lines = _wrap_rich_runs(order.get("rich_text") or (), body_w, body_font, dr)
-            deadline = assignment.get("deadline") or ""
-            panel_h = 56 + 31 * len(rich_lines) + 18 + 112 * len(tasks) + 20
-            dr.rectangle([PAD, y, W - PAD, y + panel_h], fill=PANEL, outline=LINE)
-            dr.rectangle([PAD, y, W - PAD, y + 3], fill=GOLD)
-            section_label(dr, PAD + 18, y + 14, order.get("title") or "重要指令", F(25, True))
-            if deadline:
-                deadline_text = str(deadline)[:16].replace("T", " ")
-                dw = dr.textlength(deadline_text, font=F(15))
-                dr.text((W - PAD - 18 - dw, y + 17), "截止 " + deadline_text,
-                        font=F(15), fill=GOLD2)
-            yy = _draw_rich_lines(
-                dr, PAD + 20, y + 54, rich_lines, body_font, 31, color=DIM
-            )
-            yy += 16
-            dr.line([(PAD + 20, yy), (W - PAD - 20, yy)], fill=LINE)
-            yy += 12
-            for index, task in enumerate(tasks):
-                name = task.get("name") or task.get("action") or f"任务 {index + 1}"
-                dr.text((PAD + 20, yy), f"任务 {index + 1} · {name}",
-                        font=F(20, True), fill=TEXT)
-                yy += 34
-                percentage = shared.percent(task.get("progress"), task.get("goal"))
-                progress_bar(
-                    dr, PAD + 20, yy, W - PAD * 2 - 40, 14,
-                    (percentage or 0) / 100,
-                    fill=GREEN if percentage == 100 else GOLD,
-                )
-                yy += 22
-                progress = f"{percentage:.1f}%" if percentage is not None else "未知"
-                if percentage == 100:
-                    progress = "已完成"
-                dr.text((PAD + 20, yy), progress, font=F(18, True),
-                        fill=GREEN if percentage == 100 else GOLD)
-                detail = (
-                    f"{shared.fmt_big_num(task.get('progress'))} / "
-                    f"{shared.fmt_big_num(task.get('goal'))}"
-                )
-                detail_w = dr.textlength(detail, font=F(16))
-                dr.text((W - PAD - 20 - detail_w, yy + 3), detail, font=F(16), fill=MUTE)
-                yy += 44
-            y += panel_h + 18
-            y = _draw_special_orders(dr, img, document, y)
-            dr.text((PAD, y), "正文来源：当期 NEW MAJOR ORDER 官方中文公告；HTML 已净化。",
-                    font=F(14), fill=MUTE)
-            return y + 42
-
-        return _render_cached(out_path, "", revision, draw)
+        return _render_cached(out_path, "", revision, draw, caption=MO_CAPTION)
     except Exception:
         if os.environ.get("HD2_CARD_DEBUG"):
             import traceback
